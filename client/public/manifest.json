@@ -1,0 +1,18 @@
+{
+  "name": "Pennywise — Student Personal Finance",
+  "short_name": "Pennywise",
+  "description": "Know your money. Plan your month. Student-tailored financial tracking in INR.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#7A263A",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
