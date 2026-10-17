@@ -169,8 +169,70 @@ const recordFeePayment = async (req, res, next) => {
   }
 };
 
+const updateFeeObligation = async (req, res, next) => {
+  try {
+    const ownerId = req.user._id;
+    const { id } = req.params;
+    const { title, feeType, academicYear, semester, totalAmountPaise, dueDate, notes } = req.body;
+
+    const fee = await AcademicFee.findOne({ _id: id, ownerId });
+    if (!fee) {
+      return res.status(404).json({ success: false, message: 'Fee obligation not found or unauthorized' });
+    }
+
+    if (title) fee.title = title.trim();
+    if (feeType) fee.feeType = feeType;
+    if (academicYear) fee.academicYear = academicYear;
+    if (semester) fee.semester = semester;
+    if (dueDate) fee.dueDate = new Date(dueDate);
+    if (notes !== undefined) fee.notes = notes ? notes.trim() : '';
+
+    if (totalAmountPaise) {
+      const parsedTotal = parseInt(totalAmountPaise, 10);
+      if (parsedTotal > 0) {
+        fee.totalAmountPaise = parsedTotal;
+      }
+    }
+
+    fee.updateStatus();
+    await fee.save();
+
+    res.json({
+      success: true,
+      data: { fee }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteFeeObligation = async (req, res, next) => {
+  try {
+    const ownerId = req.user._id;
+    const { id } = req.params;
+
+    const fee = await AcademicFee.findOne({ _id: id, ownerId });
+    if (!fee) {
+      return res.status(404).json({ success: false, message: 'Fee obligation not found or unauthorized' });
+    }
+
+    // Also remove any linkage on child transactions or clean up
+    await Transaction.updateMany({ academicFeeId: fee._id }, { $set: { academicFeeId: null } });
+    await fee.deleteOne();
+
+    res.json({
+      success: true,
+      message: 'Fee obligation removed successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getAcademicSummary,
   createFeeObligation,
-  recordFeePayment
+  recordFeePayment,
+  updateFeeObligation,
+  deleteFeeObligation
 };

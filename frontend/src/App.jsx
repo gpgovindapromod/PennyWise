@@ -47,10 +47,18 @@ function ProtectedLayout({ children, onOpenAddExpense }) {
 function AppContent() {
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [selectedAcademicFee, setSelectedAcademicFee] = useState(null);
+  const [editingTransaction, setEditingTransaction] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleOpenAddExpense = (fee = null) => {
     setSelectedAcademicFee(fee);
+    setEditingTransaction(null);
+    setIsAddExpenseOpen(true);
+  };
+
+  const handleOpenEditTransaction = (tx) => {
+    setEditingTransaction(tx);
+    setSelectedAcademicFee(null);
     setIsAddExpenseOpen(true);
   };
 
@@ -81,7 +89,11 @@ function AppContent() {
           path="/transactions"
           element={
             <ProtectedLayout onOpenAddExpense={() => handleOpenAddExpense(null)}>
-              <Transactions key={refreshKey} onOpenAddExpense={() => handleOpenAddExpense(null)} />
+              <Transactions 
+                key={refreshKey} 
+                onOpenAddExpense={() => handleOpenAddExpense(null)} 
+                onEditTransaction={handleOpenEditTransaction}
+              />
             </ProtectedLayout>
           }
         />
@@ -131,9 +143,11 @@ function AppContent() {
         onClose={() => {
           setIsAddExpenseOpen(false);
           setSelectedAcademicFee(null);
+          setEditingTransaction(null);
         }}
         onSuccess={handleExpenseSuccess}
         defaultAcademicFee={selectedAcademicFee}
+        editingTransaction={editingTransaction}
       />
     </BrowserRouter>
   );

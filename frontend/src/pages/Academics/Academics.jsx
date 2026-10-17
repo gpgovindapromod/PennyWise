@@ -15,13 +15,17 @@ import {
   ArrowUpRight,
   ShieldAlert,
   ChevronRight,
-  Check
+  Check,
+  Trash2,
+  Edit2,
+  X
 } from 'lucide-react';
 
 export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showFeeModal, setShowFeeModal] = useState(false);
+  const [editingFeeId, setEditingFeeId] = useState(null);
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'fees', 'expenses'
   const [feeForm, setFeeForm] = useState({
     title: '',
@@ -50,7 +54,7 @@ export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
     fetchAcademics();
   }, []);
 
-  const handleCreateFee = async (e) => {
+  const handleCreateOrUpdateFee = async (e) => {
     e.preventDefault();
     setFeeError('');
 
@@ -61,7 +65,7 @@ export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
 
     setFeeSubmitting(true);
     try {
-      await API.post('/academics/fees', {
+      const payload = {
         title: feeForm.title,
         feeType: feeForm.feeType,
         academicYear: feeForm.academicYear,
@@ -69,8 +73,16 @@ export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
         totalAmountPaise: rupeesToPaise(feeForm.totalAmountRupees),
         dueDate: feeForm.dueDate,
         notes: feeForm.notes
-      });
+      };
+
+      if (editingFeeId) {
+        await API.put(`/academics/fees/${editingFeeId}`, payload);
+      } else {
+        await API.post('/academics/fees', payload);
+      }
+
       setShowFeeModal(false);
+      setEditingFeeId(null);
       setFeeForm({
         title: '',
         feeType: 'semester',
@@ -82,9 +94,36 @@ export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
       });
       fetchAcademics();
     } catch (err) {
-      setFeeError(err.response?.data?.message || 'Failed to create fee obligation');
+      setFeeError(err.response?.data?.message || 'Failed to save fee obligation');
     } finally {
       setFeeSubmitting(false);
+    }
+  };
+
+  const handleOpenEditFee = (fee) => {
+    setEditingFeeId(fee._id);
+    setFeeForm({
+      title: fee.title,
+      feeType: fee.feeType || 'semester',
+      academicYear: fee.academicYear || '2026-2027',
+      semester: fee.semester || 'Semester 5',
+      totalAmountRupees: (fee.totalAmountPaise / 100).toString(),
+      dueDate: fee.dueDate ? new Date(fee.dueDate).toISOString().split('T')[0] : '',
+      notes: fee.notes || ''
+    });
+    setFeeError('');
+    setShowFeeModal(true);
+  };
+
+  const handleDeleteFee = async (feeId, feeTitle) => {
+    if (!window.confirm(`Are you sure you want to delete "${feeTitle}"? This cannot be undone.`)) {
+      return;
+    }
+    try {
+      await API.delete(`/academics/fees/${feeId}`);
+      fetchAcademics();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete fee obligation');
     }
   };
 
@@ -491,30 +530,74 @@ export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
                       }} />
                     </div>
 
-                    {/* Bottom Status & Installment Action */}
+                    {/* Bottom Status & Actions */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
                       <div style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>
                         {fee.installments?.length || 0} payment(s) made · {percent}% cleared
                       </div>
 
-                      {!isPaid && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {/* Edit Fee Button */}
                         <button
-                          onClick={() => onPayFeeInstallment(fee)}
-                          className="btn btn-secondary"
+                          onClick={() => handleOpenEditFee(fee)}
+                          title="Edit Fee Obligation"
                           style={{
-                            padding: '6px 14px',
-                            fontSize: 12,
-                            fontWeight: 700,
+                            background: '#F1F5F9',
+                            border: '1px solid #CBD5E1',
+                            borderRadius: 8,
+                            padding: '6px 10px',
+                            cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 6,
-                            backgroundColor: '#FFFFFF',
-                            borderColor: '#CBD5E1'
+                            gap: 4,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: '#334155'
                           }}
                         >
-                          <CreditCard size={14} color="#E11D48" /> Pay Installment
+                          <Edit2 size={13} /> Edit
                         </button>
-                      )}
+
+                        {/* Delete Fee Button */}
+                        <button
+                          onClick={() => handleDeleteFee(fee._id, fee.title)}
+                          title="Delete Fee Obligation"
+                          style={{
+                            background: '#FFF1F2',
+                            border: '1px solid #FECDD3',
+                            borderRadius: 8,
+                            padding: '6px 10px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: '#E11D48'
+                          }}
+                        >
+                          <Trash2 size={13} /> Delete
+                        </button>
+
+                        {!isPaid && (
+                          <button
+                            onClick={() => onPayFeeInstallment(fee)}
+                            className="btn btn-secondary"
+                            style={{
+                              padding: '6px 14px',
+                              fontSize: 12,
+                              fontWeight: 700,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              backgroundColor: '#FFFFFF',
+                              borderColor: '#CBD5E1'
+                            }}
+                          >
+                            <CreditCard size={14} color="#E11D48" /> Pay Installment
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -644,10 +727,10 @@ export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
 
       {/* New Fee Obligation Modal */}
       {showFeeModal && (
-        <div className="modal-overlay" onClick={() => setShowFeeModal(false)}>
+        <div className="modal-overlay" onClick={() => { setShowFeeModal(false); setEditingFeeId(null); }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480, borderRadius: 20 }}>
             <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', marginBottom: 16 }}>
-              Add College Fee Obligation
+              {editingFeeId ? 'Edit College Fee Obligation' : 'Add College Fee Obligation'}
             </h3>
 
             {feeError && (
@@ -656,7 +739,7 @@ export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
               </div>
             )}
 
-            <form onSubmit={handleCreateFee}>
+            <form onSubmit={handleCreateOrUpdateFee}>
               <div className="form-group" style={{ marginBottom: 14 }}>
                 <label className="form-label" style={{ fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 6, display: 'block' }}>
                   Fee Title / Obligation
@@ -754,7 +837,7 @@ export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
                 <button
                   type="button"
-                  onClick={() => setShowFeeModal(false)}
+                  onClick={() => { setShowFeeModal(false); setEditingFeeId(null); }}
                   className="btn btn-secondary"
                   disabled={feeSubmitting}
                 >
@@ -765,7 +848,7 @@ export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
                   className="btn btn-primary"
                   disabled={feeSubmitting}
                 >
-                  {feeSubmitting ? 'Creating...' : 'Save Obligation'}
+                  {feeSubmitting ? (editingFeeId ? 'Updating...' : 'Creating...') : (editingFeeId ? 'Update Obligation' : 'Save Obligation')}
                 </button>
               </div>
             </form>

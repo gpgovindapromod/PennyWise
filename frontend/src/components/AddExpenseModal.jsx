@@ -15,7 +15,7 @@ import {
   FileText
 } from 'lucide-react';
 
-export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, defaultAcademicFee = null }) {
+export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, defaultAcademicFee = null, editingTransaction = null }) {
   const [type, setType] = useState('expense');
   const [amount, setAmount] = useState('');
   const [categoryId, setCategoryId] = useState('food-drinks');
@@ -40,15 +40,29 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, defau
         })
         .catch(() => {});
 
-      if (defaultAcademicFee) {
+      if (editingTransaction) {
+        setType(editingTransaction.type || 'expense');
+        setAmount((editingTransaction.amountPaise / 100).toString());
+        setCategoryId(editingTransaction.categoryId || 'food-drinks');
+        setCategoryLabel(editingTransaction.categoryLabel || 'Food & Drinks');
+        setSubcategory(editingTransaction.subcategory || '');
+        setPaymentMethod(editingTransaction.paymentMethod || 'upi');
+        setDate(editingTransaction.date ? new Date(editingTransaction.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+        setNote(editingTransaction.note || '');
+      } else if (defaultAcademicFee) {
         setType('expense');
         setCategoryId('academic');
         setCategoryLabel('Academic Expenses');
         setSubcategory('College fees');
         setNote('Installment for: ' + defaultAcademicFee.title);
+        setAmount('');
+      } else {
+        setAmount('');
+        setNote('');
+        setCustomItem('');
       }
     }
-  }, [isOpen, defaultAcademicFee]);
+  }, [isOpen, defaultAcademicFee, editingTransaction]);
 
   const activeCategory = categories.find((c) => c.id === categoryId);
 
@@ -91,7 +105,7 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, defau
 
     try {
       const amountPaise = rupeesToPaise(amount);
-      await API.post('/transactions', {
+      const payload = {
         type,
         amountPaise,
         categoryId,
@@ -100,9 +114,15 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, defau
         paymentMethod,
         date,
         note
-      });
+      };
 
-      setSuccessMsg('Saved successfully!');
+      if (editingTransaction) {
+        await API.patch(`/transactions/${editingTransaction._id}`, payload);
+      } else {
+        await API.post('/transactions', payload);
+      }
+
+      setSuccessMsg(editingTransaction ? 'Updated successfully!' : 'Saved successfully!');
       setTimeout(() => {
         setIsSubmitting(false);
         setAmount('');
@@ -130,11 +150,11 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, defau
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-0.02em' }}>
-                {defaultAcademicFee ? 'Pay Fee Installment' : 'New Transaction'}
+                {editingTransaction ? 'Edit Transaction' : (defaultAcademicFee ? 'Pay Fee Installment' : 'New Transaction')}
               </h3>
             </div>
             <p style={{ fontSize: 12, color: '#64748B', margin: '3px 0 0 0' }}>
-              {defaultAcademicFee ? defaultAcademicFee.title : 'Record expense, fuel, or income'}
+              {editingTransaction ? `Updating entry #${editingTransaction._id.slice(-6)}` : (defaultAcademicFee ? defaultAcademicFee.title : 'Record expense, fuel, or income')}
             </p>
           </div>
           <button

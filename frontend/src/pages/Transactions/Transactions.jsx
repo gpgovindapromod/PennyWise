@@ -27,10 +27,11 @@ import {
   SlidersHorizontal,
   X,
   Download,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Edit2
 } from 'lucide-react';
 
-export default function Transactions({ onOpenAddExpense }) {
+export default function Transactions({ onOpenAddExpense, onEditTransaction }) {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -793,7 +794,15 @@ export default function Transactions({ onOpenAddExpense }) {
                         {formatRupees(tx.amountPaise)}
                       </div>
 
-                      <div style={{ textAlign: 'center' }}>
+                      <div style={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                        <button
+                          onClick={() => onEditTransaction && onEditTransaction(tx)}
+                          title="Edit transaction"
+                          style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: 4 }}
+                        >
+                          <Edit2 size={15} />
+                        </button>
+
                         {deleteConfirmId === tx._id ? (
                           <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
                             <button
@@ -815,7 +824,7 @@ export default function Transactions({ onOpenAddExpense }) {
                             title="Delete transaction"
                             style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: 4 }}
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={15} />
                           </button>
                         )}
                       </div>
@@ -852,9 +861,25 @@ export default function Transactions({ onOpenAddExpense }) {
                             {isIncome ? '+' : (isRefund ? '+' : '−')}
                             {formatRupees(tx.amountPaise)}
                           </div>
-                          <span style={{ fontSize: 10, color: '#64748B', fontWeight: 600 }}>
-                            {tx.paymentMethod ? tx.paymentMethod.toUpperCase() : 'UPI'}
-                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
+                            <span style={{ fontSize: 10, color: '#64748B', fontWeight: 600 }}>
+                              {tx.paymentMethod ? tx.paymentMethod.toUpperCase() : 'UPI'}
+                            </span>
+                            <button
+                              onClick={() => onEditTransaction && onEditTransaction(tx)}
+                              style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: 2 }}
+                              title="Edit"
+                            >
+                              <Edit2 size={13} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(tx._id)}
+                              style={{ background: 'none', border: 'none', color: '#E11D48', cursor: 'pointer', padding: 2 }}
+                              title="Delete"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
