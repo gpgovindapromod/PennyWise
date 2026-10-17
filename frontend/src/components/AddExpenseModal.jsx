@@ -101,6 +101,18 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, defau
       return;
     }
 
+    let finalCategoryId = categoryId;
+    let finalCategoryLabel = categoryLabel;
+
+    if (categoryId === '__custom_cat__') {
+      if (!categoryLabel.trim()) {
+        setError('Please enter a valid category name');
+        return;
+      }
+      finalCategoryLabel = categoryLabel.trim();
+      finalCategoryId = finalCategoryLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'custom';
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -108,8 +120,8 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, defau
       const payload = {
         type,
         amountPaise,
-        categoryId,
-        categoryLabel,
+        categoryId: finalCategoryId,
+        categoryLabel: finalCategoryLabel,
         subcategory: finalSubcategory,
         paymentMethod,
         date,
@@ -363,8 +375,33 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, defau
                   {c.label}
                 </option>
               ))}
+              <option value="__custom_cat__">+ Create Custom Category...</option>
             </select>
           </div>
+
+          {categoryId === '__custom_cat__' && (
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 4 }}>
+                Enter New Category Name
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Gym & Fitness, Hostel Rent, Bike Service"
+                value={categoryLabel === 'Food & Drinks' ? '' : categoryLabel}
+                onChange={(e) => setCategoryLabel(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  border: '1.5px solid #CBD5E1',
+                  fontSize: 13,
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+                required
+              />
+            </div>
+          )}
 
           {/* 4. Subcategory / Specific Item */}
           <div style={{ marginBottom: 16 }}>

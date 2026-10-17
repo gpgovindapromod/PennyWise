@@ -25,24 +25,13 @@ const transactionSchema = new mongoose.Schema({
   categoryId: {
     type: String,
     required: true,
-    enum: [
-      'food-drinks',
-      'academic',
-      'travel',
-      'shopping',
-      'bills-utilities',
-      'health',
-      'entertainment',
-      'personal-care',
-      'allowance',
-      'scholarship',
-      'freelance',
-      'other'
-    ]
+    trim: true,
+    lowercase: true
   },
   categoryLabel: {
     type: String,
-    required: true
+    required: true,
+    trim: true
   },
   subcategory: {
     type: String,
