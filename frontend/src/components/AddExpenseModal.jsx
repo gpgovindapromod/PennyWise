@@ -15,7 +15,8 @@ import {
   FileText
 } from 'lucide-react';
 
-export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, defaultAcademicFee = null, editingTransaction = null }) {
+export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuccess, defaultAcademicFee = null, editingTransaction = null }) {
+  const notifySuccess = onSuccess || onExpenseAdded || (() => {});
   const [type, setType] = useState('expense');
   const [amount, setAmount] = useState('');
   const [categoryId, setCategoryId] = useState('food-drinks');
@@ -140,7 +141,7 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, defau
         setAmount('');
         setNote('');
         setCustomItem('');
-        onExpenseAdded();
+        notifySuccess();
         onClose();
       }, 700);
     } catch (err) {
