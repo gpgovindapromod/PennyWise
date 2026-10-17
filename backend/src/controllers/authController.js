@@ -69,10 +69,12 @@ const sendRegisterOtp = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `A 6-digit verification code was sent to ${normalizedEmail}`,
+      message: emailResult.deliveredToInbox
+        ? `A 6-digit verification code was sent to ${normalizedEmail}`
+        : `Verification code generated! (Dev mode: ${otpCode})`,
       provider: emailResult.provider,
-      // For local testing convenience if no Resend key is supplied
-      devOtp: !process.env.RESEND_API_KEY ? otpCode : undefined
+      devOtp: !emailResult.deliveredToInbox ? otpCode : undefined,
+      warning: emailResult.warning
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -189,9 +191,12 @@ const forgotPassword = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `If an account exists with this email, a 6-digit password reset code has been sent.`,
+      message: emailResult.deliveredToInbox
+        ? `A 6-digit password reset code was sent to ${normalizedEmail}`
+        : `Reset code generated! (Dev mode: ${otpCode})`,
       provider: emailResult.provider,
-      devOtp: !process.env.RESEND_API_KEY ? otpCode : undefined
+      devOtp: !emailResult.deliveredToInbox ? otpCode : undefined,
+      warning: emailResult.warning
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

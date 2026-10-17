@@ -59,20 +59,39 @@ const sendOtpEmail = async (toEmail, otpCode, purpose) => {
 
   if (resend) {
     try {
-      // By default with Resend free tier on onboarding domain, sender is onboarding@resend.dev
       const sender = process.env.EMAIL_FROM || 'PennyWise Security <onboarding@resend.dev>';
-      const result = await resend.emails.send({
+      const response = await resend.emails.send({
         from: sender,
         to: toEmail,
         subject,
         html
       });
-      console.log(`[Resend] OTP email sent successfully to ${toEmail}:`, result);
-      return { success: true, provider: 'resend', id: result.id };
+
+      // Resend SDK returns { data, error } instead of throwing in many cases
+      if (response.error) {
+        console.warn(`[Resend Notice] ${response.error.message}`);
+        console.log(`[OTP CONSOLE FALLBACK] OTP for ${toEmail} is: >>> [ ${otpCode} ] <<<`);
+        return { 
+          success: true, 
+          deliveredToInbox: false, 
+          provider: 'resend-fallback', 
+          warning: response.error.message,
+          otpCode 
+        };
+      }
+
+      console.log(`[Resend] OTP email delivered to ${toEmail}:`, response.data);
+      return { success: true, deliveredToInbox: true, provider: 'resend', id: response.data?.id };
     } catch (err) {
-      console.error(`[Resend Error] Failed to send via Resend API:`, err.message);
-      console.log(`[DEV OTP FALLBACK] OTP for ${toEmail} is: [ ${otpCode} ]`);
-      return { success: true, provider: 'fallback-console', warning: err.message };
+      console.warn(`[Resend Network Error]`, err.message);
+      console.log(`[OTP CONSOLE FALLBACK] OTP for ${toEmail} is: >>> [ ${otpCode} ] <<<`);
+      return { 
+        success: true, 
+        deliveredToInbox: false, 
+        provider: 'resend-fallback', 
+        warning: err.message,
+        otpCode 
+      };
     }
   } else {
     // If RESEND_API_KEY is not yet added in .env, log visibly for seamless local dev & testing
@@ -83,7 +102,7 @@ const sendOtpEmail = async (toEmail, otpCode, purpose) => {
     console.log(`OTP Code: >>> [ ${otpCode} ] <<<`);
     console.log(`Valid for 10 minutes`);
     console.log(`======================================================\n`);
-    return { success: true, provider: 'dev-console' };
+    return { success: true, deliveredToInbox: false, provider: 'dev-console', otpCode };
   }
 };
 
