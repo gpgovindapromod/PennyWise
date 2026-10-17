@@ -19,7 +19,9 @@ import {
   Image as ImageIcon,
   Sparkles,
   Calendar,
-  Database
+  Database,
+  Smartphone,
+  Download
 } from 'lucide-react';
 
 export default function Settings() {
@@ -406,6 +408,38 @@ export default function Settings() {
         </div>
 
         <div className="profile-section-card" style={{ padding: 0, overflow: 'hidden' }}>
+          {/* PWA App Install Row */}
+          <div 
+            onClick={() => {
+              if (window.deferredPwaPrompt) {
+                window.deferredPwaPrompt.prompt();
+              } else {
+                alert('PennyWise is installed or can be installed via your browser menu (Add to Home Screen).');
+              }
+            }}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between', 
+              padding: '14px 16px', 
+              borderBottom: '1px solid #F1F5F9',
+              cursor: 'pointer' 
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Smartphone size={18} />
+              </div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>Install PennyWise App</div>
+                <div style={{ fontSize: 12, color: '#64748B' }}>Add to Home Screen for native experience</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#2563EB' }}>
+              <Download size={14} /> Install
+            </div>
+          </div>
+
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid #F1F5F9' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F1F5F9', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

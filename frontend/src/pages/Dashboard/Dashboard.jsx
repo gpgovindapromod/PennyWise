@@ -19,6 +19,7 @@ import {
   Receipt
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import InstallPwaBanner from '../../components/InstallPwaBanner';
 
 export default function Dashboard({ onOpenAddExpense }) {
   // SWR Pattern: Load from local cache instantly to kill critical path waterfall delay
@@ -87,6 +88,9 @@ export default function Dashboard({ onOpenAddExpense }) {
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 24px' }}>
       
+      {/* PWA Install Promotion Banner */}
+      <InstallPwaBanner />
+
       {/* 1. Top Bar / Cockpit Header */}
       <div style={{
         display: 'flex',
