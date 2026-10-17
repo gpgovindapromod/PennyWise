@@ -23,24 +23,43 @@ const getDashboardSummary = async (req, res, next) => {
 
     let incomeThisMonthPaise = 0;
     let expensesThisMonthPaise = 0;
-    let academicExpensesThisMonthPaise = 0;
+    let academicStudyExpensesThisMonthPaise = 0; // Study supplies, books, printing
+    let academicFeesPaidThisMonthPaise = 0; // Isolated institutional semester & exam fees
+
+    // Fee items to cleanly isolate from routine lifestyle & study expenses
+    const feeSubcategories = ['college fees', 'tuition fees', 'semester fees', 'exam fees', 'examination fees', 'hostel fees', 'admission fees'];
 
     monthlyTransactions.forEach((tx) => {
+      const isFee = Boolean(
+        tx.academicFeeId || 
+        (tx.categoryId === 'academic' && feeSubcategories.includes(tx.subcategory?.toLowerCase().trim()))
+      );
+
       if (tx.type === 'income') {
         incomeThisMonthPaise += tx.amountPaise;
       } else if (tx.type === 'expense') {
-        expensesThisMonthPaise += tx.amountPaise;
-        if (tx.categoryId === 'academic') {
-          academicExpensesThisMonthPaise += tx.amountPaise;
+        if (isFee) {
+          // Isolated: Do NOT add to general lifestyle & operational expenses
+          academicFeesPaidThisMonthPaise += tx.amountPaise;
+        } else {
+          expensesThisMonthPaise += tx.amountPaise;
+          if (tx.categoryId === 'academic') {
+            academicStudyExpensesThisMonthPaise += tx.amountPaise;
+          }
         }
       } else if (tx.type === 'refund') {
-        expensesThisMonthPaise -= tx.amountPaise;
-        if (tx.categoryId === 'academic') {
-          academicExpensesThisMonthPaise -= tx.amountPaise;
+        if (isFee) {
+          academicFeesPaidThisMonthPaise -= tx.amountPaise;
+        } else {
+          expensesThisMonthPaise -= tx.amountPaise;
+          if (tx.categoryId === 'academic') {
+            academicStudyExpensesThisMonthPaise -= tx.amountPaise;
+          }
         }
       }
     });
     if (expensesThisMonthPaise < 0) expensesThisMonthPaise = 0;
+    if (academicFeesPaidThisMonthPaise < 0) academicFeesPaidThisMonthPaise = 0;
 
     let budget = await MonthlyBudget.findOne({ ownerId, monthKey: currentMonthKey });
     if (!budget) {
@@ -55,9 +74,17 @@ const getDashboardSummary = async (req, res, next) => {
       .limit(6);
 
     const categoryTotals = {};
-    monthlyTransactions.filter(t => t.type === 'expense').forEach(t => {
-      categoryTotals[t.categoryLabel] = (categoryTotals[t.categoryLabel] || 0) + t.amountPaise;
-    });
+    monthlyTransactions
+      .filter(t => t.type === 'expense')
+      .forEach(t => {
+        const isFee = Boolean(
+          t.academicFeeId || 
+          (t.categoryId === 'academic' && feeSubcategories.includes(t.subcategory?.toLowerCase().trim()))
+        );
+        if (!isFee) {
+          categoryTotals[t.categoryLabel] = (categoryTotals[t.categoryLabel] || 0) + t.amountPaise;
+        }
+      });
 
     const academicFees = await AcademicFee.find({ ownerId });
     const totalObligationsPaise = academicFees.reduce((sum, f) => sum + f.totalAmountPaise, 0);
@@ -73,8 +100,9 @@ const getDashboardSummary = async (req, res, next) => {
         monthKey: currentMonthKey,
         currentBalancePaise,
         incomeThisMonthPaise,
-        expensesThisMonthPaise,
-        academicExpensesThisMonthPaise,
+        expensesThisMonthPaise, // General monthly expenses (cleanly isolated, excludes institutional fees)
+        academicExpensesThisMonthPaise: academicStudyExpensesThisMonthPaise, // Books, stationary, printouts
+        academicFeesPaidThisMonthPaise, // Semester & Exam fees paid this month
         budget: {
           limitPaise: goalLimitPaise,
           spentPaise: expensesThisMonthPaise,

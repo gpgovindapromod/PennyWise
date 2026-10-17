@@ -72,6 +72,7 @@ export default function Dashboard({ onOpenAddExpense }) {
     currentBalancePaise = 0,
     incomeThisMonthPaise = 0,
     expensesThisMonthPaise = 0,
+    academicFeesPaidThisMonthPaise = 0,
     budget = {},
     recentTransactions = [],
     academicExpensesThisMonthPaise = 0
@@ -234,7 +235,7 @@ export default function Dashboard({ onOpenAddExpense }) {
                 <TrendingDown size={16} />
               </div>
               <div>
-                <div style={{ fontSize: 10, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Expenses / Spent</div>
+                <div style={{ fontSize: 10, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Monthly Expenses</div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#F43F5E' }}>−{formatRupees(expensesThisMonthPaise)}</div>
               </div>
             </div>
@@ -306,7 +307,7 @@ export default function Dashboard({ onOpenAddExpense }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
             <div>
               <div style={{ fontSize: 11, fontWeight: 800, color: '#64748B', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                ACADEMIC EXPENSES (THIS MONTH)
+                STUDY EXPENSES (THIS MONTH)
               </div>
               <div style={{ fontSize: 18, fontWeight: 800, color: '#0F172A', marginTop: 2 }}>
                 {formatRupees(academicExpensesThisMonthPaise)}
@@ -326,8 +327,33 @@ export default function Dashboard({ onOpenAddExpense }) {
             </div>
           </div>
 
-          <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 12px 0', lineHeight: 1.5 }}>
-            College tuition, exam fees, textbooks, photocopies, and supplies.
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
+            <span style={{
+              fontSize: 10,
+              fontWeight: 700,
+              padding: '2px 8px',
+              borderRadius: 6,
+              backgroundColor: '#F1F5F9',
+              color: '#475569'
+            }}>
+              Books & Supplies
+            </span>
+            {academicFeesPaidThisMonthPaise > 0 && (
+              <span style={{
+                fontSize: 10,
+                fontWeight: 700,
+                padding: '2px 8px',
+                borderRadius: 6,
+                backgroundColor: '#EDE9FE',
+                color: '#6D28D9'
+              }}>
+                + {formatRupees(academicFeesPaidThisMonthPaise)} Fee Paid
+              </span>
+            )}
+          </div>
+
+          <p style={{ fontSize: 11, color: '#64748B', margin: '0 0 12px 0', lineHeight: 1.4 }}>
+            Textbooks, stationery, photocopies & prints. Semester & exam fees are tracked separately.
           </p>
 
           <Link to="/academics" style={{
@@ -339,7 +365,7 @@ export default function Dashboard({ onOpenAddExpense }) {
             color: '#1D4ED8',
             textDecoration: 'none'
           }}>
-            View Academic Tracker <ArrowRight size={13} />
+            Manage Fees & Academics <ArrowRight size={13} />
           </Link>
         </div>
       </div>

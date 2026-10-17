@@ -21,22 +21,45 @@ const getReportSummary = async (req, res, next) => {
 
       let incomePaise = 0;
       let expensePaise = 0;
+      let institutionalFeePaise = 0;
+
+      const feeSubcategories = ['college fees', 'tuition fees', 'semester fees', 'exam fees', 'examination fees', 'hostel fees', 'admission fees'];
 
       txs.forEach(t => {
-        if (t.type === 'income') incomePaise += t.amountPaise;
-        if (t.type === 'expense') expensePaise += t.amountPaise;
-        if (t.type === 'refund') expensePaise -= t.amountPaise;
+        const isFee = Boolean(
+          t.academicFeeId || 
+          (t.categoryId === 'academic' && feeSubcategories.includes(t.subcategory?.toLowerCase().trim()))
+        );
+
+        if (t.type === 'income') {
+          incomePaise += t.amountPaise;
+        } else if (t.type === 'expense') {
+          if (isFee) {
+            institutionalFeePaise += t.amountPaise;
+          } else {
+            expensePaise += t.amountPaise;
+          }
+        } else if (t.type === 'refund') {
+          if (isFee) {
+            institutionalFeePaise -= t.amountPaise;
+          } else {
+            expensePaise -= t.amountPaise;
+          }
+        }
       });
 
       monthlyTrend.push({
         monthKey,
         label: monthLabel,
         income: Math.round(incomePaise / 100),
-        expense: Math.max(0, Math.round(expensePaise / 100))
+        expense: Math.max(0, Math.round(expensePaise / 100)),
+        fees: Math.max(0, Math.round(institutionalFeePaise / 100))
       });
     }
 
     // Dynamic Filter for Breakdown queries
+    const feeSubcategories = ['college fees', 'tuition fees', 'semester fees', 'exam fees', 'examination fees', 'hostel fees', 'admission fees'];
+
     const expenseQuery = {
       ownerId,
       type: 'expense'
@@ -57,15 +80,25 @@ const getReportSummary = async (req, res, next) => {
     const categoryMap = {};
     const foodSubcategoryMap = {};
     const academicSubcategoryMap = {};
+    let totalExamAndSemesterFeesPaise = 0;
 
     allExpenses.forEach(t => {
-      categoryMap[t.categoryLabel] = (categoryMap[t.categoryLabel] || 0) + t.amountPaise;
+      const isFee = Boolean(
+        t.academicFeeId || 
+        (t.categoryId === 'academic' && feeSubcategories.includes(t.subcategory?.toLowerCase().trim()))
+      );
 
-      if (t.categoryId === 'food-drinks') {
-        foodSubcategoryMap[t.subcategory] = (foodSubcategoryMap[t.subcategory] || 0) + t.amountPaise;
-      }
-      if (t.categoryId === 'academic') {
-        academicSubcategoryMap[t.subcategory] = (academicSubcategoryMap[t.subcategory] || 0) + t.amountPaise;
+      if (isFee) {
+        totalExamAndSemesterFeesPaise += t.amountPaise;
+      } else {
+        categoryMap[t.categoryLabel] = (categoryMap[t.categoryLabel] || 0) + t.amountPaise;
+
+        if (t.categoryId === 'food-drinks') {
+          foodSubcategoryMap[t.subcategory] = (foodSubcategoryMap[t.subcategory] || 0) + t.amountPaise;
+        }
+        if (t.categoryId === 'academic') {
+          academicSubcategoryMap[t.subcategory] = (academicSubcategoryMap[t.subcategory] || 0) + t.amountPaise;
+        }
       }
     });
 
@@ -90,7 +123,8 @@ const getReportSummary = async (req, res, next) => {
         monthlyTrend,
         categoryBreakdown,
         foodBreakdown,
-        academicBreakdown
+        academicBreakdown, // Contains only books, notes, supplies, xerox
+        institutionalFeesRupees: Math.round(totalExamAndSemesterFeesPaise / 100)
       }
     });
   } catch (error) {

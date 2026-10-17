@@ -98,7 +98,8 @@ export default function Reports() {
     monthlyTrend = [],
     categoryBreakdown = [],
     foodBreakdown = [],
-    academicBreakdown = []
+    academicBreakdown = [],
+    institutionalFeesRupees = 0
   } = data || {};
 
   // Total sums for current period KPIs
@@ -337,7 +338,7 @@ export default function Reports() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <div style={{ fontSize: 11, fontWeight: 800, color: '#2563EB', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                Academic & Study
+                Study & Course Supplies
               </div>
               <div style={{ fontSize: 26, fontWeight: 900, fontFamily: 'var(--font-heading)', color: '#0F172A', marginTop: 4 }}>
                 ₹{totalAcademicSpending.toLocaleString('en-IN')}
@@ -357,7 +358,9 @@ export default function Reports() {
             </div>
           </div>
           <div style={{ fontSize: 12, color: '#64748B', marginTop: 10 }}>
-            Books, tuition, xerox, and lab items
+            {institutionalFeesRupees > 0 
+              ? `Books & notes · (₹${institutionalFeesRupees.toLocaleString('en-IN')} fee isolated)` 
+              : 'Books, xerox, pens & lab stationery'}
           </div>
         </div>
 

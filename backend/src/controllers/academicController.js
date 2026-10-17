@@ -20,19 +20,29 @@ const getAcademicSummary = async (req, res, next) => {
     let spendingThisYearPaise = 0;
     const subcategoryTotals = {};
 
-    academicTxs.forEach(tx => {
-      const txDate = new Date(tx.date);
-      const isThisMonth = txDate >= startOfMonth;
-      const isThisYear = txDate >= startOfAcademicYear;
+    const feeSubcategories = ['college fees', 'tuition fees', 'semester fees', 'exam fees', 'examination fees', 'hostel fees', 'admission fees'];
 
-      if (tx.type === 'expense') {
-        if (isThisMonth) spendingThisMonthPaise += tx.amountPaise;
-        if (isThisYear) spendingThisYearPaise += tx.amountPaise;
-        subcategoryTotals[tx.subcategory] = (subcategoryTotals[tx.subcategory] || 0) + tx.amountPaise;
-      } else if (tx.type === 'refund') {
-        if (isThisMonth) spendingThisMonthPaise -= tx.amountPaise;
-        if (isThisYear) spendingThisYearPaise -= tx.amountPaise;
-        subcategoryTotals[tx.subcategory] = (subcategoryTotals[tx.subcategory] || 0) - tx.amountPaise;
+    academicTxs.forEach(tx => {
+      const isFee = Boolean(
+        tx.academicFeeId || 
+        feeSubcategories.includes(tx.subcategory?.toLowerCase().trim())
+      );
+
+      // We isolate institutional exam & semester fees from study costs
+      if (!isFee) {
+        const txDate = new Date(tx.date);
+        const isThisMonth = txDate >= startOfMonth;
+        const isThisYear = txDate >= startOfAcademicYear;
+
+        if (tx.type === 'expense') {
+          if (isThisMonth) spendingThisMonthPaise += tx.amountPaise;
+          if (isThisYear) spendingThisYearPaise += tx.amountPaise;
+          subcategoryTotals[tx.subcategory] = (subcategoryTotals[tx.subcategory] || 0) + tx.amountPaise;
+        } else if (tx.type === 'refund') {
+          if (isThisMonth) spendingThisMonthPaise -= tx.amountPaise;
+          if (isThisYear) spendingThisYearPaise -= tx.amountPaise;
+          subcategoryTotals[tx.subcategory] = (subcategoryTotals[tx.subcategory] || 0) - tx.amountPaise;
+        }
       }
     });
 
