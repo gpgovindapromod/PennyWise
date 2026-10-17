@@ -25,7 +25,9 @@ import {
   Loader2,
   CheckCircle2,
   SlidersHorizontal,
-  X
+  X,
+  Download,
+  FileSpreadsheet
 } from 'lucide-react';
 
 export default function Transactions({ onOpenAddExpense }) {
@@ -161,6 +163,62 @@ export default function Transactions({ onOpenAddExpense }) {
     setSortOrder('desc');
   };
 
+  // Export filtered transactions to CSV
+  const [exporting, setExporting] = useState(false);
+  const handleExportCsv = async () => {
+    setExporting(true);
+    try {
+      // Fetch all matching records without pagination limit
+      const res = await API.get('/transactions', {
+        params: {
+          search: search.trim(),
+          category,
+          type,
+          startDate,
+          endDate,
+          sortBy,
+          sortOrder,
+          page: 1,
+          limit: 10000
+        }
+      });
+
+      const records = res.data.data?.transactions || transactions;
+      if (!records || records.length === 0) {
+        alert('No transactions found to export.');
+        return;
+      }
+
+      // Build CSV headers and rows
+      const headers = ['Date', 'Type', 'Category', 'Subcategory / Item', 'Amount (INR)', 'Payment Method', 'Note'];
+      const rows = records.map((t) => [
+        `"${new Date(t.date).toISOString().split('T')[0]}"`,
+        `"${t.type.toUpperCase()}"`,
+        `"${t.categoryLabel || t.categoryId}"`,
+        `"${(t.subcategory || '').replace(/"/g, '""')}"`,
+        (t.amountPaise / 100).toFixed(2),
+        `"${(t.paymentMethod || 'upi').toUpperCase()}"`,
+        `"${(t.note || '').replace(/"/g, '""')}"`
+      ]);
+
+      const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      const dateStr = new Date().toISOString().split('T')[0];
+      link.setAttribute('download', `PennyWise_Transactions_${dateStr}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Failed to generate CSV export.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const hasActiveFilters = category !== 'all' || type !== 'all' || startDate || endDate || search;
 
   // Icon mapping helper
@@ -224,6 +282,30 @@ export default function Transactions({ onOpenAddExpense }) {
         </div>
 
         <div className="page-header-actions" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            onClick={handleExportCsv}
+            disabled={exporting || transactions.length === 0}
+            className="btn btn-secondary"
+            title="Download full filtered ledger as Excel/CSV"
+            style={{
+              padding: '10px 15px',
+              fontSize: 13,
+              fontWeight: 700,
+              borderRadius: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              background: '#FFFFFF',
+              border: '1px solid #CBD5E1',
+              color: '#334155',
+              cursor: exporting ? 'wait' : 'pointer'
+            }}
+          >
+            <Download size={15} color="#2563EB" />
+            <span>{exporting ? 'Exporting...' : 'Export CSV'}</span>
+          </button>
+
           <button
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
             className="btn btn-secondary"
