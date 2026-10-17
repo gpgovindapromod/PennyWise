@@ -1,0 +1,11 @@
+# PennyWise
+
+> High-performance personal finance tracker designed for students and car enthusiasts with telemetry, pit stop expense logging, and budget gauges.
+
+## Features
+- Cockpit Overview: Real-time balance and burn rate telemetry
+- Pit Stop Logs: Detailed transaction tracking with UPI, Cash, and Card payment methods
+- Academy Track: Academic semester fee milestones and installments
+- RPM Fuel Budget: Target monthly spending limit with tachometer warning indicators
+- Telemetry: Recharts visual cash flow analytics and category breakdowns
+- Tuning: Account settings, data isolation, and clean state resets

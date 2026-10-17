@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="Pennywise — High-performance personal finance tracker with telemetry, pit stop expense logging, and budget gauges." />
+    <title>Pennywise — High Performance Finance</title>
+
+    <!-- PWA & Mobile Web App Metadata -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#7A263A" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Pennywise" />
+
+    <link rel="icon" type="image/svg+xml" href="/pwa-icon.svg" />
+    <link rel="apple-touch-icon" href="/pwa-icon.svg" />
+
+    <!-- LCP Critical Resource Preload & Network Optimization -->
+    <link rel="preconnect" href="http://localhost:5000" crossorigin />
+    <link rel="dns-prefetch" href="http://localhost:5000" />
+    <link rel="preload" as="image" href="/sports-car-hero.jpg" fetchpriority="high" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch((err) => {
+            console.log('SW registration error:', err);
+          });
+        });
+      }
+    </script>
+  </body>
+</html>
