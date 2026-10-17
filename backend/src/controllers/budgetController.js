@@ -29,8 +29,17 @@ const getBudget = async (req, res, next) => {
 
     let spentPaise = 0;
     const categorySpentMap = {};
+    const feeSubcategories = ['college fees', 'tuition fees', 'semester fees', 'exam fees', 'examination fees', 'hostel fees', 'admission fees'];
 
     monthlyTransactions.forEach(tx => {
+      const isFee = Boolean(
+        tx.academicFeeId || 
+        (tx.categoryId === 'academic' && feeSubcategories.includes(tx.subcategory?.toLowerCase().trim()))
+      );
+
+      // Institutional semester/exam fees must not exhaust or breach monthly operational budget
+      if (isFee) return;
+
       const factor = tx.type === 'refund' ? -1 : 1;
       spentPaise += (tx.amountPaise * factor);
       categorySpentMap[tx.categoryId] = (categorySpentMap[tx.categoryId] || 0) + (tx.amountPaise * factor);
