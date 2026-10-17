@@ -34,10 +34,19 @@ export default function Reports() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'categories', 'canteen', 'academics'
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [preset, setPreset] = useState('all'); // 'all', 'this-month', 'last-month', 'semester'
 
-  const fetchReports = async () => {
+  const fetchReports = async (sDate = startDate, eDate = endDate) => {
+    setLoading(true);
     try {
-      const res = await API.get('/reports/summary');
+      const res = await API.get('/reports/summary', {
+        params: {
+          startDate: sDate || undefined,
+          endDate: eDate || undefined
+        }
+      });
       setData(res.data.data);
     } catch (err) {
       console.error(err);
@@ -46,8 +55,35 @@ export default function Reports() {
     }
   };
 
+  const applyPreset = (type) => {
+    setPreset(type);
+    const now = new Date();
+    let s = '';
+    let e = '';
+
+    if (type === 'this-month') {
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      s = firstDay.toISOString().split('T')[0];
+      e = now.toISOString().split('T')[0];
+    } else if (type === 'last-month') {
+      const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+      s = firstDay.toISOString().split('T')[0];
+      e = lastDay.toISOString().split('T')[0];
+    } else if (type === 'semester') {
+      // Semester rolling 6-month
+      const semStart = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+      s = semStart.toISOString().split('T')[0];
+      e = now.toISOString().split('T')[0];
+    }
+
+    setStartDate(s);
+    setEndDate(e);
+    fetchReports(s, e);
+  };
+
   useEffect(() => {
-    fetchReports();
+    fetchReports('', '');
   }, []);
 
   if (loading) {
@@ -103,7 +139,7 @@ export default function Reports() {
               <BarChart2 size={12} /> SPENDING TELEMETRY & ANALYTICS
             </span>
             <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>
-              6-Month Rolling Analysis
+              {startDate && endDate ? `${startDate} to ${endDate}` : 'All-Time Analytics'}
             </span>
           </div>
           <h1 style={{ fontSize: 28, fontWeight: 900, color: '#0F172A', letterSpacing: '-0.02em', margin: 0 }}>
@@ -112,6 +148,104 @@ export default function Reports() {
           <p style={{ fontSize: 13, color: '#64748B', margin: '4px 0 0 0' }}>
             Interactive cash-flow trends, item-level canteen habits, and semester study breakdowns
           </p>
+        </div>
+
+        {/* Date Filter Bar & Quick Preset Buttons */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-end' }}>
+          {/* Quick Presets */}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => applyPreset('all')}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 8,
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: 'pointer',
+                border: 'none',
+                background: preset === 'all' && !startDate ? '#0F172A' : '#F1F5F9',
+                color: preset === 'all' && !startDate ? '#FFFFFF' : '#475569'
+              }}
+            >
+              All Time
+            </button>
+            <button
+              onClick={() => applyPreset('this-month')}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 8,
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: 'pointer',
+                border: 'none',
+                background: preset === 'this-month' ? '#0F172A' : '#F1F5F9',
+                color: preset === 'this-month' ? '#FFFFFF' : '#475569'
+              }}
+            >
+              This Month
+            </button>
+            <button
+              onClick={() => applyPreset('last-month')}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 8,
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: 'pointer',
+                border: 'none',
+                background: preset === 'last-month' ? '#0F172A' : '#F1F5F9',
+                color: preset === 'last-month' ? '#FFFFFF' : '#475569'
+              }}
+            >
+              Last Month
+            </button>
+            <button
+              onClick={() => applyPreset('semester')}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 8,
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: 'pointer',
+                border: 'none',
+                background: preset === 'semester' ? '#0F172A' : '#F1F5F9',
+                color: preset === 'semester' ? '#FFFFFF' : '#475569'
+              }}
+            >
+              Semester (6 Mo)
+            </button>
+          </div>
+
+          {/* Custom Date Pickers */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#FFFFFF', padding: '4px 10px', borderRadius: 8, border: '1px solid #CBD5E1' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#64748B' }}>From:</span>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setPreset('custom');
+                  fetchReports(e.target.value, endDate);
+                }}
+                style={{ border: 'none', outline: 'none', fontSize: 12, color: '#0F172A' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#FFFFFF', padding: '4px 10px', borderRadius: 8, border: '1px solid #CBD5E1' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#64748B' }}>To:</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setPreset('custom');
+                  fetchReports(startDate, e.target.value);
+                }}
+                style={{ border: 'none', outline: 'none', fontSize: 12, color: '#0F172A' }}
+              />
+            </div>
+          </div>
         </div>
       </div>
 

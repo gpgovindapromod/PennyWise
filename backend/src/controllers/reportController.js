@@ -3,6 +3,7 @@ const Transaction = require('../models/Transaction');
 const getReportSummary = async (req, res, next) => {
   try {
     const ownerId = req.user._id;
+    const { startDate, endDate } = req.query;
     const now = new Date();
 
     const monthlyTrend = [];
@@ -35,10 +36,23 @@ const getReportSummary = async (req, res, next) => {
       });
     }
 
-    const allExpenses = await Transaction.find({
+    // Dynamic Filter for Breakdown queries
+    const expenseQuery = {
       ownerId,
       type: 'expense'
-    });
+    };
+
+    if (startDate || endDate) {
+      expenseQuery.date = {};
+      if (startDate) expenseQuery.date.$gte = new Date(startDate);
+      if (endDate) {
+        const eDate = new Date(endDate);
+        eDate.setHours(23, 59, 59, 999);
+        expenseQuery.date.$lte = eDate;
+      }
+    }
+
+    const allExpenses = await Transaction.find(expenseQuery);
 
     const categoryMap = {};
     const foodSubcategoryMap = {};
