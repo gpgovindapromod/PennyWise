@@ -1,4 +1,5 @@
 const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
 // Initialize Resend if API key is present in environment
 const getResendClient = () => {
@@ -9,8 +10,33 @@ const getResendClient = () => {
   return new Resend(apiKey);
 };
 
+// Initialize Nodemailer SMTP transporter (Gmail or any custom SMTP)
+const getSmtpTransporter = () => {
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+
+  if (user && pass && user.trim() !== '' && pass.trim() !== '') {
+    return nodemailer.createTransport({
+      service: process.env.SMTP_SERVICE || 'gmail',
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : undefined,
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: user.trim(),
+        pass: pass.trim()
+      }
+    });
+  }
+  return null;
+};
+
 /**
- * Send an OTP email using Resend (free tier) with graceful console fallback
+ * Send an OTP email to any recipient
+ * Priority:
+ * 1. SMTP / Gmail App Password (delivers to ANY real user email without domain restrictions)
+ * 2. Resend API (delivers to verified recipient or custom domain)
+ * 3. Fallback console logging for dev
+ * 
  * @param {string} toEmail 
  * @param {string} otpCode 
  * @param {'registration'|'password-reset'} purpose 
@@ -55,8 +81,33 @@ const sendOtpEmail = async (toEmail, otpCode, purpose) => {
     </div>
   `;
 
-  const resend = getResendClient();
+  // OPTION 1: SMTP Transporter (e.g. Gmail App Password - allows emailing ANY user)
+  const transporter = getSmtpTransporter();
+  if (transporter) {
+    try {
+      const fromAddress = process.env.SMTP_FROM || `"PennyWise" <${process.env.SMTP_USER}>`;
+      const info = await transporter.sendMail({
+        from: fromAddress,
+        to: toEmail,
+        subject,
+        html
+      });
+      console.log(`[SMTP] Successfully sent OTP email to ${toEmail}: ${info.messageId}`);
+      return { 
+        success: true, 
+        deliveredToInbox: true, 
+        provider: 'smtp', 
+        messageId: info.messageId,
+        otpCode 
+      };
+    } catch (smtpErr) {
+      console.error(`[SMTP Error] Failed sending to ${toEmail}:`, smtpErr.message);
+      // Fall through to Resend or fallback
+    }
+  }
 
+  // OPTION 2: Resend API
+  const resend = getResendClient();
   if (resend) {
     try {
       const sender = process.env.EMAIL_FROM || 'PennyWise Security <onboarding@resend.dev>';
@@ -67,7 +118,6 @@ const sendOtpEmail = async (toEmail, otpCode, purpose) => {
         html
       });
 
-      // Resend SDK returns { data, error } instead of throwing in many cases
       if (response.error) {
         console.warn(`[Resend Notice] ${response.error.message}`);
         console.log(`[OTP CONSOLE FALLBACK] OTP for ${toEmail} is: >>> [ ${otpCode} ] <<<`);
@@ -81,7 +131,7 @@ const sendOtpEmail = async (toEmail, otpCode, purpose) => {
       }
 
       console.log(`[Resend] OTP email delivered to ${toEmail}:`, response.data);
-      return { success: true, deliveredToInbox: true, provider: 'resend', id: response.data?.id };
+      return { success: true, deliveredToInbox: true, provider: 'resend', id: response.data?.id, otpCode };
     } catch (err) {
       console.warn(`[Resend Network Error]`, err.message);
       console.log(`[OTP CONSOLE FALLBACK] OTP for ${toEmail} is: >>> [ ${otpCode} ] <<<`);
@@ -93,17 +143,17 @@ const sendOtpEmail = async (toEmail, otpCode, purpose) => {
         otpCode 
       };
     }
-  } else {
-    // If RESEND_API_KEY is not yet added in .env, log visibly for seamless local dev & testing
-    console.log(`\n======================================================`);
-    console.log(`[DEV EMAIL SIMULATION] RESEND_API_KEY not configured in .env`);
-    console.log(`To: ${toEmail}`);
-    console.log(`Purpose: ${purpose}`);
-    console.log(`OTP Code: >>> [ ${otpCode} ] <<<`);
-    console.log(`Valid for 10 minutes`);
-    console.log(`======================================================\n`);
-    return { success: true, deliveredToInbox: false, provider: 'dev-console', otpCode };
   }
+
+  // OPTION 3: Development console simulation
+  console.log(`\n======================================================`);
+  console.log(`[DEV EMAIL SIMULATION] No active SMTP or Resend credentials`);
+  console.log(`To: ${toEmail}`);
+  console.log(`Purpose: ${purpose}`);
+  console.log(`OTP Code: >>> [ ${otpCode} ] <<<`);
+  console.log(`Valid for 10 minutes`);
+  console.log(`======================================================\n`);
+  return { success: true, deliveredToInbox: false, provider: 'dev-console', otpCode };
 };
 
 module.exports = { sendOtpEmail };
