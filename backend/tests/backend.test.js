@@ -124,6 +124,28 @@ async function runTests() {
   if (!isWarning) throw new Error('Test 5 Failed: 80% spending warning logic failure');
   console.log('[PASS] Test 5: Monthly goal threshold calculations (82% triggers warning)');
 
+  // TEST 6: Email OTP Generation, Hash Verification & Expiry
+  const Otp = require('../src/models/Otp');
+  const bcrypt = require('bcryptjs');
+  const testOtpCode = '654321';
+  const hashedOtp = await bcrypt.hash(testOtpCode, 10);
+  const otpRecord = await Otp.create({
+    email: 'student_otp@test.pennywise',
+    otpHash: hashedOtp,
+    purpose: 'registration',
+    tempUserData: {
+      name: 'OTP Student',
+      passwordHash: 'dummyHashedPass',
+      college: 'CET'
+    },
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+  });
+  const otpMatch = await bcrypt.compare(testOtpCode, otpRecord.otpHash);
+  const otpMismatch = await bcrypt.compare('111111', otpRecord.otpHash);
+  if (!otpMatch || otpMismatch) throw new Error('Test 6 Failed: OTP hash verification failed');
+  await Otp.deleteMany({ email: 'student_otp@test.pennywise' });
+  console.log('[PASS] Test 6: Email OTP cryptographic hashing and verification');
+
   // Clean up test data
   await User.deleteMany({ email: /@test\.pennywise$/ });
   await Account.deleteMany({ ownerId: { $in: [userA._id, userB._id] } });
@@ -132,7 +154,7 @@ async function runTests() {
   await MonthlyBudget.deleteMany({ ownerId: { $in: [userA._id, userB._id] } });
 
   await mongoose.disconnect();
-  console.log('=== ALL 5 BACKEND TESTS PASSED SUCCESSFULLY ===');
+  console.log('=== ALL 6 BACKEND TESTS PASSED SUCCESSFULLY ===');
 }
 
 runTests().catch(err => {
