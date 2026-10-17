@@ -166,11 +166,10 @@ const forgotPassword = async (req, res) => {
     const normalizedEmail = email.toLowerCase().trim();
     const user = await User.findOne({ email: normalizedEmail });
 
-    // Anti-enumeration: don't reveal if user does not exist
     if (!user) {
-      return res.status(200).json({
-        success: true,
-        message: 'If an account exists with this email, a 6-digit password reset code has been sent.'
+      return res.status(404).json({
+        success: false,
+        message: `No account found with ${normalizedEmail}. Please check the email or create a new account.`
       });
     }
 

@@ -60,6 +60,16 @@ app.use('/api/auth/register', authLimiter);
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
+// Request logger for real-time visibility in terminal
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    console.log(`[API ${req.method}] ${req.originalUrl} -> ${res.statusCode} (${duration}ms)`);
+  });
+  next();
+});
+
 // LAYER 3 & 4: Defense Against NoSQL Injection
 app.use(noSqlSanitizer);
 
