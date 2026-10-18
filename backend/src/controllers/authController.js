@@ -274,6 +274,10 @@ const login = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role || 'student',
+        companyName: user.companyName || 'PennyWise Tours & Travels',
+        mustChangePassword: Boolean(user.mustChangePassword),
+        status: user.status || 'active',
         college: user.college,
         currency: user.currency,
         token: generateToken(user._id)
@@ -379,8 +383,6 @@ const updateProfile = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    if (name && typeof name === 'string') user.name = name.trim();
-    if (college && typeof college === 'string') user.college = college.trim();
     if (typeof req.body.avatar === 'string') user.avatar = req.body.avatar;
 
     await user.save();
@@ -391,10 +393,48 @@ const updateProfile = async (req, res, next) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role || 'student',
+        companyName: user.companyName,
         college: user.college,
         avatar: user.avatar,
         currency: user.currency
       }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Change password after initial login or from settings
+// @route   PUT /api/auth/change-password
+const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'New password must be at least 6 characters' });
+    }
+
+    const user = await User.findById(req.user._id).select('+password');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Verify current password if user is not in forced initial change
+    if (currentPassword) {
+      const isMatch = await user.matchPassword(currentPassword);
+      if (!isMatch) {
+        return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+      }
+    }
+
+    user.password = newPassword;
+    user.mustChangePassword = false;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully! Your account is fully secured.'
     });
   } catch (error) {
     next(error);
@@ -410,5 +450,6 @@ module.exports = {
   login, 
   getMe, 
   updateProfile, 
-  clearUserData 
+  clearUserData,
+  changePassword
 };

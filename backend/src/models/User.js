@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please provide your name'],
     trim: true,
-    maxlength: 50
+    maxlength: 100
   },
   email: {
     type: String,
@@ -20,6 +20,31 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Please provide a password'],
     minlength: 6,
     select: false
+  },
+  role: {
+    type: String,
+    enum: ['student', 'travel_admin', 'admin'],
+    default: 'student',
+    index: true
+  },
+  companyName: {
+    type: String,
+    trim: true,
+    default: 'PennyWise Tours & Travels'
+  },
+  phone: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  mustChangePassword: {
+    type: Boolean,
+    default: false
+  },
+  status: {
+    type: String,
+    enum: ['active', 'inactive', 'suspended'],
+    default: 'active'
   },
   college: {
     type: String,

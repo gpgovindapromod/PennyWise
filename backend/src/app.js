@@ -90,6 +90,7 @@ app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/budgets', require('./routes/budgetRoutes'));
 app.use('/api/academics', require('./routes/academicRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
+app.use('/api/travel', require('./routes/travelRoutes'));
 
 // 404 handler
 app.use((req, res, next) => {
