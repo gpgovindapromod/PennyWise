@@ -15,7 +15,7 @@ async function provisionTravelAdmin() {
   await mongoose.connect(process.env.MONGODB_URI);
   console.log('Connected to MongoDB Atlas');
 
-  const email = 'govindapromod@gmail.com';
+  const email = 'smiletrips@gmail.com';
   let user = await User.findOne({ email });
 
   const salt = await bcrypt.genSalt(10);
@@ -25,7 +25,7 @@ async function provisionTravelAdmin() {
     console.log(`User ${email} exists. Updating role to travel_admin...`);
     user.role = 'travel_admin';
     user.status = 'active';
-    user.companyName = user.companyName || 'PennyWise Tours & Travels';
+    user.companyName = user.companyName || 'Smile Trips & Travels';
     user.mustChangePassword = true;
     user.password = hashedPassword;
     await user.save();
@@ -33,11 +33,11 @@ async function provisionTravelAdmin() {
   } else {
     console.log(`Creating new Travel Company Admin user for ${email}...`);
     user = await User.create({
-      name: 'Govind A. Promod',
+      name: 'Smile Trips Admin',
       email,
       password: hashedPassword,
       role: 'travel_admin',
-      companyName: 'PennyWise Tours & Travels',
+      companyName: 'Smile Trips & Travels',
       status: 'active',
       mustChangePassword: true
     });
