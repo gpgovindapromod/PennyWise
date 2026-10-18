@@ -18,16 +18,13 @@ async function provisionTravelAdmin() {
   const email = 'smiletrips@gmail.com';
   let user = await User.findOne({ email });
 
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash('123456', salt);
-
   if (user) {
     console.log(`User ${email} exists. Updating role to travel_admin...`);
     user.role = 'travel_admin';
     user.status = 'active';
     user.companyName = user.companyName || 'Smile Trips & Travels';
     user.mustChangePassword = true;
-    user.password = hashedPassword;
+    user.password = '123456';
     await user.save();
     console.log(`Updated user ${user._id} to Travel Company Admin.`);
   } else {
@@ -35,7 +32,7 @@ async function provisionTravelAdmin() {
     user = await User.create({
       name: 'Smile Trips Admin',
       email,
-      password: hashedPassword,
+      password: '123456',
       role: 'travel_admin',
       companyName: 'Smile Trips & Travels',
       status: 'active',
