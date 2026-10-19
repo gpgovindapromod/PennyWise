@@ -988,16 +988,40 @@ exports.getUnifiedTransactions = async (req, res, next) => {
       oQuery.paymentMethod = paymentMethod;
     }
 
-    const [payments, expenses, commissions, otherIncomes] = await Promise.all([
+    const tripQuery = { companyId };
+    if (tripId && tripId !== 'all') tripQuery._id = tripId;
+
+    const [payments, expenses, commissions, otherIncomes, allTrips] = await Promise.all([
       PassengerPayment.find(pQuery).populate('tripId', 'name destination').populate('passengerId', 'name phone'),
       TravelExpense.find(eQuery).populate('tripId', 'name destination'),
       Commission.find(cQuery).populate('tripId', 'name destination'),
-      OtherIncome.find(oQuery).populate('tripId', 'name destination')
+      OtherIncome.find(oQuery).populate('tripId', 'name destination'),
+      Trip.find(tripQuery)
     ]);
 
     const txList = [];
 
-    // 1. Passenger payments and refunds
+    // 1. Direct Tour Package Collections (if no individual payments recorded)
+    allTrips.filter(t => t.directIncomePaise > 0).forEach(t => {
+      // Check if bookings/payments exist for this trip
+      const hasSpecificPayments = payments.some(p => p.tripId && p.tripId._id.toString() === t._id.toString());
+      if (!hasSpecificPayments) {
+        txList.push({
+          id: `trip-rev-${t._id}`,
+          date: t.returnDate || t.departureDate || t.createdAt,
+          transactionType: 'Tour Package Revenue',
+          flow: 'inflow',
+          description: `Total collection for ${t.name}`,
+          tripName: `${t.name} (${t.destination})`,
+          amountRupees: (t.directIncomePaise / 100),
+          paymentMethod: 'Collection',
+          reference: `TRIP-${t._id.toString().slice(-6).toUpperCase()}`,
+          status: 'confirmed'
+        });
+      }
+    });
+
+    // 2. Passenger payments and refunds
     payments.forEach(p => {
       const isRefund = p.type === 'refund';
       txList.push({
@@ -1014,7 +1038,7 @@ exports.getUnifiedTransactions = async (req, res, next) => {
       });
     });
 
-    // 2. Expenses
+    // 3. Expenses
     expenses.forEach(e => {
       txList.push({
         id: e._id,
