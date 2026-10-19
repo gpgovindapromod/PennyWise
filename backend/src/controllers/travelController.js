@@ -60,7 +60,14 @@ exports.getDashboardSummary = async (req, res, next) => {
         passengerPaymentsReceivedPaise += p.amountPaise;
       }
     });
-    const netPassengerIncomeCollectedPaise = passengerPaymentsReceivedPaise - passengerRefundsPaidPaise;
+
+    // Add direct trip income recorded directly on tour packages
+    const tripsForIncome = await Trip.find({ companyId, ...tripFilter });
+    const directTripIncomePaise = tripsForIncome.reduce((sum, t) => sum + (t.directIncomePaise || 0), 0);
+    const directPassengersCount = tripsForIncome.reduce((sum, t) => sum + (t.adultCount || 0) + (t.childCount || 0), 0);
+
+    const netPassengerIncomeCollectedPaise = (passengerPaymentsReceivedPaise > 0 ? passengerPaymentsReceivedPaise - passengerRefundsPaidPaise : 0) + directTripIncomePaise;
+    const effectiveTotalPassengers = totalPassengers > 0 ? totalPassengers : directPassengersCount;
 
     // Outstanding Passenger Payments (Receivables)
     // Calculate booking-by-booking
@@ -147,18 +154,19 @@ exports.getDashboardSummary = async (req, res, next) => {
       const tripExp = expenses.filter(e => e.tripId && e.tripId.toString() === trip._id.toString());
       const tripComm = commissions.filter(c => c.tripId && c.tripId.toString() === trip._id.toString() && c.status !== 'cancelled');
 
-      const collectedPaxPaise = tripPayments.reduce((sum, p) => p.type === 'refund' ? sum - p.amountPaise : sum + p.amountPaise, 0);
+      const collectedPaxPaise = (tripPayments.reduce((sum, p) => p.type === 'refund' ? sum - p.amountPaise : sum + p.amountPaise, 0)) || (trip.directIncomePaise || 0);
       const commReceivedPaise = tripComm.reduce((sum, c) => sum + (c.amountReceivedPaise || 0), 0);
       const totalIncomePaise = collectedPaxPaise + commReceivedPaise;
       const totalExpPaise = tripExp.reduce((sum, e) => sum + (e.amountPaise || 0), 0);
       const netProfitPaise = totalIncomePaise - totalExpPaise;
+      const pCount = tripBookings.length > 0 ? tripBookings.length : ((trip.adultCount || 0) + (trip.childCount || 0));
 
       return {
         tripId: trip._id,
         tripName: trip.name,
         destination: trip.destination,
         status: trip.status,
-        passengerCount: tripBookings.length,
+        passengerCount: pCount,
         incomeRupees: totalIncomePaise / 100,
         expenseRupees: totalExpPaise / 100,
         netProfitRupees: netProfitPaise / 100
@@ -180,7 +188,7 @@ exports.getDashboardSummary = async (req, res, next) => {
           upcomingTrips,
           ongoingTrips,
           completedTrips,
-          totalPassengers,
+          totalPassengers: effectiveTotalPassengers,
           averageProfitPerTripRupees: averageProfitPerTripPaise / 100
         },
         expenseCategoryBreakdown,
@@ -221,16 +229,23 @@ exports.getTrips = async (req, res, next) => {
       const expenses = await TravelExpense.find({ tripId: trip._id });
       const commissions = await Commission.find({ tripId: trip._id, status: { $ne: 'cancelled' } });
 
-      const expectedPassengerIncomePaise = bookings.reduce((sum, b) => sum + (b.totalPricePaise || 0), 0);
-      const collectedPassengerPaymentsPaise = payments.reduce((sum, p) => p.type === 'refund' ? sum - p.amountPaise : sum + p.amountPaise, 0);
+      const bookedIncomePaise = bookings.reduce((sum, b) => sum + (b.totalPricePaise || 0), 0);
+      const bookedPaymentsPaise = payments.reduce((sum, p) => p.type === 'refund' ? sum - p.amountPaise : sum + p.amountPaise, 0);
+
+      const directIncome = trip.directIncomePaise || 0;
+      const expectedPassengerIncomePaise = bookedIncomePaise > 0 ? bookedIncomePaise : directIncome;
+      const collectedPassengerPaymentsPaise = bookedPaymentsPaise > 0 ? bookedPaymentsPaise : directIncome;
       const outstandingPaymentsPaise = Math.max(0, expectedPassengerIncomePaise - collectedPassengerPaymentsPaise);
       const totalExpensesPaise = expenses.reduce((sum, e) => sum + (e.amountPaise || 0), 0);
       const totalCommissionsPaise = commissions.reduce((sum, c) => sum + (c.amountReceivedPaise || 0), 0);
       const netProfitPaise = (collectedPassengerPaymentsPaise + totalCommissionsPaise) - totalExpensesPaise;
 
+      const directPassengerCount = (trip.adultCount || 0) + (trip.childCount || 0);
+      const passengerCount = directPassengerCount > 0 ? directPassengerCount : bookings.length;
+
       return {
         ...trip.toObject(),
-        passengerCount: bookings.length,
+        passengerCount,
         bookings,
         expectedPassengerIncomePaise,
         collectedPassengerPaymentsPaise,
@@ -258,8 +273,12 @@ exports.getTripById = async (req, res, next) => {
     const expenses = await TravelExpense.find({ tripId: trip._id }).sort({ expenseDate: -1 });
     const commissions = await Commission.find({ tripId: trip._id }).sort({ dateEarned: -1 });
 
-    const expectedPassengerIncomePaise = bookings.filter(b => b.status !== 'cancelled').reduce((sum, b) => sum + (b.totalPricePaise || 0), 0);
-    const collectedPassengerPaymentsPaise = payments.reduce((sum, p) => p.type === 'refund' ? sum - p.amountPaise : sum + p.amountPaise, 0);
+    const bookedIncomePaise = bookings.filter(b => b.status !== 'cancelled').reduce((sum, b) => sum + (b.totalPricePaise || 0), 0);
+    const bookedPaymentsPaise = payments.reduce((sum, p) => p.type === 'refund' ? sum - p.amountPaise : sum + p.amountPaise, 0);
+
+    const directIncome = trip.directIncomePaise || 0;
+    const expectedPassengerIncomePaise = bookedIncomePaise > 0 ? bookedIncomePaise : directIncome;
+    const collectedPassengerPaymentsPaise = bookedPaymentsPaise > 0 ? bookedPaymentsPaise : directIncome;
     const outstandingPaymentsPaise = Math.max(0, expectedPassengerIncomePaise - collectedPassengerPaymentsPaise);
     const totalExpensesPaise = expenses.reduce((sum, e) => sum + (e.amountPaise || 0), 0);
     const totalCommissionsPaise = commissions.filter(c => c.status !== 'cancelled').reduce((sum, c) => sum + (c.amountReceivedPaise || 0), 0);
@@ -303,6 +322,9 @@ exports.createTrip = async (req, res, next) => {
       packagePriceChildPaise,
       capacity,
       maxCapacity,
+      adultCount = 0,
+      childCount = 0,
+      directIncomePaise = 0,
       notes
     } = req.body;
 
@@ -313,6 +335,10 @@ exports.createTrip = async (req, res, next) => {
     const adultPaise = packagePriceAdultPaise !== undefined ? parseInt(packagePriceAdultPaise, 10) : (parseInt(packagePricePaise, 10) || 0);
     const childPaise = packagePriceChildPaise !== undefined ? parseInt(packagePriceChildPaise, 10) : 0;
     const finalCapacity = parseInt(capacity, 10) || parseInt(maxCapacity, 10) || 30;
+
+    const aCount = parseInt(adultCount, 10) || 0;
+    const cCount = parseInt(childCount, 10) || 0;
+    const autoIncome = directIncomePaise ? parseInt(directIncomePaise, 10) : ((aCount * adultPaise) + (cCount * childPaise));
 
     const trip = await Trip.create({
       companyId,
@@ -327,6 +353,9 @@ exports.createTrip = async (req, res, next) => {
       packagePriceChildPaise: childPaise,
       capacity: finalCapacity,
       maxCapacity: finalCapacity,
+      adultCount: aCount,
+      childCount: cCount,
+      directIncomePaise: autoIncome,
       notes: notes ? notes.trim() : ''
     });
 

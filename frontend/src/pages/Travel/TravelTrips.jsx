@@ -36,6 +36,9 @@ export default function TravelTrips() {
     packagePriceAdultRupees: '',
     packagePriceChildRupees: '',
     capacity: '30',
+    adultCount: '',
+    childCount: '',
+    directIncomeRupees: '',
     status: 'completed',
     notes: ''
   });
@@ -75,6 +78,9 @@ export default function TravelTrips() {
       packagePriceAdultRupees: '',
       packagePriceChildRupees: '',
       capacity: '30',
+      adultCount: '',
+      childCount: '',
+      directIncomeRupees: '',
       status: 'completed',
       notes: ''
     });
@@ -85,6 +91,7 @@ export default function TravelTrips() {
     setEditingTripId(t._id);
     const adultRupees = t.packagePriceAdultPaise !== undefined ? (t.packagePriceAdultPaise / 100).toString() : (t.packagePricePaise ? (t.packagePricePaise / 100).toString() : '');
     const childRupees = t.packagePriceChildPaise !== undefined ? (t.packagePriceChildPaise / 100).toString() : '';
+    const directRupees = t.directIncomePaise ? (t.directIncomePaise / 100).toString() : '';
     setForm({
       name: t.name,
       destination: t.destination,
@@ -95,10 +102,24 @@ export default function TravelTrips() {
       packagePriceAdultRupees: adultRupees,
       packagePriceChildRupees: childRupees,
       capacity: (t.capacity || t.maxCapacity || 30).toString(),
-      status: t.status || 'upcoming',
+      adultCount: t.adultCount !== undefined ? t.adultCount.toString() : '',
+      childCount: t.childCount !== undefined ? t.childCount.toString() : '',
+      directIncomeRupees: directRupees,
+      status: t.status || 'completed',
       notes: t.notes || ''
     });
     setShowModal(true);
+  };
+
+  const calculateAutoIncome = () => {
+    const aCount = parseInt(form.adultCount, 10) || 0;
+    const cCount = parseInt(form.childCount, 10) || 0;
+    const aRate = parseFloat(form.packagePriceAdultRupees) || 0;
+    const cRate = parseFloat(form.packagePriceChildRupees) || 0;
+    const total = (aCount * aRate) + (cCount * cRate);
+    if (total > 0) {
+      setForm(prev => ({ ...prev, directIncomeRupees: total.toString() }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -107,6 +128,7 @@ export default function TravelTrips() {
       const adultPaise = rupeesToPaise(form.packagePriceAdultRupees);
       const childPaise = form.packagePriceChildRupees ? rupeesToPaise(form.packagePriceChildRupees) : 0;
       const capacityVal = parseInt(form.capacity, 10) || 30;
+      const directIncomePaiseVal = form.directIncomeRupees ? rupeesToPaise(form.directIncomeRupees) : 0;
 
       const payload = {
         name: form.name,
@@ -120,6 +142,9 @@ export default function TravelTrips() {
         packagePricePaise: adultPaise,
         capacity: capacityVal,
         maxCapacity: capacityVal,
+        adultCount: parseInt(form.adultCount, 10) || 0,
+        childCount: parseInt(form.childCount, 10) || 0,
+        directIncomePaise: directIncomePaiseVal,
         status: form.status,
         notes: form.notes
       };
@@ -400,6 +425,55 @@ export default function TravelTrips() {
                     onChange={(e) => setForm({ ...form, capacity: e.target.value })}
                     className="form-input"
                   />
+                </div>
+              </div>
+
+              {/* Post-Travel Tour Passenger & Income Fields */}
+              <div style={{ backgroundColor: '#F0FDF4', padding: '14px', borderRadius: 10, border: '1px solid #BBF7D0', marginBottom: 14 }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: '#15803D', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Tour Summary (Passengers & Total Collected Revenue)</span>
+                  <button
+                    type="button"
+                    onClick={calculateAutoIncome}
+                    style={{ fontSize: 11, fontWeight: 700, color: '#0284C7', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    Auto-calc Revenue
+                  </button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: 11 }}>Adults Count</label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="e.g. 20"
+                      value={form.adultCount}
+                      onChange={(e) => setForm({ ...form, adultCount: e.target.value })}
+                      className="form-input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: 11 }}>Children &lt; 8 yrs</label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="e.g. 5"
+                      value={form.childCount}
+                      onChange={(e) => setForm({ ...form, childCount: e.target.value })}
+                      className="form-input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: 11 }}>Total Collected (₹)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="e.g. 30250"
+                      value={form.directIncomeRupees}
+                      onChange={(e) => setForm({ ...form, directIncomeRupees: e.target.value })}
+                      className="form-input"
+                    />
+                  </div>
                 </div>
               </div>
 

@@ -62,6 +62,21 @@ const tripSchema = new mongoose.Schema({
     default: 30,
     min: [1, 'Capacity must be at least 1']
   },
+  adultCount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  childCount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  directIncomePaise: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   status: {
     type: String,
     enum: ['upcoming', 'ongoing', 'completed', 'cancelled'],

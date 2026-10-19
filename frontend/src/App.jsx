@@ -219,19 +219,11 @@ function AppContent() {
           />
           <Route
             path="/travel/passengers"
-            element={
-              <TravelProtectedLayout>
-                <TravelPassengers />
-              </TravelProtectedLayout>
-            }
+            element={<Navigate to="/travel/trips" replace />}
           />
           <Route
             path="/travel/payments"
-            element={
-              <TravelProtectedLayout>
-                <TravelPayments />
-              </TravelProtectedLayout>
-            }
+            element={<Navigate to="/travel/trips" replace />}
           />
           <Route
             path="/travel/expenses"
