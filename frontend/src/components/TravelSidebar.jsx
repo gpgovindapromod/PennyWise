@@ -31,8 +31,6 @@ export default function TravelSidebar({ onOpenAddModal }) {
   const navItems = [
     { path: '/travel', label: 'Company Overview', icon: Compass },
     { path: '/travel/trips', label: 'Trips & Packages', icon: MapPin },
-    { path: '/travel/passengers', label: 'Passengers', icon: Users },
-    { path: '/travel/payments', label: 'Passenger Payments', icon: CreditCard },
     { path: '/travel/expenses', label: 'Trip & Co. Expenses', icon: Receipt },
     { path: '/travel/commissions', label: 'Commissions', icon: Percent },
     { path: '/travel/other-income', label: 'Other Income', icon: TrendingUp },
@@ -197,7 +195,7 @@ export default function TravelSidebar({ onOpenAddModal }) {
               }}
             >
               <PlusCircle size={16} />
-              {!isEffectiveCollapsed && <span>Record Expense / Pax</span>}
+              {!isEffectiveCollapsed && <span>Record Expense</span>}
             </button>
           </div>
         )}
