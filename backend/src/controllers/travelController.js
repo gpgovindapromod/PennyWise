@@ -291,11 +291,28 @@ exports.getTripById = async (req, res, next) => {
 exports.createTrip = async (req, res, next) => {
   try {
     const companyId = getCompanyId(req);
-    const { name, destination, route, departureDate, returnDate, packageDescription, packagePricePaise, maxCapacity, notes } = req.body;
+    const {
+      name,
+      destination,
+      route,
+      departureDate,
+      returnDate,
+      packageDescription,
+      packagePricePaise,
+      packagePriceAdultPaise,
+      packagePriceChildPaise,
+      capacity,
+      maxCapacity,
+      notes
+    } = req.body;
 
     if (!name || !destination || !departureDate || !returnDate) {
       return res.status(400).json({ success: false, message: 'Name, destination, departure and return dates are required' });
     }
+
+    const adultPaise = packagePriceAdultPaise !== undefined ? parseInt(packagePriceAdultPaise, 10) : (parseInt(packagePricePaise, 10) || 0);
+    const childPaise = packagePriceChildPaise !== undefined ? parseInt(packagePriceChildPaise, 10) : 0;
+    const finalCapacity = parseInt(capacity, 10) || parseInt(maxCapacity, 10) || 30;
 
     const trip = await Trip.create({
       companyId,
@@ -305,8 +322,11 @@ exports.createTrip = async (req, res, next) => {
       departureDate,
       returnDate,
       packageDescription: packageDescription ? packageDescription.trim() : '',
-      packagePricePaise: parseInt(packagePricePaise, 10) || 0,
-      maxCapacity: parseInt(maxCapacity, 10) || 30,
+      packagePricePaise: adultPaise,
+      packagePriceAdultPaise: adultPaise,
+      packagePriceChildPaise: childPaise,
+      capacity: finalCapacity,
+      maxCapacity: finalCapacity,
       notes: notes ? notes.trim() : ''
     });
 
@@ -323,6 +343,17 @@ exports.updateTrip = async (req, res, next) => {
     if (!trip) return res.status(404).json({ success: false, message: 'Trip not found' });
 
     const updates = req.body;
+    if (updates.capacity !== undefined) {
+      updates.maxCapacity = parseInt(updates.capacity, 10) || 30;
+      updates.capacity = updates.maxCapacity;
+    } else if (updates.maxCapacity !== undefined) {
+      updates.capacity = parseInt(updates.maxCapacity, 10) || 30;
+    }
+
+    if (updates.packagePriceAdultPaise !== undefined) {
+      updates.packagePricePaise = parseInt(updates.packagePriceAdultPaise, 10) || 0;
+    }
+
     Object.keys(updates).forEach(key => {
       if (key !== '_id' && key !== 'companyId') {
         trip[key] = updates[key];
@@ -409,7 +440,20 @@ exports.getPassengers = async (req, res, next) => {
 exports.createPassenger = async (req, res, next) => {
   try {
     const companyId = getCompanyId(req);
-    const { name, phone, email, address, notes, tripId, packagePricePaise, seatsBooked = 1 } = req.body;
+    const {
+      name,
+      phone,
+      email,
+      address,
+      notes,
+      tripId,
+      packagePricePaise,
+      packagePriceAdultPaise,
+      packagePriceChildPaise,
+      seatsBooked,
+      adultSeats,
+      childSeats
+    } = req.body;
 
     if (!name || !phone) {
       return res.status(400).json({ success: false, message: 'Passenger name and phone are required' });
@@ -429,14 +473,29 @@ exports.createPassenger = async (req, res, next) => {
     if (tripId) {
       const trip = await Trip.findOne({ _id: tripId, companyId });
       if (trip) {
-        const unitPrice = packagePricePaise !== undefined ? parseInt(packagePricePaise, 10) : trip.packagePricePaise;
-        const total = unitPrice * parseInt(seatsBooked, 10);
+        const aSeats = adultSeats !== undefined ? parseInt(adultSeats, 10) : (seatsBooked !== undefined ? parseInt(seatsBooked, 10) : 1);
+        const cSeats = childSeats !== undefined ? parseInt(childSeats, 10) : 0;
+        const totalSeats = aSeats + cSeats;
+
+        const aPrice = packagePriceAdultPaise !== undefined
+          ? parseInt(packagePriceAdultPaise, 10)
+          : (trip.packagePriceAdultPaise || (packagePricePaise !== undefined ? parseInt(packagePricePaise, 10) : trip.packagePricePaise));
+        const cPrice = packagePriceChildPaise !== undefined
+          ? parseInt(packagePriceChildPaise, 10)
+          : (trip.packagePriceChildPaise !== undefined ? trip.packagePriceChildPaise : 0);
+
+        const total = (aSeats * aPrice) + (cSeats * cPrice);
+
         booking = await Booking.create({
           companyId,
           tripId: trip._id,
           passengerId: passenger._id,
-          packagePricePaise: unitPrice,
-          seatsBooked: parseInt(seatsBooked, 10) || 1,
+          adultSeats: aSeats,
+          childSeats: cSeats,
+          seatsBooked: totalSeats > 0 ? totalSeats : 1,
+          packagePriceAdultPaise: aPrice,
+          packagePriceChildPaise: cPrice,
+          packagePricePaise: aPrice,
           totalPricePaise: total
         });
       }
@@ -491,7 +550,17 @@ exports.deletePassenger = async (req, res, next) => {
 exports.createBooking = async (req, res, next) => {
   try {
     const companyId = getCompanyId(req);
-    const { tripId, passengerId, packagePricePaise, seatsBooked = 1, notes } = req.body;
+    const {
+      tripId,
+      passengerId,
+      packagePricePaise,
+      packagePriceAdultPaise,
+      packagePriceChildPaise,
+      seatsBooked,
+      adultSeats,
+      childSeats,
+      notes
+    } = req.body;
 
     const trip = await Trip.findOne({ _id: tripId, companyId });
     if (!trip) return res.status(404).json({ success: false, message: 'Trip not found' });
@@ -499,15 +568,29 @@ exports.createBooking = async (req, res, next) => {
     const passenger = await Passenger.findOne({ _id: passengerId, companyId });
     if (!passenger) return res.status(404).json({ success: false, message: 'Passenger not found' });
 
-    const unitPrice = packagePricePaise !== undefined ? parseInt(packagePricePaise, 10) : trip.packagePricePaise;
-    const total = unitPrice * parseInt(seatsBooked, 10);
+    const aSeats = adultSeats !== undefined ? parseInt(adultSeats, 10) : (seatsBooked !== undefined ? parseInt(seatsBooked, 10) : 1);
+    const cSeats = childSeats !== undefined ? parseInt(childSeats, 10) : 0;
+    const totalSeats = aSeats + cSeats;
+
+    const aPrice = packagePriceAdultPaise !== undefined
+      ? parseInt(packagePriceAdultPaise, 10)
+      : (trip.packagePriceAdultPaise || (packagePricePaise !== undefined ? parseInt(packagePricePaise, 10) : trip.packagePricePaise));
+    const cPrice = packagePriceChildPaise !== undefined
+      ? parseInt(packagePriceChildPaise, 10)
+      : (trip.packagePriceChildPaise !== undefined ? trip.packagePriceChildPaise : 0);
+
+    const total = (aSeats * aPrice) + (cSeats * cPrice);
 
     const booking = await Booking.create({
       companyId,
       tripId: trip._id,
       passengerId: passenger._id,
-      packagePricePaise: unitPrice,
-      seatsBooked: parseInt(seatsBooked, 10) || 1,
+      adultSeats: aSeats,
+      childSeats: cSeats,
+      seatsBooked: totalSeats > 0 ? totalSeats : 1,
+      packagePriceAdultPaise: aPrice,
+      packagePriceChildPaise: cPrice,
+      packagePricePaise: aPrice,
       totalPricePaise: total,
       notes: notes || ''
     });

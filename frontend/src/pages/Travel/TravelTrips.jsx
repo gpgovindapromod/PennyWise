@@ -33,8 +33,9 @@ export default function TravelTrips() {
     departureDate: '',
     returnDate: '',
     packageDescription: '',
-    packagePriceRupees: '',
-    maxCapacity: '30',
+    packagePriceAdultRupees: '',
+    packagePriceChildRupees: '',
+    capacity: '30',
     status: 'upcoming',
     notes: ''
   });
@@ -71,8 +72,9 @@ export default function TravelTrips() {
       departureDate: '',
       returnDate: '',
       packageDescription: '',
-      packagePriceRupees: '',
-      maxCapacity: '30',
+      packagePriceAdultRupees: '',
+      packagePriceChildRupees: '',
+      capacity: '30',
       status: 'upcoming',
       notes: ''
     });
@@ -81,6 +83,8 @@ export default function TravelTrips() {
 
   const handleOpenEdit = (t) => {
     setEditingTripId(t._id);
+    const adultRupees = t.packagePriceAdultPaise !== undefined ? (t.packagePriceAdultPaise / 100).toString() : (t.packagePricePaise ? (t.packagePricePaise / 100).toString() : '');
+    const childRupees = t.packagePriceChildPaise !== undefined ? (t.packagePriceChildPaise / 100).toString() : '';
     setForm({
       name: t.name,
       destination: t.destination,
@@ -88,8 +92,9 @@ export default function TravelTrips() {
       departureDate: t.departureDate ? new Date(t.departureDate).toISOString().split('T')[0] : '',
       returnDate: t.returnDate ? new Date(t.returnDate).toISOString().split('T')[0] : '',
       packageDescription: t.packageDescription || '',
-      packagePriceRupees: (t.packagePricePaise / 100).toString(),
-      maxCapacity: (t.maxCapacity || 30).toString(),
+      packagePriceAdultRupees: adultRupees,
+      packagePriceChildRupees: childRupees,
+      capacity: (t.capacity || t.maxCapacity || 30).toString(),
       status: t.status || 'upcoming',
       notes: t.notes || ''
     });
@@ -99,6 +104,10 @@ export default function TravelTrips() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const adultPaise = rupeesToPaise(form.packagePriceAdultRupees);
+      const childPaise = form.packagePriceChildRupees ? rupeesToPaise(form.packagePriceChildRupees) : 0;
+      const capacityVal = parseInt(form.capacity, 10) || 30;
+
       const payload = {
         name: form.name,
         destination: form.destination,
@@ -106,8 +115,11 @@ export default function TravelTrips() {
         departureDate: form.departureDate,
         returnDate: form.returnDate,
         packageDescription: form.packageDescription,
-        packagePricePaise: rupeesToPaise(form.packagePriceRupees),
-        maxCapacity: parseInt(form.maxCapacity, 10) || 30,
+        packagePriceAdultPaise: adultPaise,
+        packagePriceChildPaise: childPaise,
+        packagePricePaise: adultPaise,
+        capacity: capacityVal,
+        maxCapacity: capacityVal,
         status: form.status,
         notes: form.notes
       };
@@ -270,7 +282,7 @@ export default function TravelTrips() {
                     <Calendar size={13} /> {new Date(t.departureDate).toLocaleDateString('en-IN')} → {new Date(t.returnDate).toLocaleDateString('en-IN')}
                   </span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Users size={13} /> {t.passengerCount || 0} / {t.maxCapacity || 30} Pax
+                    <Users size={13} /> {t.passengerCount || 0} / {t.capacity || t.maxCapacity || 30} Pax
                   </span>
                 </div>
 
@@ -278,8 +290,16 @@ export default function TravelTrips() {
                 <div style={{ marginTop: 'auto', backgroundColor: '#F8FAFC', padding: '12px', borderRadius: 10, border: '1px solid #F1F5F9' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 11, marginBottom: 8 }}>
                     <div>
-                      <div style={{ color: '#64748B' }}>Package Rate</div>
-                      <div style={{ fontWeight: 800, color: '#0F172A', fontSize: 13 }}>{formatRupees(t.packagePricePaise)} / Pax</div>
+                      <div style={{ color: '#64748B' }}>Adult Rate</div>
+                      <div style={{ fontWeight: 800, color: '#0F172A', fontSize: 13 }}>
+                        {formatRupees(t.packagePriceAdultPaise !== undefined ? t.packagePriceAdultPaise : t.packagePricePaise)}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ color: '#64748B' }}>Child (&lt;8 yrs)</div>
+                      <div style={{ fontWeight: 800, color: '#0F172A', fontSize: 13 }}>
+                        {t.packagePriceChildPaise ? formatRupees(t.packagePriceChildPaise) : '₹0 (Free)'}
+                      </div>
                     </div>
                     <div>
                       <div style={{ color: '#64748B' }}>Collected Income</div>
@@ -340,7 +360,7 @@ export default function TravelTrips() {
                   <label className="form-label">Destination *</label>
                   <input
                     type="text"
-                    placeholder="e.g. Manali, Himachal Pradesh"
+                    placeholder="e.g. Munroe, Sambranikodi"
                     value={form.destination}
                     onChange={(e) => setForm({ ...form, destination: e.target.value })}
                     className="form-input"
@@ -348,14 +368,37 @@ export default function TravelTrips() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Package Price / Pax (₹) *</label>
+                  <label className="form-label">Package Price - Adult (₹) *</label>
                   <input
                     type="number"
-                    placeholder="15000"
-                    value={form.packagePriceRupees}
-                    onChange={(e) => setForm({ ...form, packagePriceRupees: e.target.value })}
+                    placeholder="1350"
+                    value={form.packagePriceAdultRupees}
+                    onChange={(e) => setForm({ ...form, packagePriceAdultRupees: e.target.value })}
                     className="form-input"
                     required
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                <div className="form-group">
+                  <label className="form-label">Package Price - Child (&lt; 8 yrs) (₹)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 650 (or 0 if free)"
+                    value={form.packagePriceChildRupees}
+                    onChange={(e) => setForm({ ...form, packagePriceChildRupees: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Capacity</label>
+                  <input
+                    type="number"
+                    placeholder="30"
+                    value={form.capacity}
+                    onChange={(e) => setForm({ ...form, capacity: e.target.value })}
+                    className="form-input"
                   />
                 </div>
               </div>
@@ -394,16 +437,7 @@ export default function TravelTrips() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-                <div className="form-group">
-                  <label className="form-label">Max Pax Capacity</label>
-                  <input
-                    type="number"
-                    value={form.maxCapacity}
-                    onChange={(e) => setForm({ ...form, maxCapacity: e.target.value })}
-                    className="form-input"
-                  />
-                </div>
+              <div style={{ marginBottom: 12 }}>
                 <div className="form-group">
                   <label className="form-label">Trip Status</label>
                   <select

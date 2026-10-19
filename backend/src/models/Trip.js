@@ -39,8 +39,23 @@ const tripSchema = new mongoose.Schema({
   },
   packagePricePaise: {
     type: Number,
-    required: [true, 'Package price per passenger is required'],
-    min: [0, 'Package price cannot be negative']
+    min: [0, 'Package price cannot be negative'],
+    default: 0
+  },
+  packagePriceAdultPaise: {
+    type: Number,
+    min: [0, 'Adult package price cannot be negative'],
+    default: 0
+  },
+  packagePriceChildPaise: {
+    type: Number,
+    min: [0, 'Child package price cannot be negative'],
+    default: 0
+  },
+  capacity: {
+    type: Number,
+    default: 30,
+    min: [1, 'Capacity must be at least 1']
   },
   maxCapacity: {
     type: Number,

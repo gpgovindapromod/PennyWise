@@ -71,8 +71,10 @@ export default function TravelPassengers() {
       address: '',
       notes: '',
       tripId: trips.length > 0 ? trips[0]._id : '',
-      seatsBooked: '1',
-      packagePriceRupees: trips.length > 0 ? (trips[0].packagePricePaise / 100).toString() : ''
+      adultSeats: '1',
+      childSeats: '0',
+      adultRateRupees: trips.length > 0 ? ((trips[0].packagePriceAdultPaise !== undefined ? trips[0].packagePriceAdultPaise : trips[0].packagePricePaise) / 100).toString() : '',
+      childRateRupees: trips.length > 0 && trips[0].packagePriceChildPaise ? (trips[0].packagePriceChildPaise / 100).toString() : '0'
     });
     setShowModal(true);
   };
@@ -86,18 +88,23 @@ export default function TravelPassengers() {
       address: p.address || '',
       notes: p.notes || '',
       tripId: '',
-      seatsBooked: '1',
-      packagePriceRupees: ''
+      adultSeats: '1',
+      childSeats: '0',
+      adultRateRupees: '',
+      childRateRupees: ''
     });
     setShowModal(true);
   };
 
   const handleTripSelectChange = (tripId) => {
     const trip = trips.find(t => t._id === tripId);
+    const adultPrice = trip ? ((trip.packagePriceAdultPaise !== undefined ? trip.packagePriceAdultPaise : trip.packagePricePaise) / 100).toString() : '';
+    const childPrice = trip && trip.packagePriceChildPaise ? (trip.packagePriceChildPaise / 100).toString() : '0';
     setForm({
       ...form,
       tripId,
-      packagePriceRupees: trip ? (trip.packagePricePaise / 100).toString() : form.packagePriceRupees
+      adultRateRupees: adultPrice,
+      childRateRupees: childPrice
     });
   };
 
@@ -113,6 +120,11 @@ export default function TravelPassengers() {
           notes: form.notes
         });
       } else {
+        const aSeats = parseInt(form.adultSeats, 10) || 0;
+        const cSeats = parseInt(form.childSeats, 10) || 0;
+        const aPrice = form.adultRateRupees ? rupeesToPaise(form.adultRateRupees) : 0;
+        const cPrice = form.childRateRupees ? rupeesToPaise(form.childRateRupees) : 0;
+
         await API.post('/travel/passengers', {
           name: form.name,
           phone: form.phone,
@@ -120,8 +132,12 @@ export default function TravelPassengers() {
           address: form.address,
           notes: form.notes,
           tripId: form.tripId || undefined,
-          seatsBooked: parseInt(form.seatsBooked, 10) || 1,
-          packagePricePaise: form.packagePriceRupees ? rupeesToPaise(form.packagePriceRupees) : undefined
+          adultSeats: aSeats,
+          childSeats: cSeats,
+          seatsBooked: aSeats + cSeats > 0 ? aSeats + cSeats : 1,
+          packagePriceAdultPaise: aPrice,
+          packagePriceChildPaise: cPrice,
+          packagePricePaise: aPrice
         });
       }
 
@@ -369,30 +385,55 @@ export default function TravelPassengers() {
                       className="form-input"
                     >
                       <option value="">-- No trip right now (Register passenger only) --</option>
-                      {trips.map(t => (
-                        <option key={t._id} value={t._id}>{t.name} ({t.destination}) - ₹{(t.packagePricePaise / 100).toLocaleString('en-IN')}</option>
-                      ))}
+                      {trips.map(t => {
+                        const aRate = (t.packagePriceAdultPaise !== undefined ? t.packagePriceAdultPaise : t.packagePricePaise) / 100;
+                        const cRate = t.packagePriceChildPaise ? t.packagePriceChildPaise / 100 : 0;
+                        return (
+                          <option key={t._id} value={t._id}>
+                            {t.name} ({t.destination}) - Adult: ₹{aRate.toLocaleString('en-IN')}{cRate > 0 ? ` | Child: ₹${cRate.toLocaleString('en-IN')}` : ' | Child: Free'}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
 
                   {form.tripId && (
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                       <div className="form-group">
-                        <label className="form-label" style={{ fontSize: 11 }}>Seats Booked</label>
+                        <label className="form-label" style={{ fontSize: 11 }}>Adult Seats</label>
                         <input
                           type="number"
-                          min="1"
-                          value={form.seatsBooked}
-                          onChange={(e) => setForm({ ...form, seatsBooked: e.target.value })}
+                          min="0"
+                          value={form.adultSeats}
+                          onChange={(e) => setForm({ ...form, adultSeats: e.target.value })}
                           className="form-input"
                         />
                       </div>
                       <div className="form-group">
-                        <label className="form-label" style={{ fontSize: 11 }}>Rate / Seat (₹)</label>
+                        <label className="form-label" style={{ fontSize: 11 }}>Adult Rate (₹)</label>
                         <input
                           type="number"
-                          value={form.packagePriceRupees}
-                          onChange={(e) => setForm({ ...form, packagePriceRupees: e.target.value })}
+                          value={form.adultRateRupees}
+                          onChange={(e) => setForm({ ...form, adultRateRupees: e.target.value })}
+                          className="form-input"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label" style={{ fontSize: 11 }}>Child Seats (&lt; 8 yrs)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={form.childSeats}
+                          onChange={(e) => setForm({ ...form, childSeats: e.target.value })}
+                          className="form-input"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label" style={{ fontSize: 11 }}>Child Rate (₹)</label>
+                        <input
+                          type="number"
+                          value={form.childRateRupees}
+                          onChange={(e) => setForm({ ...form, childRateRupees: e.target.value })}
                           className="form-input"
                         />
                       </div>

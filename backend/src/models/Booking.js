@@ -29,6 +29,26 @@ const bookingSchema = new mongoose.Schema({
     default: 1,
     min: 1
   },
+  adultSeats: {
+    type: Number,
+    default: 1,
+    min: 0
+  },
+  childSeats: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  packagePriceAdultPaise: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  packagePriceChildPaise: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   packagePricePaise: {
     type: Number,
     required: true,
