@@ -85,8 +85,14 @@ export default function TravelExpenses() {
     fetchData();
   }, [categoryFilter, tripFilter]);
 
-  const handleOpenCreate = () => {
+  const handleOpenCreate = async () => {
     setEditingId(null);
+    try {
+      const tripsRes = await API.get('/travel/trips');
+      setTrips(tripsRes.data.data || []);
+    } catch (e) {
+      console.error(e);
+    }
     setForm({
       title: '',
       category: TRAVEL_EXPENSE_CATEGORIES[0],
