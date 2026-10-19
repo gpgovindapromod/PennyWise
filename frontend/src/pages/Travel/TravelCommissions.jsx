@@ -341,9 +341,16 @@ export default function TravelCommissions() {
                     className="form-input"
                   >
                     <option value="">-- General / No Trip --</option>
-                    {trips.map(t => (
-                      <option key={t._id} value={t._id}>{t.name}</option>
-                    ))}
+                    {trips.map(t => {
+                      const dep = t.departureDate ? new Date(t.departureDate).toLocaleDateString('en-IN') : '';
+                      const ret = t.returnDate ? new Date(t.returnDate).toLocaleDateString('en-IN') : '';
+                      const dateStr = dep && ret ? ` (${dep} → ${ret})` : (dep ? ` (${dep})` : '');
+                      return (
+                        <option key={t._id} value={t._id}>
+                          {t.name} - {t.destination}{dateStr}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               </div>

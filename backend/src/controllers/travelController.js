@@ -686,7 +686,7 @@ exports.getExpenses = async (req, res, next) => {
     }
 
     const expenses = await TravelExpense.find(query)
-      .populate('tripId', 'name destination')
+      .populate('tripId', 'name destination departureDate returnDate')
       .sort({ expenseDate: -1 });
 
     const totalPaise = expenses.reduce((sum, e) => sum + (e.amountPaise || 0), 0);

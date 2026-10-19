@@ -36,7 +36,7 @@ export default function TravelTrips() {
     packagePriceAdultRupees: '',
     packagePriceChildRupees: '',
     capacity: '30',
-    status: 'upcoming',
+    status: 'completed',
     notes: ''
   });
 
@@ -75,7 +75,7 @@ export default function TravelTrips() {
       packagePriceAdultRupees: '',
       packagePriceChildRupees: '',
       capacity: '30',
-      status: 'upcoming',
+      status: 'completed',
       notes: ''
     });
     setShowModal(true);

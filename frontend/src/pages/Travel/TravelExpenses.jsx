@@ -237,9 +237,14 @@ export default function TravelExpenses() {
               style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #CBD5E1', fontSize: 12, outline: 'none' }}
             >
               <option value="all">All Trips & General</option>
-              {trips.map(t => (
-                <option key={t._id} value={t._id}>{t.name}</option>
-              ))}
+              {trips.map(t => {
+                const dep = t.departureDate ? new Date(t.departureDate).toLocaleDateString('en-IN') : '';
+                const ret = t.returnDate ? new Date(t.returnDate).toLocaleDateString('en-IN') : '';
+                const dateStr = dep && ret ? ` (${dep} → ${ret})` : (dep ? ` (${dep})` : '');
+                return (
+                  <option key={t._id} value={t._id}>{t.name} - {t.destination}{dateStr}</option>
+                );
+              })}
             </select>
           </div>
         </div>
@@ -265,7 +270,7 @@ export default function TravelExpenses() {
                   <th style={{ padding: '12px 16px' }}>Date</th>
                   <th style={{ padding: '12px 16px' }}>Expense Title & Vendor</th>
                   <th style={{ padding: '12px 16px' }}>Category</th>
-                  <th style={{ padding: '12px 16px' }}>Allocated Trip</th>
+                  <th style={{ padding: '12px 16px' }}>Allocated Trip & Tour Date</th>
                   <th style={{ padding: '12px 16px' }}>Method</th>
                   <th style={{ padding: '12px 16px', textAlign: 'right' }}>Amount</th>
                   <th style={{ padding: '12px 16px', textAlign: 'center' }}>Action</th>
@@ -295,7 +300,14 @@ export default function TravelExpenses() {
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       {e.tripId ? (
-                        <div style={{ fontWeight: 700, color: '#0284C7' }}>{e.tripId.name}</div>
+                        <div>
+                          <div style={{ fontWeight: 700, color: '#0284C7' }}>{e.tripId.name}</div>
+                          <div style={{ fontSize: 11, color: '#64748B' }}>
+                            {e.tripId.departureDate ? (
+                              `${new Date(e.tripId.departureDate).toLocaleDateString('en-IN')}${e.tripId.returnDate ? ` → ${new Date(e.tripId.returnDate).toLocaleDateString('en-IN')}` : ''}`
+                            ) : e.tripId.destination}
+                          </div>
+                        </div>
                       ) : (
                         <span style={{ fontSize: 11, color: '#94A3B8', fontStyle: 'italic' }}>Company Overhead</span>
                       )}
@@ -388,16 +400,23 @@ export default function TravelExpenses() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
                 <div className="form-group">
-                  <label className="form-label">Associated Trip</label>
+                  <label className="form-label">Associated Trip / Tour Package</label>
                   <select
                     value={form.tripId}
                     onChange={(e) => setForm({ ...form, tripId: e.target.value })}
                     className="form-input"
                   >
                     <option value="">-- General Company Overhead --</option>
-                    {trips.map(t => (
-                      <option key={t._id} value={t._id}>{t.name} ({t.destination})</option>
-                    ))}
+                    {trips.map(t => {
+                      const dep = t.departureDate ? new Date(t.departureDate).toLocaleDateString('en-IN') : '';
+                      const ret = t.returnDate ? new Date(t.returnDate).toLocaleDateString('en-IN') : '';
+                      const dateStr = dep && ret ? ` (${dep} → ${ret})` : (dep ? ` (${dep})` : '');
+                      return (
+                        <option key={t._id} value={t._id}>
+                          {t.name} - {t.destination}{dateStr}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
                 <div className="form-group">
