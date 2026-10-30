@@ -27,13 +27,18 @@ const getTransporter = () => {
     });
   }
 
-  // Default Gmail SMTP
+  // Default Gmail SMTP with explicit connection timeout and port
   return nodemailer.createTransport({
-    service: process.env.SMTP_SERVICE || 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // SSL
     auth: {
       user: user.trim(),
-      pass: pass.trim()
-    }
+      pass: pass.trim().replace(/\s+/g, '')
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000
   });
 };
 
