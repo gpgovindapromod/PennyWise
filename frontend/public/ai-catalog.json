@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "PennyWise Financial Suite",
+  "description": "High-performance financial ledger designed for students and travel tour operators",
+  "version": "1.0.0",
+  "homepage": "https://penny-wise-ashy.vercel.app",
+  "capabilities": [
+    {
+      "name": "Student Financial Ledger",
+      "description": "Expense logging, monthly budget thresholds, academic semester fee installments",
+      "type": "finance"
+    },
+    {
+      "name": "Travel Company Tour Operations",
+      "description": "Multi-trip tour tracking, passenger collections, trip overhead expenses, and commission revenue",
+      "type": "erp"
+    }
+  ]
+}

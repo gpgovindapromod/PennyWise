@@ -1,11 +1,18 @@
-# PennyWise
+# PennyWise - Student Financial & Travel Operations Ledger
 
-> High-performance personal finance tracker designed for students and car enthusiasts with telemetry, pit stop expense logging, and budget gauges.
+> High-performance financial ledger designed for students and travel tour operators with verified authentication, transaction logging, and real-time cash flow telemetry.
 
-## Features
-- Cockpit Overview: Real-time balance and burn rate telemetry
-- Pit Stop Logs: Detailed transaction tracking with UPI, Cash, and Card payment methods
-- Academy Track: Academic semester fee milestones and installments
-- RPM Fuel Budget: Target monthly spending limit with tachometer warning indicators
-- Telemetry: Recharts visual cash flow analytics and category breakdowns
-- Tuning: Account settings, data isolation, and clean state resets
+## Overview
+PennyWise offers two dedicated financial workspace modes:
+1. Student Financial Hub: Track allowances, semester fees, monthly spending targets, and category expenses.
+2. Travel Company ERP: Manage group tour trips, passenger revenue, multi-vendor expenses, and commission accounting.
+
+## API & Endpoints
+- `/api/health`: Health status endpoint for operational monitoring.
+- `/api/auth/login`: User and company admin authentication.
+- `/api/auth/register-otp`: Email-verified account onboarding with 6-digit OTP.
+- `/api/travel/dashboard`: Financial analytics, net income, and tour ledger summaries.
+
+## Documentation Links
+- [Application Web App](https://penny-wise-ashy.vercel.app/login): Production application login.
+- [API Health Check](https://pennywise-7p6q.onrender.com/api/health): Backend live status.
