@@ -4,7 +4,7 @@ import API from '../services/api';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(localStorage.getItem('pennywise_token'));
+  const [token, setToken] = useState(() => localStorage.getItem('pennywise_token'));
   const [user, setUser] = useState(() => {
     try {
       const cached = localStorage.getItem('pennywise_user');
@@ -13,10 +13,14 @@ export const AuthProvider = ({ children }) => {
       return null;
     }
   });
-  const [loading, setLoading] = useState(!localStorage.getItem('pennywise_user'));
+  // If user is already cached in localStorage, start non-blocking (loading = false)
+  const [loading, setLoading] = useState(() => {
+    return !!localStorage.getItem('pennywise_token') && !localStorage.getItem('pennywise_user');
+  });
 
   useEffect(() => {
     if (token) {
+      // Background validation without blocking first visual paint
       API.get('/auth/me')
         .then((res) => {
           setUser(res.data.data.user);
