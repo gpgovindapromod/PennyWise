@@ -2,14 +2,29 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import API from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { AlertCircle, Loader2, Mail, CheckCircle2, ArrowLeft, KeyRound, RefreshCw } from 'lucide-react';
+import { 
+  AlertCircle, 
+  Loader2, 
+  Mail, 
+  CheckCircle2, 
+  ArrowLeft, 
+  KeyRound, 
+  RefreshCw, 
+  Eye, 
+  EyeOff, 
+  Lock, 
+  ShieldCheck,
+  Sparkles
+} from 'lucide-react';
 
 export default function Login() {
   const [mode, setMode] = useState('login'); // 'login' | 'forgot' | 'reset'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
@@ -104,88 +119,105 @@ export default function Login() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: 'var(--color-neutral-bg)', padding: 24 }}>
-      <div style={{ width: '100%', maxWidth: 420 }}>
+    <div className="auth-page-wrapper">
+      <div className="auth-grid-overlay" />
+      <div className="auth-container">
         {/* Brand header */}
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 36, color: 'var(--color-burgundy)', letterSpacing: '-0.02em', marginBottom: 6 }}>
-            pennywise
-          </h1>
-          <p style={{ fontSize: 14, color: 'var(--color-chocolate-light)' }}>
-            Know your money. Plan your month.
-          </p>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <div className="auth-header-badge">
+            <Sparkles size={13} /> Student & Travel Financial Hub
+          </div>
+          <h1 className="auth-logo-text">pennywise</h1>
+          <p className="auth-subheading">Know your money. Plan your month.</p>
         </div>
 
         {/* Form Card */}
-        <div className="card" style={{ padding: 32 }}>
+        <div className="auth-glass-card">
           {mode === 'login' && (
             <>
-              <h2 style={{ fontSize: 20, color: 'var(--color-chocolate)', marginBottom: 6, fontWeight: 700 }}>
-                Sign in to your account
-              </h2>
-              <p style={{ fontSize: 13, color: 'var(--color-chocolate-light)', marginBottom: 20 }}>
-                Access your student financial workspace
-              </p>
+              <div style={{ marginBottom: 20 }}>
+                <h2 style={{ fontSize: 22, color: '#FFFFFF', fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>
+                  Sign in
+                </h2>
+                <p style={{ fontSize: 13, color: '#94A3B8', marginTop: 4 }}>
+                  Access your secure financial workspace
+                </p>
+              </div>
 
               {infoMsg && (
-                <div style={{ padding: '10px 14px', background: '#F0FDF4', color: '#15803D', borderRadius: 'var(--radius-md)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                  <CheckCircle2 size={16} /> {infoMsg}
+                <div className="auth-banner-success">
+                  <CheckCircle2 size={16} /> <span>{infoMsg}</span>
                 </div>
               )}
 
               {error && (
-                <div style={{ padding: '10px 14px', background: 'var(--color-expense-bg)', color: 'var(--color-expense)', borderRadius: 'var(--radius-md)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                  <AlertCircle size={16} /> {error}
+                <div className="auth-banner-error">
+                  <AlertCircle size={16} /> <span>{error}</span>
                 </div>
               )}
 
               <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                  <label className="form-label">Email address</label>
-                  <input
-                    type="email"
-                    placeholder="student@college.edu"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="form-input"
-                    required
-                    autoFocus
-                  />
+                <div className="auth-input-group">
+                  <label className="auth-label">Email address</label>
+                  <div className="auth-input-wrapper">
+                    <Mail size={17} className="auth-input-icon" />
+                    <input
+                      type="email"
+                      placeholder="student@college.edu"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="auth-input-field"
+                      required
+                      autoFocus
+                    />
+                  </div>
                 </div>
 
-                <div className="form-group">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                    <label className="form-label" style={{ margin: 0 }}>Password</label>
+                <div className="auth-input-group">
+                  <div className="auth-label">
+                    <span>Password</span>
                     <button
                       type="button"
                       onClick={() => { setMode('forgot'); setError(''); setInfoMsg(''); }}
-                      style={{ background: 'none', border: 'none', color: 'var(--color-burgundy)', fontSize: 12, fontWeight: 600, cursor: 'pointer', padding: 0 }}
+                      className="auth-pill-link"
                     >
                       Forgot password?
                     </button>
                   </div>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="form-input"
-                    required
-                  />
+                  <div className="auth-input-wrapper">
+                    <Lock size={17} className="auth-input-icon" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="auth-input-field"
+                      style={{ paddingRight: 42 }}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="auth-password-toggle"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
 
                 <button
                   type="submit"
-                  className="btn btn-primary"
+                  className="auth-submit-btn"
                   disabled={loading}
-                  style={{ width: '100%', padding: '12px 16px', fontSize: 15, marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                 >
                   {loading ? (
                     <>
-                      <Loader2 size={16} className="animate-spin" /> Signing in...
+                      <Loader2 size={17} className="animate-spin" /> Signing in...
                     </>
                   ) : (
-                    'Sign In'
+                    'Sign In to Dashboard'
                   )}
                 </button>
               </form>
@@ -194,52 +226,54 @@ export default function Login() {
 
           {mode === 'forgot' && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                 <button
                   type="button"
                   onClick={() => { setMode('login'); setError(''); setInfoMsg(''); }}
-                  style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: 4 }}
+                  style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: 6, borderRadius: 8, display: 'flex', alignItems: 'center' }}
                   title="Back to login"
                 >
-                  <ArrowLeft size={18} />
+                  <ArrowLeft size={16} />
                 </button>
-                <h2 style={{ fontSize: 20, color: 'var(--color-chocolate)', margin: 0, fontWeight: 700 }}>
+                <h2 style={{ fontSize: 20, color: '#FFFFFF', margin: 0, fontWeight: 700 }}>
                   Reset Password
                 </h2>
               </div>
-              <p style={{ fontSize: 13, color: 'var(--color-chocolate-light)', marginBottom: 20 }}>
-                Enter your email address and we'll send a 6-digit verification code
+              <p style={{ fontSize: 13, color: '#94A3B8', marginBottom: 20 }}>
+                Enter your registered email address to receive a secure 6-digit OTP code.
               </p>
 
               {error && (
-                <div style={{ padding: '10px 14px', background: 'var(--color-expense-bg)', color: 'var(--color-expense)', borderRadius: 'var(--radius-md)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                  <AlertCircle size={16} /> {error}
+                <div className="auth-banner-error">
+                  <AlertCircle size={16} /> <span>{error}</span>
                 </div>
               )}
 
               <form onSubmit={handleRequestResetOtp}>
-                <div className="form-group">
-                  <label className="form-label">Registered Email</label>
-                  <input
-                    type="email"
-                    placeholder="student@college.edu"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="form-input"
-                    required
-                    autoFocus
-                  />
+                <div className="auth-input-group">
+                  <label className="auth-label">Registered Email</label>
+                  <div className="auth-input-wrapper">
+                    <Mail size={17} className="auth-input-icon" />
+                    <input
+                      type="email"
+                      placeholder="student@college.edu"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="auth-input-field"
+                      required
+                      autoFocus
+                    />
+                  </div>
                 </div>
 
                 <button
                   type="submit"
-                  className="btn btn-primary"
+                  className="auth-submit-btn"
                   disabled={loading}
-                  style={{ width: '100%', padding: '12px 16px', fontSize: 15, marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                 >
                   {loading ? (
                     <>
-                      <Loader2 size={16} className="animate-spin" /> Sending Code...
+                      <Loader2 size={17} className="animate-spin" /> Sending Code...
                     </>
                   ) : (
                     <>
@@ -252,7 +286,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => { setMode('login'); setError(''); }}
-                    style={{ background: 'none', border: 'none', color: '#64748B', fontSize: 12, cursor: 'pointer' }}
+                    style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: 12.5, cursor: 'pointer' }}
                   >
                     Cancel and return to login
                   </button>
@@ -263,72 +297,84 @@ export default function Login() {
 
           {mode === 'reset' && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                 <button
                   type="button"
                   onClick={() => { setMode('forgot'); setError(''); }}
-                  style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: 4 }}
+                  style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: 6, borderRadius: 8, display: 'flex', alignItems: 'center' }}
                   title="Back"
                 >
-                  <ArrowLeft size={18} />
+                  <ArrowLeft size={16} />
                 </button>
-                <h2 style={{ fontSize: 20, color: 'var(--color-chocolate)', margin: 0, fontWeight: 700 }}>
-                  Enter Code & New Password
+                <h2 style={{ fontSize: 20, color: '#FFFFFF', margin: 0, fontWeight: 700 }}>
+                  Set New Password
                 </h2>
               </div>
-              <p style={{ fontSize: 13, color: 'var(--color-chocolate-light)', marginBottom: 20 }}>
-                Verification code sent to <strong>{email}</strong>
+              <p style={{ fontSize: 13, color: '#94A3B8', marginBottom: 20 }}>
+                Verification code sent to <strong style={{ color: '#F8FAFC' }}>{email}</strong>
               </p>
 
               {infoMsg && (
-                <div style={{ padding: '10px 14px', background: '#F0FDF4', color: '#15803D', borderRadius: 'var(--radius-md)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                  <CheckCircle2 size={16} /> {infoMsg}
+                <div className="auth-banner-success">
+                  <CheckCircle2 size={16} /> <span>{infoMsg}</span>
                 </div>
               )}
 
               {error && (
-                <div style={{ padding: '10px 14px', background: 'var(--color-expense-bg)', color: 'var(--color-expense)', borderRadius: 'var(--radius-md)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                  <AlertCircle size={16} /> {error}
+                <div className="auth-banner-error">
+                  <AlertCircle size={16} /> <span>{error}</span>
                 </div>
               )}
 
               <form onSubmit={handleConfirmReset}>
-                <div className="form-group">
-                  <label className="form-label">6-Digit Code</label>
+                <div className="auth-input-group">
+                  <label className="auth-label">6-Digit Verification Code</label>
                   <input
                     type="text"
                     maxLength={6}
                     placeholder="123456"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                    className="form-input"
-                    style={{ textAlign: 'center', fontSize: 22, letterSpacing: 6, fontWeight: 800, fontFamily: 'monospace' }}
+                    className="auth-input-field"
+                    style={{ textAlign: 'center', fontSize: 22, letterSpacing: 8, fontWeight: 800, fontFamily: 'monospace', paddingLeft: 14 }}
                     required
                     autoFocus
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">New Password (min 6 characters)</label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="form-input"
-                    required
-                  />
+                <div className="auth-input-group">
+                  <label className="auth-label">New Password (min 6 characters)</label>
+                  <div className="auth-input-wrapper">
+                    <Lock size={17} className="auth-input-icon" />
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="auth-input-field"
+                      style={{ paddingRight: 42 }}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="auth-password-toggle"
+                      aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                      tabIndex={-1}
+                    >
+                      {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
 
                 <button
                   type="submit"
-                  className="btn btn-primary"
+                  className="auth-submit-btn"
                   disabled={loading}
-                  style={{ width: '100%', padding: '12px 16px', fontSize: 15, marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                 >
                   {loading ? (
                     <>
-                      <Loader2 size={16} className="animate-spin" /> Updating Password...
+                      <Loader2 size={17} className="animate-spin" /> Updating Password...
                     </>
                   ) : (
                     <>
@@ -337,18 +383,18 @@ export default function Login() {
                   )}
                 </button>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, fontSize: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, fontSize: 12.5 }}>
                   <button
                     type="button"
                     onClick={handleRequestResetOtp}
-                    style={{ background: 'none', border: 'none', color: 'var(--color-burgundy)', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                    style={{ background: 'none', border: 'none', color: '#FB7185', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}
                   >
-                    <RefreshCw size={12} /> Resend Code
+                    <RefreshCw size={13} /> Resend Code
                   </button>
                   <button
                     type="button"
                     onClick={() => { setMode('login'); setError(''); }}
-                    style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer' }}
+                    style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
                   >
                     Back to Login
                   </button>
@@ -357,11 +403,16 @@ export default function Login() {
             </>
           )}
 
-          <div style={{ textAlign: 'center', marginTop: 24, fontSize: 13, color: 'var(--color-chocolate-light)' }}>
+          <div style={{ textAlign: 'center', marginTop: 24, fontSize: 13, color: '#94A3B8' }}>
             Don't have an account yet?{' '}
-            <Link to="/register" style={{ color: 'var(--color-burgundy)', fontWeight: 600, textDecoration: 'none' }}>
+            <Link to="/register" className="auth-pill-link">
               Create an account
             </Link>
+          </div>
+
+          <div className="auth-security-badge">
+            <ShieldCheck size={14} color="#10B981" />
+            <span>End-to-end encrypted · Anti-Injection Protected</span>
           </div>
         </div>
       </div>

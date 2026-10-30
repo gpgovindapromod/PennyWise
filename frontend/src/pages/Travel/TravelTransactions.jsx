@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import API from '../../services/api';
 import { formatRupees } from '../../services/currency';
 import { 
@@ -8,43 +8,86 @@ import {
   ArrowUpRight, 
   ArrowDownRight, 
   CreditCard, 
-  Download
+  Download,
+  Loader2
 } from 'lucide-react';
 
 export default function TravelTransactions() {
   const [transactions, setTransactions] = useState([]);
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [flowFilter, setFlowFilter] = useState('all'); // 'all' | 'inflow' | 'outflow'
   const [methodFilter, setMethodFilter] = useState('all');
   const [tripFilter, setTripFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const observer = useRef();
+
+  // Load Trips Dropdown only once
+  useEffect(() => {
+    API.get('/travel/trips')
+      .then(res => setTrips(res.data.data || []))
+      .catch(() => {});
+  }, []);
+
+  const fetchData = async (pageNum = 1, isAppend = false) => {
+    if (isAppend) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+
     try {
-      const [txRes, tripsRes] = await Promise.all([
-        API.get('/travel/transactions', {
-          params: {
-            type: flowFilter !== 'all' ? flowFilter : undefined,
-            paymentMethod: methodFilter !== 'all' ? methodFilter : undefined,
-            tripId: tripFilter !== 'all' ? tripFilter : undefined
-          }
-        }),
-        API.get('/travel/trips')
-      ]);
+      const res = await API.get('/travel/transactions', {
+        params: {
+          type: flowFilter !== 'all' ? flowFilter : undefined,
+          paymentMethod: methodFilter !== 'all' ? methodFilter : undefined,
+          tripId: tripFilter !== 'all' ? tripFilter : undefined,
+          page: pageNum,
+          limit: 20
+        }
+      });
 
-      setTransactions(txRes.data.data || []);
-      setTrips(tripsRes.data.data || []);
+      const newItems = res.data.data || [];
+      const pagination = res.data.pagination || { total: newItems.length, page: 1, pages: 1 };
+
+      if (isAppend) {
+        setTransactions(prev => [...prev, ...newItems]);
+      } else {
+        setTransactions(newItems);
+      }
+
+      setTotalCount(pagination.total);
+      setHasMore(pagination.page < pagination.pages);
+      setPage(pagination.page);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData(1, false);
   }, [flowFilter, methodFilter, tripFilter]);
+
+  // Infinite Scroll Observer for the bottom row
+  const lastRowRef = useCallback((node) => {
+    if (loading || loadingMore) return;
+    if (observer.current) observer.current.disconnect();
+
+    observer.current = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasMore) {
+        fetchData(page + 1, true);
+      }
+    }, { rootMargin: '200px' });
+
+    if (node) observer.current.observe(node);
+  }, [loading, loadingMore, hasMore, page]);
 
   const handleExportCSV = () => {
     if (transactions.length === 0) return;
@@ -54,8 +97,8 @@ export default function TravelTransactions() {
       new Date(t.date).toLocaleDateString('en-IN'),
       `"${t.transactionType}"`,
       t.flow,
-      `"${t.description.replace(/"/g, '""')}"`,
-      `"${t.tripName.replace(/"/g, '""')}"`,
+      `"${(t.description || '').replace(/"/g, '""')}"`,
+      `"${(t.tripName || '').replace(/"/g, '""')}"`,
       t.amountRupees,
       t.paymentMethod || 'N/A',
       `"${(t.reference || '').replace(/"/g, '""')}"`
@@ -176,8 +219,8 @@ export default function TravelTransactions() {
           </div>
         </div>
 
-        <div style={{ fontSize: 12, color: '#64748B' }}>
-          {transactions.length} verified transactions
+        <div style={{ fontSize: 12, color: '#64748B', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span>Showing <strong>{transactions.length}</strong> of <strong>{totalCount}</strong> entries</span>
         </div>
       </div>
 
@@ -209,9 +252,14 @@ export default function TravelTransactions() {
               <tbody>
                 {transactions.map((t, idx) => {
                   const isInflow = t.flow === 'inflow';
+                  const isLast = idx === transactions.length - 1;
 
                   return (
-                    <tr key={t.id || idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                    <tr 
+                      key={t.id || idx} 
+                      ref={isLast ? lastRowRef : null}
+                      style={{ borderBottom: '1px solid #F1F5F9' }}
+                    >
                       <td style={{ padding: '12px 16px', color: '#475569', fontWeight: 600 }}>
                         {new Date(t.date).toLocaleDateString('en-IN')}
                       </td>
@@ -258,6 +306,13 @@ export default function TravelTransactions() {
               </tbody>
             </table>
           </div>
+
+          {loadingMore && (
+            <div style={{ textAlign: 'center', padding: '16px', color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 13 }}>
+              <Loader2 size={16} className="animate-spin" />
+              Loading more entries...
+            </div>
+          )}
         </div>
       )}
 

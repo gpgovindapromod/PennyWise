@@ -1,10 +1,11 @@
 import React, { useState, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import TravelSidebar from './components/TravelSidebar';
 import AddExpenseModal from './components/AddExpenseModal';
 import ForcedPasswordModal from './components/ForcedPasswordModal';
+import FadeContent from './components/FadeContent';
 
 // Code-split pages for high performance
 // Student modules
@@ -41,6 +42,7 @@ function RoleBasedHomeRedirect() {
 
 function StudentProtectedLayout({ children, onOpenAddExpense }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -64,7 +66,9 @@ function StudentProtectedLayout({ children, onOpenAddExpense }) {
       <Sidebar onOpenAddExpense={onOpenAddExpense} />
       <div className="car-main-content-wrapper">
         <main className="car-main-content" style={{ flex: 1, overflowY: 'auto' }}>
-          {children}
+          <div key={location.pathname} className="premium-page-transition">
+            {children}
+          </div>
         </main>
         <MobileBottomNav onOpenAddExpense={onOpenAddExpense} />
       </div>
@@ -74,6 +78,7 @@ function StudentProtectedLayout({ children, onOpenAddExpense }) {
 
 function TravelProtectedLayout({ children, onOpenAddModal }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -97,7 +102,9 @@ function TravelProtectedLayout({ children, onOpenAddModal }) {
       <TravelSidebar onOpenAddModal={onOpenAddModal} />
       <div className="car-main-content-wrapper" style={{ backgroundColor: '#F8FAFC' }}>
         <main className="car-main-content" style={{ flex: 1, overflowY: 'auto', backgroundColor: '#F8FAFC' }}>
-          {children}
+          <div key={location.pathname} className="premium-page-transition">
+            {children}
+          </div>
         </main>
       </div>
     </div>

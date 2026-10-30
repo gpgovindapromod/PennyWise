@@ -6,7 +6,7 @@ const Transaction = require('../models/Transaction');
 const AcademicFee = require('../models/AcademicFee');
 const MonthlyBudget = require('../models/MonthlyBudget');
 const Otp = require('../models/Otp');
-const { sendOtpEmail } = require('../utils/emailService');
+const { sendOtpEmail, sendWelcomeEmail } = require('../utils/emailService');
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'pennywise_student_secret_key_2026_jwt_token', {
@@ -29,12 +29,16 @@ const sendRegisterOtp = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide name, email, and password' });
     }
 
+    if (typeof email !== 'string' || typeof password !== 'string' || typeof name !== 'string') {
+      return res.status(400).json({ success: false, message: 'Invalid input format' });
+    }
+
     if (password.length < 6) {
       return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    const userExists = await User.findOne({ email: normalizedEmail });
+    const userExists = await User.findOne({ email: String(normalizedEmail) });
     if (userExists) {
       return res.status(400).json({ success: false, message: 'An account with this email already exists' });
     }
@@ -136,6 +140,11 @@ const verifyRegisterOtp = async (req, res) => {
     // Clean up OTP record
     await Otp.deleteMany({ email: normalizedEmail, purpose: 'registration' });
 
+    // Send asynchronous welcome email via pure Node.js Nodemailer
+    sendWelcomeEmail(normalizedEmail, user.name).catch((err) => {
+      console.error('[Welcome Email Background Error]:', err.message);
+    });
+
     res.status(201).json({
       success: true,
       message: 'Account verified and created successfully!',
@@ -163,8 +172,12 @@ const forgotPassword = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide your registered email' });
     }
 
+    if (typeof email !== 'string') {
+      return res.status(400).json({ success: false, message: 'Invalid email format' });
+    }
+
     const normalizedEmail = email.toLowerCase().trim();
-    const user = await User.findOne({ email: normalizedEmail });
+    const user = await User.findOne({ email: String(normalizedEmail) });
 
     if (!user) {
       return res.status(404).json({
@@ -263,7 +276,13 @@ const login = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide email and password' });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ success: false, message: 'Invalid credentials format' });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    // Use exact string query against normalized email, defensive against object query injection
+    const user = await User.findOne({ email: String(cleanEmail) }).select('+password');
     if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
@@ -298,8 +317,16 @@ const register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide name, email and password' });
     }
 
+    if (typeof email !== 'string' || typeof password !== 'string' || typeof name !== 'string') {
+      return res.status(400).json({ success: false, message: 'Invalid input format' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    }
+
     const normalizedEmail = email.toLowerCase().trim();
-    const userExists = await User.findOne({ email: normalizedEmail });
+    const userExists = await User.findOne({ email: String(normalizedEmail) });
     if (userExists) {
       return res.status(400).json({ success: false, message: 'An account with this email already exists' });
     }

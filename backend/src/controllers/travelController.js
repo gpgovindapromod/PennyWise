@@ -1094,7 +1094,23 @@ exports.getUnifiedTransactions = async (req, res, next) => {
 
     filteredList.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    res.json({ success: true, data: filteredList });
+    // Support pagination & limit query to avoid heavy JSON payloads
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.max(1, Math.min(100, parseInt(req.query.limit, 10) || 25));
+    const total = filteredList.length;
+    const startIndex = (page - 1) * limit;
+    const paginatedItems = filteredList.slice(startIndex, startIndex + limit);
+
+    res.json({
+      success: true,
+      data: paginatedItems,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit) || 1
+      }
+    });
   } catch (err) {
     next(err);
   }
