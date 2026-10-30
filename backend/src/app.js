@@ -7,6 +7,9 @@ const { noSqlSanitizer } = require('./middleware/noSqlSanitizer');
 
 const app = express();
 
+// Trust reverse proxy (Render, Heroku, Cloudflare, AWS ALB)
+app.set('trust proxy', 1);
+
 // LAYER 1: Network & Perimeter Security
 app.use(helmet({
   contentSecurityPolicy: false, // Managed per web asset domain
@@ -43,6 +46,7 @@ const apiLimiter = rateLimit({
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
   message: { success: false, message: 'Too many requests from this IP, please try again after 15 minutes.' }
 });
 app.use('/api/', apiLimiter);
@@ -50,7 +54,8 @@ app.use('/api/', apiLimiter);
 // Specific stricter brute-force limiter for Auth routes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 30,
+  max: 60,
+  validate: { xForwardedForHeader: false },
   message: { success: false, message: 'Too many authentication attempts, please try again after 15 minutes.' }
 });
 app.use('/api/auth/login', authLimiter);

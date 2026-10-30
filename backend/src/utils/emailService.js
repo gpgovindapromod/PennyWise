@@ -23,22 +23,24 @@ const getTransporter = () => {
       auth: {
         user: user.trim(),
         pass: pass.trim()
-      }
+      },
+      connectionTimeout: 6000,
+      greetingTimeout: 6000,
+      socketTimeout: 8000
     });
   }
 
-  // Default Gmail SMTP with explicit connection timeout and port
+  // Default Gmail SMTP: Render Free instances block outbound port 465/587 or direct socket connections
+  // We use standard service 'gmail' with a strict 5-second timeout so the API never hangs
   return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // SSL
+    service: 'gmail',
     auth: {
       user: user.trim(),
       pass: pass.trim().replace(/\s+/g, '')
     },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000
+    connectionTimeout: 5000,
+    greetingTimeout: 5000,
+    socketTimeout: 6000
   });
 };
 
