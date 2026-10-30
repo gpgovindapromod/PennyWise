@@ -55,7 +55,8 @@ const getTransactions = async (req, res, next) => {
       .sort(sortOptions)
       .skip(skip)
       .limit(limitNum)
-      .populate('accountId', 'name type');
+      .populate('accountId', 'name type')
+      .lean(); // Return plain JS objects for 3-5x faster serialization
 
     res.json({
       success: true,

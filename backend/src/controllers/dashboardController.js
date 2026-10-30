@@ -15,11 +15,16 @@ const getDashboardSummary = async (req, res, next) => {
     const startOfMonth = new Date(year, monthIndex, 1);
     const endOfMonth = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
 
-    const accounts = await Account.find({ ownerId });
-    const currentBalancePaise = accounts.reduce((acc, a) => acc + (a.balancePaise || 0), 0);
+    const [accounts, monthlyTransactions, budgetDoc, recentTransactions, academicFees] = await Promise.all([
+      Account.find({ ownerId }).lean(),
+      Transaction.find({ ownerId, date: dateFilter }).lean(),
+      MonthlyBudget.findOne({ ownerId, monthKey: currentMonthKey }).lean(),
+      Transaction.find({ ownerId }).sort({ date: -1, createdAt: -1 }).limit(6).lean(),
+      AcademicFee.find({ ownerId }).lean()
+    ]);
 
-    const dateFilter = { $gte: startOfMonth, $lte: endOfMonth };
-    const monthlyTransactions = await Transaction.find({ ownerId, date: dateFilter });
+    const currentBalancePaise = accounts.reduce((acc, a) => acc + (a.balancePaise || 0), 0);
+    const budget = budgetDoc || { limitPaise: 0, monthKey: currentMonthKey };
 
     let incomeThisMonthPaise = 0;
     let expensesThisMonthPaise = 0;
@@ -61,17 +66,9 @@ const getDashboardSummary = async (req, res, next) => {
     if (expensesThisMonthPaise < 0) expensesThisMonthPaise = 0;
     if (academicFeesPaidThisMonthPaise < 0) academicFeesPaidThisMonthPaise = 0;
 
-    let budget = await MonthlyBudget.findOne({ ownerId, monthKey: currentMonthKey });
-    if (!budget) {
-      budget = { limitPaise: 0, monthKey: currentMonthKey };
-    }
     const goalLimitPaise = budget.limitPaise;
     const remainingLimitPaise = goalLimitPaise - expensesThisMonthPaise;
     const percentUsed = goalLimitPaise > 0 ? (expensesThisMonthPaise / goalLimitPaise) * 100 : 0;
-
-    const recentTransactions = await Transaction.find({ ownerId })
-      .sort({ date: -1, createdAt: -1 })
-      .limit(6);
 
     const categoryTotals = {};
     monthlyTransactions
@@ -86,7 +83,7 @@ const getDashboardSummary = async (req, res, next) => {
         }
       });
 
-    const academicFees = await AcademicFee.find({ ownerId });
+
     const totalObligationsPaise = academicFees.reduce((sum, f) => sum + f.totalAmountPaise, 0);
     const totalFeePaidPaise = academicFees.reduce((sum, f) => {
       const paid = f.installments.reduce((iSum, inst) => iSum + inst.amountPaise, 0);

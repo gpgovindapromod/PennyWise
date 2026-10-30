@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const config = require('./config/env');
 const { noSqlSanitizer } = require('./middleware/noSqlSanitizer');
@@ -9,6 +10,12 @@ const app = express();
 
 // Trust reverse proxy (Render, Heroku, Cloudflare, AWS ALB)
 app.set('trust proxy', 1);
+
+// High-speed gzip / deflate response compression (slashes JSON payload transfer sizes by 70-80%)
+app.use(compression({
+  threshold: 1024, // Only compress responses over 1KB
+  level: 6
+}));
 
 // LAYER 1: Network & Perimeter Security
 app.use(helmet({
