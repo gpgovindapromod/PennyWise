@@ -984,6 +984,7 @@ h1, h2, h3, .serif-font {
   font-weight: 800;
   background: linear-gradient(135deg, #FAF7F2 30%, #E8DFD5 65%, #F87171 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   letter-spacing: -0.03em;
   margin-bottom: 4px;
