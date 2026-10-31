@@ -14,7 +14,8 @@ import {
   ChevronRight,
   Menu,
   X,
-  Sparkles
+  Sparkles,
+  Flame
 } from 'lucide-react';
 
 export default function Sidebar({ onOpenAddExpense }) {
@@ -97,21 +98,21 @@ export default function Sidebar({ onOpenAddExpense }) {
                 width: 34,
                 height: 34,
                 borderRadius: 8,
-                backgroundColor: '#E11D48',
+                backgroundColor: 'var(--color-burgundy)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 0 12px rgba(225, 29, 72, 0.5)'
+                boxShadow: '0 0 12px var(--color-burgundy-glow)'
               }}>
-                <Flame size={20} color="#FFFFFF" />
+                <Sparkles size={19} color="#FAF7F2" />
               </div>
               {!isEffectiveCollapsed && (
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: 17, fontWeight: 900, color: '#FFFFFF', letterSpacing: '-0.02em', textTransform: 'uppercase' }}>
-                    PENNY<span style={{ color: '#FB7185' }}>WISE</span>
+                  <span style={{ fontSize: 17, fontWeight: 900, color: '#FAF7F2', letterSpacing: '-0.02em', textTransform: 'uppercase' }}>
+                    PENNY<span style={{ color: '#E08B9B' }}>WISE</span>
                   </span>
-                  <span style={{ fontSize: 9, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.1em' }}>
-                    GT PERFORMANCE
+                  <span style={{ fontSize: 9, fontWeight: 700, color: '#CBB9B0', letterSpacing: '0.1em' }}>
+                    FINANCE & MEMORIES
                   </span>
                 </div>
               )}
