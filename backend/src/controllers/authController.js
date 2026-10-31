@@ -410,6 +410,8 @@ const updateProfile = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
+    if (name && typeof name === 'string') user.name = name.trim();
+    if (typeof college === 'string') user.college = college.trim();
     if (typeof req.body.avatar === 'string') user.avatar = req.body.avatar;
 
     await user.save();

@@ -18,15 +18,22 @@ import {
   UploadCloud, 
   Image as ImageIcon,
   Sparkles,
-  Calendar,
-  Database,
+  Lock,
+  Eye,
+  EyeOff,
   Smartphone,
-  Download
+  Download,
+  AlertCircle,
+  KeyRound,
+  RotateCcw
 } from 'lucide-react';
 
 export default function Settings() {
   const { user, logout, updateUser } = useAuth();
   const [msg, setMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  
+  // Profile edit state
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(user?.name || '');
   const [college, setCollege] = useState(user?.college || '');
@@ -35,6 +42,17 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef(null);
 
+  // Password change state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [passSaving, setPassSaving] = useState(false);
+  const [passMsg, setPassMsg] = useState('');
+  const [passError, setPassError] = useState('');
+
+  // Handle demo data reset
   const handleResetData = async () => {
     if (window.confirm('Are you sure you want to clear demo transactions and start fresh with ₹0 balance?')) {
       try {
@@ -89,14 +107,15 @@ export default function Settings() {
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     setSaving(true);
+    setErrorMsg('');
     try {
       const res = await API.put('/auth/profile', { name, college, avatar });
       updateUser(res.data.data);
       setIsEditing(false);
-      setMsg('Profile & Picture updated successfully in live database!');
+      setMsg('Profile & Picture updated successfully!');
       setTimeout(() => setMsg(''), 3500);
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update profile');
+      setErrorMsg(err.response?.data?.message || 'Failed to update profile');
     } finally {
       setSaving(false);
     }
@@ -105,6 +124,42 @@ export default function Settings() {
   const handleRemovePhoto = () => {
     setAvatar('');
     setAvatarPreview('');
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPassError('');
+    setPassMsg('');
+
+    if (newPassword.length < 6) {
+      setPassError('New password must be at least 6 characters');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPassError('New passwords do not match');
+      return;
+    }
+
+    setPassSaving(true);
+    try {
+      const res = await API.put('/auth/change-password', {
+        currentPassword,
+        newPassword
+      });
+      setPassMsg(res.data.message || 'Password changed successfully!');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => {
+        setShowPasswordModal(false);
+        setPassMsg('');
+      }, 2000);
+    } catch (err) {
+      setPassError(err.response?.data?.message || 'Failed to change password');
+    } finally {
+      setPassSaving(false);
+    }
   };
 
   const getInitials = (n) => {
@@ -127,9 +182,8 @@ export default function Settings() {
         style={{ display: 'none' }}
       />
 
-      {/* 1. Perfect Hero Profile Card (Responsive: Dark App Card on Mobile, Panoramic Card on Desktop) */}
+      {/* 1. Profile Hero Card */}
       <div className="profile-hero-card">
-        {/* Glow orb */}
         <div className="profile-hero-glow" />
 
         <div className="profile-hero-content">
@@ -147,32 +201,31 @@ export default function Settings() {
               </div>
             )}
 
-            {/* Quick Upload Camera Trigger Button */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               title="Upload Profile Picture"
               className="profile-camera-btn"
             >
-              <Camera size={14} />
+              <Camera size={13} />
             </button>
           </div>
 
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <h2 className="profile-user-name">
-                {user?.name || 'Active Student'}
+                {user?.name || 'Active Member'}
               </h2>
               <span className="profile-status-badge">
-                Student Pro
+                {user?.role === 'travel_admin' ? 'Travel Admin' : 'Active Plan'}
               </span>
             </div>
 
             <p className="profile-subtext">
-              {user?.email || 'student@college.edu'}
+              {user?.email || 'user@example.com'}
             </p>
             <p className="profile-subtext" style={{ opacity: 0.85, marginTop: 2 }}>
-              {user?.college || 'Engineering Institute'}
+              {user?.college || user?.companyName || 'Finance Hub'}
             </p>
           </div>
 
@@ -196,61 +249,79 @@ export default function Settings() {
 
       {msg && (
         <div style={{
-          padding: '12px 16px',
-          background: '#ECFDF5',
-          color: '#065F46',
-          borderRadius: 14,
-          fontSize: 13,
+          padding: '10px 14px',
+          background: '#DCFCE7',
+          color: '#15803D',
+          borderRadius: 10,
+          fontSize: 12.5,
           fontWeight: 600,
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          marginBottom: 16,
-          border: '1px solid #A7F3D0'
+          marginBottom: 14,
+          border: '1px solid #BBF7D0'
         }}>
           <Check size={16} /> {msg}
         </div>
       )}
 
-      {/* 2. Profile Edit Form (Inline modal/card when editing) */}
+      {errorMsg && (
+        <div style={{
+          padding: '10px 14px',
+          background: '#FEE2E2',
+          color: '#991B1B',
+          borderRadius: 10,
+          fontSize: 12.5,
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          marginBottom: 14,
+          border: '1px solid #FECDD3'
+        }}>
+          <AlertCircle size={16} /> {errorMsg}
+        </div>
+      )}
+
+      {/* 2. Profile Edit Form (Inline card when editing) */}
       {isEditing && (
-        <form onSubmit={handleSaveProfile} className="profile-section-card" style={{ marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <span style={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>
+        <form onSubmit={handleSaveProfile} className="profile-section-card" style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--color-chocolate-dark)' }}>
               Edit Profile & Photo
             </span>
-            <span style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>
+            <span style={{ fontSize: 11, color: 'var(--color-chocolate-light)', fontWeight: 600 }}>
               Live Database Update
             </span>
           </div>
 
-          {/* Photo Upload Box inside form */}
+          {/* Photo Upload Box */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 14,
-            padding: '12px 14px',
-            borderRadius: 14,
-            background: '#F8FAFC',
-            border: '1px dashed #CBD5E1',
-            marginBottom: 16,
+            gap: 12,
+            padding: '10px 12px',
+            borderRadius: 10,
+            background: 'var(--color-cream-surface)',
+            border: '1px dashed var(--color-border)',
+            marginBottom: 14,
             flexWrap: 'wrap'
           }}>
             {avatarPreview ? (
               <img
                 src={avatarPreview}
                 alt="Avatar preview"
-                style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: '2px solid #E11D48' }}
+                style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--color-burgundy)' }}
               />
             ) : (
-              <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B' }}>
-                <ImageIcon size={22} />
+              <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B' }}>
+                <ImageIcon size={20} />
               </div>
             )}
 
-            <div style={{ flex: 1, minWidth: 140 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#0F172A' }}>Profile Picture</div>
-              <div style={{ fontSize: 11, color: '#64748B' }}>PNG, JPG or WebP (max 4MB)</div>
+            <div style={{ flex: 1, minWidth: 120 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-chocolate-dark)' }}>Profile Picture</div>
+              <div style={{ fontSize: 10.5, color: 'var(--color-chocolate-light)' }}>PNG, JPG or WebP (max 4MB)</div>
             </div>
 
             <div style={{ display: 'flex', gap: 6 }}>
@@ -258,16 +329,16 @@ export default function Settings() {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="btn btn-secondary"
-                style={{ padding: '7px 12px', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}
+                style={{ padding: '6px 10px', fontSize: 11.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}
               >
-                <UploadCloud size={14} /> Upload
+                <UploadCloud size={13} /> Upload
               </button>
               {avatarPreview && (
                 <button
                   type="button"
                   onClick={handleRemovePhoto}
                   className="btn btn-secondary"
-                  style={{ padding: '7px 10px', fontSize: 12, fontWeight: 700, color: '#E11D48', borderColor: '#FECDD3' }}
+                  style={{ padding: '6px 10px', fontSize: 11.5, fontWeight: 700, color: 'var(--color-burgundy)', borderColor: '#FECDD3' }}
                 >
                   Remove
                 </button>
@@ -275,8 +346,8 @@ export default function Settings() {
             </div>
           </div>
           
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#64748B', marginBottom: 4 }}>
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: 'var(--color-chocolate-light)', marginBottom: 4 }}>
               Full Name
             </label>
             <input
@@ -285,13 +356,13 @@ export default function Settings() {
               onChange={(e) => setName(e.target.value)}
               required
               className="form-input"
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid #CBD5E1', fontSize: 14, fontWeight: 600, boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--color-border)', fontSize: 13.5, fontWeight: 600, boxSizing: 'border-box' }}
             />
           </div>
 
-          <div style={{ marginBottom: 18 }}>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#64748B', marginBottom: 4 }}>
-              College / University
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: 'var(--color-chocolate-light)', marginBottom: 4 }}>
+              Organization / College
             </label>
             <input
               type="text"
@@ -299,7 +370,7 @@ export default function Settings() {
               onChange={(e) => setCollege(e.target.value)}
               placeholder="e.g. CET Trivandrum"
               className="form-input"
-              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1.5px solid #CBD5E1', fontSize: 14, fontWeight: 600, boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--color-border)', fontSize: 13.5, fontWeight: 600, boxSizing: 'border-box' }}
             />
           </div>
 
@@ -307,29 +378,29 @@ export default function Settings() {
             type="submit"
             disabled={saving}
             className="btn btn-primary"
-            style={{ width: '100%', padding: '12px', borderRadius: 12, fontSize: 14, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}
+            style={{ width: '100%', padding: '10px', borderRadius: 10, fontSize: 13.5, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}
           >
-            <Save size={16} /> {saving ? 'Saving Changes...' : 'Save Profile & Photo'}
+            <Save size={15} /> {saving ? 'Saving...' : 'Save Profile & Photo'}
           </button>
         </form>
       )}
 
       {/* 3. Account Details Section */}
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 8px 8px 8px' }}>
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-chocolate-light)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 4px 6px 4px' }}>
           Account Details
         </div>
 
         <div className="profile-section-card" style={{ padding: 0, overflow: 'hidden' }}>
-          {/* Item 1: Name */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid #F1F5F9' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#FFF1F2', color: '#E11D48', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <User size={18} />
+          {/* Full Name */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid var(--color-border-subtle)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--color-baby-pink)', color: 'var(--color-burgundy)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <User size={16} />
               </div>
               <div>
-                <div style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>Full Name</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>{user?.name || 'Active Student'}</div>
+                <div style={{ fontSize: 10.5, color: 'var(--color-chocolate-light)', fontWeight: 600 }}>Full Name</div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--color-chocolate-dark)' }}>{user?.name || 'Active Member'}</div>
               </div>
             </div>
             <button
@@ -338,37 +409,37 @@ export default function Settings() {
                 setCollege(user?.college || '');
                 setIsEditing(true);
               }}
-              style={{ background: 'none', border: 'none', color: '#E11D48', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+              style={{ background: 'none', border: 'none', color: 'var(--color-burgundy)', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}
             >
               Change
             </button>
           </div>
 
-          {/* Item 2: Email */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid #F1F5F9' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#EFF6FF', color: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Mail size={18} />
+          {/* Email */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid var(--color-border-subtle)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Mail size={16} />
               </div>
               <div>
-                <div style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>Email Address</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>{user?.email || 'student@college.edu'}</div>
+                <div style={{ fontSize: 10.5, color: 'var(--color-chocolate-light)', fontWeight: 600 }}>Email Address</div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--color-chocolate-dark)' }}>{user?.email || 'user@example.com'}</div>
               </div>
             </div>
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#059669', background: '#ECFDF5', padding: '3px 8px', borderRadius: 6 }}>
+            <span style={{ fontSize: 10.5, fontWeight: 700, color: '#15803D', background: '#DCFCE7', padding: '2px 7px', borderRadius: 5 }}>
               Verified
             </span>
           </div>
 
-          {/* Item 3: College */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid #F1F5F9' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F5F3FF', color: '#8B5CF6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Building2 size={18} />
+          {/* College / Organization */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid var(--color-border-subtle)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: '#F5F3FF', color: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Building2 size={16} />
               </div>
               <div>
-                <div style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>College / University</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>{user?.college || 'Engineering Institute'}</div>
+                <div style={{ fontSize: 10.5, color: 'var(--color-chocolate-light)', fontWeight: 600 }}>Organization / College</div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--color-chocolate-dark)' }}>{user?.college || user?.companyName || 'Finance Hub'}</div>
               </div>
             </div>
             <button
@@ -377,81 +448,112 @@ export default function Settings() {
                 setCollege(user?.college || '');
                 setIsEditing(true);
               }}
-              style={{ background: 'none', border: 'none', color: '#E11D48', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+              style={{ background: 'none', border: 'none', color: 'var(--color-burgundy)', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}
             >
               Change
             </button>
           </div>
 
-          {/* Item 4: Currency */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#ECFDF5', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <IndianRupee size={18} />
+          {/* Currency */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: '#DCFCE7', color: '#15803D', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <IndianRupee size={16} />
               </div>
               <div>
-                <div style={{ fontSize: 11, color: '#64748B', fontWeight: 600 }}>Currency Ledger</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>Indian Rupee (₹ INR)</div>
+                <div style={{ fontSize: 10.5, color: 'var(--color-chocolate-light)', fontWeight: 600 }}>Currency Ledger</div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--color-chocolate-dark)' }}>Indian Rupee (₹ INR)</div>
               </div>
             </div>
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#10B981', background: '#ECFDF5', padding: '3px 8px', borderRadius: 6 }}>
-              Integer Paise
+            <span style={{ fontSize: 10.5, fontWeight: 700, color: '#15803D', background: '#DCFCE7', padding: '2px 7px', borderRadius: 5 }}>
+              Active
             </span>
           </div>
         </div>
       </div>
 
-      {/* 4. Security & Cloud Data Actions */}
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 8px 8px 8px' }}>
-          Security & Database
+      {/* 4. Security & Web Access Control */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-chocolate-light)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 4px 6px 4px' }}>
+          Security & Web Control
         </div>
 
         <div className="profile-section-card" style={{ padding: 0, overflow: 'hidden' }}>
-          {/* PWA App Install Row */}
+          {/* Change Password Trigger */}
+          <div 
+            onClick={() => {
+              setShowPasswordModal(true);
+              setPassError('');
+              setPassMsg('');
+            }}
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between', 
+              padding: '12px 14px', 
+              borderBottom: '1px solid var(--color-border-subtle)',
+              cursor: 'pointer' 
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: '#FEF3C7', color: '#B45309', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <KeyRound size={16} />
+              </div>
+              <div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--color-chocolate-dark)' }}>Change Password</div>
+                <div style={{ fontSize: 11, color: 'var(--color-chocolate-light)' }}>Update your web app login credentials</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11.5, fontWeight: 700, color: 'var(--color-burgundy)' }}>
+              Update <ChevronRight size={15} />
+            </div>
+          </div>
+
+          {/* Install PWA */}
           <div 
             onClick={() => {
               if (window.deferredPwaPrompt) {
                 window.deferredPwaPrompt.prompt();
               } else {
-                alert('PennyWise is installed or can be installed via your browser menu (Add to Home Screen).');
+                alert('PennyWise is installed or can be added to your Home Screen via browser menu.');
               }
             }}
             style={{ 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'space-between', 
-              padding: '14px 16px', 
-              borderBottom: '1px solid #F1F5F9',
+              padding: '12px 14px', 
+              borderBottom: '1px solid var(--color-border-subtle)',
               cursor: 'pointer' 
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Smartphone size={18} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: '#EFF6FF', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Smartphone size={16} />
               </div>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>Install PennyWise App</div>
-                <div style={{ fontSize: 12, color: '#64748B' }}>Add to Home Screen for native experience</div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--color-chocolate-dark)' }}>Install Web App (PWA)</div>
+                <div style={{ fontSize: 11, color: 'var(--color-chocolate-light)' }}>Add to device home screen for fast offline launch</div>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#2563EB' }}>
-              <Download size={14} /> Install
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11.5, fontWeight: 700, color: '#2563EB' }}>
+              <Download size={13} /> Install
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid #F1F5F9' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F1F5F9', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ShieldCheck size={18} />
+          {/* Cloud Atlas Security */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '1px solid var(--color-border-subtle)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--color-cream-surface)', color: 'var(--color-chocolate-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ShieldCheck size={16} />
               </div>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>Atlas Cloud Security</div>
-                <div style={{ fontSize: 12, color: '#64748B' }}>Owner-scoped MongoDB queries & HSTS</div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--color-chocolate-dark)' }}>Cloud Data Encryption</div>
+                <div style={{ fontSize: 11, color: 'var(--color-chocolate-light)' }}>Owner-isolated MongoDB Atlas database</div>
               </div>
             </div>
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#059669', background: '#ECFDF5', padding: '3px 8px', borderRadius: 6 }}>
-              Active
+            <span style={{ fontSize: 10.5, fontWeight: 700, color: '#15803D', background: '#DCFCE7', padding: '2px 7px', borderRadius: 5 }}>
+              Secured
             </span>
           </div>
 
@@ -462,21 +564,20 @@ export default function Settings() {
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'space-between', 
-              padding: '14px 16px', 
-              cursor: 'pointer',
-              transition: 'background-color 0.15s ease'
+              padding: '12px 14px', 
+              cursor: 'pointer'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#FFF1F2', color: '#E11D48', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Trash2 size={18} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--color-baby-pink)', color: 'var(--color-burgundy)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Trash2 size={16} />
               </div>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#E11D48' }}>Clear Demo Data</div>
-                <div style={{ fontSize: 12, color: '#64748B' }}>Reset records and restart with ₹0 balance</div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--color-burgundy)' }}>Reset Account Ledger</div>
+                <div style={{ fontSize: 11, color: 'var(--color-chocolate-light)' }}>Clear transaction history and start at ₹0</div>
               </div>
             </div>
-            <ChevronRight size={18} color="#94A3B8" />
+            <ChevronRight size={16} color="var(--color-chocolate-muted)" />
           </div>
         </div>
       </div>
@@ -486,13 +587,122 @@ export default function Settings() {
         onClick={logout}
         className="profile-logout-btn"
       >
-        <LogOut size={18} /> Sign Out
+        <LogOut size={16} /> Sign Out of PennyWise
       </button>
 
       {/* App Version */}
-      <div style={{ textAlign: 'center', marginTop: 18, fontSize: 12, color: '#94A3B8', fontWeight: 500 }}>
-        PennyWise GT v1.0.0 · Live MongoDB Atlas
+      <div style={{ textAlign: 'center', marginTop: 14, fontSize: 11, color: 'var(--color-chocolate-muted)', fontWeight: 500 }}>
+        PennyWise Web App v1.2.0 · Live Atlas MongoDB
       </div>
+
+      {/* Modal: Change Password */}
+      {showPasswordModal && (
+        <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420, padding: '20px 18px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <KeyRound size={18} color="var(--color-burgundy)" />
+                <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-chocolate-dark)', margin: 0 }}>
+                  Change Password
+                </h3>
+              </div>
+              <button 
+                onClick={() => setShowPasswordModal(false)}
+                className="modal-close-btn"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {passMsg && (
+              <div style={{ padding: '8px 12px', background: '#DCFCE7', color: '#15803D', borderRadius: 8, fontSize: 12, fontWeight: 600, marginBottom: 12 }}>
+                {passMsg}
+              </div>
+            )}
+
+            {passError && (
+              <div style={{ padding: '8px 12px', background: '#FEE2E2', color: '#991B1B', borderRadius: 8, fontSize: 12, fontWeight: 600, marginBottom: 12 }}>
+                {passError}
+              </div>
+            )}
+
+            <form onSubmit={handleChangePassword}>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: 'var(--color-chocolate-light)', marginBottom: 4 }}>
+                  Current Password
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    required
+                    placeholder="Enter current password"
+                    className="form-input"
+                    style={{ paddingRight: 36, fontSize: 13 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
+                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748B', cursor: 'pointer' }}
+                  >
+                    {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: 'var(--color-chocolate-light)', marginBottom: 4 }}>
+                  New Password (min 6 characters)
+                </label>
+                <input
+                  type={showPass ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  placeholder="Enter new password"
+                  className="form-input"
+                  style={{ fontSize: 13 }}
+                />
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: 'var(--color-chocolate-light)', marginBottom: 4 }}>
+                  Confirm New Password
+                </label>
+                <input
+                  type={showPass ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  placeholder="Re-enter new password"
+                  className="form-input"
+                  style={{ fontSize: 13 }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                  className="btn btn-secondary"
+                  style={{ flex: 1, padding: '9px', fontSize: 13 }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={passSaving}
+                  className="btn btn-primary"
+                  style={{ flex: 1.5, padding: '9px', fontSize: 13, fontWeight: 700 }}
+                >
+                  {passSaving ? 'Updating...' : 'Update Password'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
