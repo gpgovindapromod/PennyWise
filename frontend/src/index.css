@@ -580,12 +580,6 @@ h1, h2, h3, .serif-font {
     margin-bottom: 10px !important;
   }
 
-  @media (max-width: 480px) {
-    div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))'"] {
-      grid-template-columns: repeat(3, 1fr) !important;
-    }
-  }
-
   /* Form and grid wrappers on mobile: collapse cleanly */
   .grid-responsive-2,
   form[style*="gridTemplateColumns"],
