@@ -1,15 +1,15 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Gauge, Receipt, Plus, GraduationCap, Settings, Target, User } from 'lucide-react';
+import { Compass, Receipt, Plus, UtensilsCrossed, User } from 'lucide-react';
 
 export default function MobileBottomNav({ onOpenAddExpense }) {
   const location = useLocation();
 
   const navItems = [
-    { path: '/', label: 'Dashboard', icon: Gauge },
-    { path: '/transactions', label: 'History', icon: Receipt },
+    { path: '/', label: 'Overview', icon: Compass },
+    { path: '/transactions', label: 'Ledger', icon: Receipt },
     { isFab: true },
-    { path: '/academics', label: 'Academics', icon: GraduationCap },
+    { path: '/academics', label: 'Academics', icon: UtensilsCrossed },
     { path: '/settings', label: 'Profile', icon: User },
   ];
 

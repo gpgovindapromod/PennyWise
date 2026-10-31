@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
-  Gauge, 
+  Compass, 
   Receipt, 
   GraduationCap, 
   Target, 
@@ -14,7 +14,7 @@ import {
   ChevronRight,
   Menu,
   X,
-  Flame
+  Sparkles
 } from 'lucide-react';
 
 export default function Sidebar({ onOpenAddExpense }) {
@@ -24,11 +24,11 @@ export default function Sidebar({ onOpenAddExpense }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = [
-    { path: '/', label: 'Dashboard', icon: Gauge },
-    { path: '/transactions', label: 'Transactions', icon: Receipt },
-    { path: '/academics', label: 'Academic Expenses', icon: GraduationCap },
+    { path: '/', label: 'Overview', icon: Compass },
+    { path: '/transactions', label: 'Cash & Expenses', icon: Receipt },
+    { path: '/academics', label: 'Study & Academics', icon: GraduationCap },
     { path: '/goals', label: 'Monthly Budget', icon: Target },
-    { path: '/reports', label: 'Analytics & Reports', icon: BarChart2 },
+    { path: '/reports', label: 'Memories & Insights', icon: BarChart2 },
     { path: '/settings', label: 'Profile & Settings', icon: Settings },
   ];
 
@@ -42,13 +42,13 @@ export default function Sidebar({ onOpenAddExpense }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button 
             onClick={() => setMobileOpen(!mobileOpen)}
-            style={{ background: 'none', border: 'none', color: '#F0F6FC', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}
+            style={{ background: 'none', border: 'none', color: '#FAF7F2', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}
             aria-label="Toggle navigation menu"
           >
             {mobileOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Flame size={18} color="#E08B9B" />
+            <Sparkles size={18} color="#D97706" />
             <span style={{ fontSize: 16, fontWeight: 900, color: '#FAF7F2', letterSpacing: '-0.02em', textTransform: 'uppercase' }}>
               PENNY<span style={{ color: '#E08B9B' }}>WISE</span>
             </span>

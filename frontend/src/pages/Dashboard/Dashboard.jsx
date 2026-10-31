@@ -143,12 +143,12 @@ export default function Dashboard({ onOpenAddExpense }) {
               cursor: 'pointer'
             }}
           >
-            <PlusCircle size={16} /> Add Expense / Fuel
+            <PlusCircle size={16} /> Add Expense / Travel
           </button>
         </div>
       </div>
 
-      {/* 2. Automotive Hero Banner with Sports Car Visual */}
+      {/* 2. Warm Lifestyle & Financial Horizon Banner */}
       <div
         className="card cockpit-hero-card"
         style={{
@@ -157,33 +157,16 @@ export default function Dashboard({ onOpenAddExpense }) {
           borderRadius: 20,
           padding: '24px',
           marginBottom: 20,
-          backgroundColor: '#0D1117',
-          color: '#FFFFFF',
-          border: '1px solid #21262D',
-          boxShadow: '0 8px 30px rgba(13, 17, 23, 0.4)'
+          backgroundColor: 'var(--color-chocolate-dark)',
+          color: '#FAF7F2',
+          border: '1px solid var(--color-chocolate-border)',
+          boxShadow: '0 8px 30px rgba(28, 16, 10, 0.35)'
         }}
       >
-        {/* Background Car Image Overlay */}
-        <div
-          className="hero-car-overlay"
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            width: '55%',
-            backgroundImage: `linear-gradient(to right, #0D1117 15%, rgba(13,17,23,0.4) 60%, rgba(13,17,23,0.1) 100%), url('/sports-car-hero.jpg')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            opacity: 0.92,
-            pointerEvents: 'none'
-          }}
-        />
-
-        <div className="hero-content-box" style={{ position: 'relative', zIndex: 1, maxWidth: '65%' }}>
+        <div className="hero-content-box" style={{ position: 'relative', zIndex: 1, maxWidth: '100%' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 800, color: '#FB7185', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-              CURRENT TOTAL BALANCE
+            <span style={{ fontSize: 11, fontWeight: 800, color: '#E08B9B', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+              SAVINGS & TOTAL BALANCE
             </span>
           </div>
 
@@ -193,7 +176,7 @@ export default function Dashboard({ onOpenAddExpense }) {
             fontFamily: 'var(--font-heading)',
             letterSpacing: '-0.03em',
             lineHeight: 1.1,
-            color: '#FFFFFF',
+            color: '#FAF7F2',
             marginBottom: 16
           }}>
             {formatRupees(currentBalancePaise)}
@@ -205,8 +188,8 @@ export default function Dashboard({ onOpenAddExpense }) {
                 width: 28,
                 height: 28,
                 borderRadius: 6,
-                backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                color: '#10B981',
+                backgroundColor: 'rgba(21, 128, 61, 0.25)',
+                color: '#34D399',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
@@ -214,20 +197,20 @@ export default function Dashboard({ onOpenAddExpense }) {
                 <TrendingUp size={16} />
               </div>
               <div>
-                <div style={{ fontSize: 10, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Income / Added</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#10B981' }}>+{formatRupees(incomeThisMonthPaise)}</div>
+                <div style={{ fontSize: 10, color: '#CBB9B0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Inflow / Received</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#34D399' }}>+{formatRupees(incomeThisMonthPaise)}</div>
               </div>
             </div>
 
-            <div style={{ width: 1, height: 28, backgroundColor: '#30363D' }} />
+            <div style={{ width: 1, height: 28, backgroundColor: 'var(--color-chocolate-border)' }} />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{
                 width: 28,
                 height: 28,
                 borderRadius: 6,
-                backgroundColor: 'rgba(225, 29, 72, 0.15)',
-                color: '#E11D48',
+                backgroundColor: 'rgba(225, 29, 72, 0.22)',
+                color: '#F87171',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
@@ -235,8 +218,8 @@ export default function Dashboard({ onOpenAddExpense }) {
                 <TrendingDown size={16} />
               </div>
               <div>
-                <div style={{ fontSize: 10, color: '#8B949E', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Monthly Expenses</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#F43F5E' }}>−{formatRupees(expensesThisMonthPaise)}</div>
+                <div style={{ fontSize: 10, color: '#CBB9B0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Spent / Outflow</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#FCA5A5' }}>−{formatRupees(expensesThisMonthPaise)}</div>
               </div>
             </div>
           </div>
