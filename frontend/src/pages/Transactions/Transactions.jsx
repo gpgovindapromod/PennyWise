@@ -265,19 +265,19 @@ export default function Transactions({ onOpenAddExpense, onEditTransaction }) {
               textTransform: 'uppercase',
               padding: '2px 8px',
               borderRadius: 4,
-              backgroundColor: '#FFE4E6',
-              color: '#E11D48'
+              backgroundColor: 'var(--color-baby-pink)',
+              color: 'var(--color-burgundy)'
             }}>
               <Receipt size={12} /> GENERAL LEDGER
             </span>
-            <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>
+            <span style={{ fontSize: 12, color: 'var(--color-chocolate-light)', fontWeight: 600 }}>
               {totalCount} Total Entries
             </span>
           </div>
-          <h1 style={{ fontSize: 28, fontWeight: 900, color: '#0F172A', letterSpacing: '-0.02em', margin: 0 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 900, color: 'var(--color-chocolate-dark)', letterSpacing: '-0.02em', margin: 0 }}>
             Transaction History
           </h1>
-          <p style={{ fontSize: 13, color: '#64748B', margin: '4px 0 0 0' }}>
+          <p style={{ fontSize: 13, color: 'var(--color-chocolate-light)', margin: '4px 0 0 0' }}>
             Search, filter, and inspect your full cash-flow records with continuous infinite stream
           </p>
         </div>

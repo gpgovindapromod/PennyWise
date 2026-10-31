@@ -113,16 +113,16 @@ export default function Dashboard({ onOpenAddExpense }) {
               textTransform: 'uppercase',
               padding: '3px 8px',
               borderRadius: 4,
-              backgroundColor: '#9F1239',
-              color: '#FFFFFF'
+              backgroundColor: '#800020',
+              color: '#FAF7F2'
             }}>
               <Zap size={11} /> MONTHLY OVERVIEW
             </span>
-            <span style={{ fontSize: 13, color: '#334155', fontWeight: 700 }}>
+            <span style={{ fontSize: 13, color: '#6E5346', fontWeight: 700 }}>
               {currentMonthName}
             </span>
           </div>
-          <h1 style={{ fontSize: 28, fontWeight: 900, color: '#0F172A', letterSpacing: '-0.02em', margin: 0 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 900, color: 'var(--color-chocolate-dark)', letterSpacing: '-0.02em', margin: 0 }}>
             Financial Dashboard
           </h1>
         </div>

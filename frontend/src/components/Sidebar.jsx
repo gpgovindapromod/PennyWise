@@ -48,9 +48,9 @@ export default function Sidebar({ onOpenAddExpense }) {
             {mobileOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Flame size={18} color="#FB7185" />
-            <span style={{ fontSize: 16, fontWeight: 900, color: '#FFFFFF', letterSpacing: '-0.02em', textTransform: 'uppercase' }}>
-              PENNY<span style={{ color: '#FB7185' }}>WISE</span>
+            <Flame size={18} color="#E08B9B" />
+            <span style={{ fontSize: 16, fontWeight: 900, color: '#FAF7F2', letterSpacing: '-0.02em', textTransform: 'uppercase' }}>
+              PENNY<span style={{ color: '#E08B9B' }}>WISE</span>
             </span>
           </div>
         </div>

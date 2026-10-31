@@ -170,19 +170,19 @@ export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
               textTransform: 'uppercase',
               padding: '2px 8px',
               borderRadius: 4,
-              backgroundColor: '#FFE4E6',
-              color: '#E11D48'
+              backgroundColor: 'var(--color-baby-pink)',
+              color: 'var(--color-burgundy)'
             }}>
               <GraduationCap size={12} /> ACADEMY & TUITION
             </span>
-            <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>
+            <span style={{ fontSize: 12, color: 'var(--color-chocolate-light)', fontWeight: 600 }}>
               Term 2026-2027
             </span>
           </div>
-          <h1 style={{ fontSize: 28, fontWeight: 900, color: '#0F172A', letterSpacing: '-0.02em', margin: 0 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 900, color: 'var(--color-chocolate-dark)', letterSpacing: '-0.02em', margin: 0 }}>
             Academic Expenses
           </h1>
-          <p style={{ fontSize: 13, color: '#64748B', margin: '4px 0 0 0' }}>
+          <p style={{ fontSize: 13, color: 'var(--color-chocolate-light)', margin: '4px 0 0 0' }}>
             College tuition, exam fees, textbooks, notes, and lab expenses organized in one hub
           </p>
         </div>
