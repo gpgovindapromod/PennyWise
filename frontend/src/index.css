@@ -733,29 +733,37 @@ h3,
     /* Remove car overlay on small mobile screens to maximize legibility and space */
   }
 
-  /* Clean, Luxury Warm Mobile Bottom Navigation Bar */
+  /* Stitch Nordic Floating Dock Pill */
   .mobile-floating-dock {
     display: flex !important;
     position: fixed;
-    bottom: 0;
+    bottom: 12px;
     left: 0;
     right: 0;
     z-index: 999;
-    background: var(--color-chocolate-dark);
-    border-top: 1px solid var(--color-chocolate-border);
-    padding: 2px 8px;
-    padding-bottom: max(4px, env(safe-area-inset-bottom));
-    box-shadow: 0 -3px 12px rgba(28, 16, 10, 0.4);
+    background: transparent;
+    border-top: none;
+    padding: 0 16px;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: none;
+    pointer-events: none;
   }
 
   .mobile-dock-inner {
-    width: 100%;
-    max-width: 500px;
+    pointer-events: auto;
+    width: auto;
+    min-width: 280px;
+    max-width: 380px;
     margin: 0 auto;
-    height: 44px;
+    height: 48px;
     display: flex;
     align-items: center;
     justify-content: space-around;
+    background: #111215;
+    border: 1px solid #2C2F38;
+    border-radius: 9999px;
+    padding: 0 10px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.05);
   }
 
   .dock-item {
@@ -763,20 +771,21 @@ h3,
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: #CBB9B0;
+    color: #8E92A0;
     text-decoration: none;
-    padding: 2px 4px;
-    border-radius: 6px;
+    padding: 4px 10px;
+    border-radius: 9999px;
     flex: 1;
-    transition: color 0.15s ease;
+    transition: all 0.15s ease;
   }
 
   .dock-item:active {
     color: #FFFFFF;
+    transform: scale(0.92);
   }
 
   .dock-item.active {
-    color: #F87171;
+    color: #34D399;
   }
 
   .dock-icon-box {
@@ -787,19 +796,20 @@ h3,
   }
 
   .dock-item.active .dock-icon-box {
-    color: #FCA5A5;
+    color: #34D399;
   }
 
   .dock-label {
-    font-size: 9px;
+    font-size: 8.5px;
     font-weight: 700;
     margin-top: 1px;
-    letter-spacing: 0.1px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
 
   .dock-item.active .dock-label {
     color: #FFFFFF;
-    font-weight: 700;
+    font-weight: 800;
   }
 
   .dock-active-dot {
@@ -814,21 +824,21 @@ h3,
   }
 
   .dock-fab-btn {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, var(--color-burgundy) 0%, var(--color-burgundy-hover) 100%);
-    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #047857;
+    border: 2px solid #111215;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 2px 8px var(--color-burgundy-glow);
+    box-shadow: 0 2px 10px rgba(4, 120, 87, 0.4);
     transition: transform 0.15s ease;
   }
 
   .dock-fab-btn:active {
-    transform: scale(0.92);
+    transform: scale(0.9);
   }
 }
 
@@ -1234,4 +1244,771 @@ h3,
   margin-top: 20px;
   padding-top: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+
+/* ==========================================================================
+   STITCH NORDIC PRECISION DESIGN SYSTEM (GLOBAL CLASSES - ZERO INLINE CSS)
+   ========================================================================== */
+
+/* Main Container */
+.stitch-container {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 16px 14px 80px 14px;
+}
+
+/* 1. Protocol Sub-Header Status Row */
+.proto-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+  font-size: 11.5px;
+  color: #64748B;
+  font-weight: 600;
+}
+
+.proto-status-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.proto-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #10B981;
+  display: inline-block;
+}
+
+.proto-protocol-pill {
+  font-size: 9.5px;
+  padding: 2px 6px;
+  background: #EEF0F4;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  color: #475569;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.proto-status-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.proto-filter-pill-active {
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  color: #111215;
+  font-weight: 700;
+}
+
+.proto-filter-pill {
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: #F3F4F8;
+  color: #64748B;
+}
+
+.proto-badge-base {
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: #ECFDF5;
+  color: #047857;
+  font-weight: 700;
+  border: 1px solid #A7F3D0;
+}
+
+/* 2. Horizon Net Liquidity Hero Card */
+.horizon-card {
+  background: linear-gradient(135deg, #111215 0%, #18191D 100%);
+  border-radius: 18px;
+  padding: 24px 22px;
+  color: #FFFFFF;
+  margin-bottom: 14px;
+  border: 1px solid #2C2F38;
+  box-shadow: 0 8px 24px rgba(17, 18, 21, 0.15);
+}
+
+.horizon-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.horizon-meta-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.horizon-label-protocol {
+  font-size: 10px;
+  font-weight: 800;
+  color: #A1A7B4;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.horizon-live-pill {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(16, 185, 129, 0.2);
+  color: #34D399;
+  text-transform: uppercase;
+}
+
+.horizon-balance-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.horizon-balance-num {
+  font-size: 38px;
+  font-weight: 900;
+  font-family: var(--font-heading);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.horizon-growth-tag {
+  font-size: 12px;
+  font-weight: 700;
+  color: #34D399;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.horizon-subtext-muted {
+  font-size: 11.5px;
+  color: #8E92A0;
+  margin: 8px 0 0 0;
+  max-width: 460px;
+}
+
+.horizon-velocity-wrap {
+  min-width: 160px;
+  text-align: right;
+}
+
+.horizon-velocity-title {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #8E92A0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.horizon-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #282B33;
+}
+
+.horizon-metric-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.horizon-icon-inflow {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34D399;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.horizon-icon-outflow {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(244, 63, 94, 0.15);
+  color: #FB7185;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.horizon-icon-surplus {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(16, 185, 129, 0.25);
+  color: #34D399;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.horizon-metric-label {
+  font-size: 9.5px;
+  color: #8E92A0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.horizon-metric-val-white {
+  font-size: 14px;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.horizon-metric-val-emerald {
+  font-size: 14px;
+  font-weight: 800;
+  color: #34D399;
+}
+
+.horizon-pill-surplus {
+  font-size: 9.5px;
+  padding: 1px 5px;
+  background: rgba(16, 185, 129, 0.2);
+  border-radius: 3px;
+}
+
+/* 3. Action Command Strip */
+.action-strip-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.btn-nordic-black {
+  background: #111215;
+  color: #FFFFFF;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.btn-nordic-black:hover {
+  opacity: 0.9;
+}
+
+.btn-nordic-emerald {
+  background: #047857;
+  color: #FFFFFF;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-nordic-emerald:hover {
+  background: #065F46;
+}
+
+.btn-nordic-outline {
+  background: #FFFFFF;
+  color: #111215;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s ease;
+}
+
+.btn-nordic-outline:hover {
+  background: #F9F9FB;
+}
+
+/* 4. Dual Goal Horizon Cards */
+.goal-dual-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.goal-card-surface {
+  background: #FFFFFF;
+  border-radius: 14px;
+  padding: 18px 20px;
+  border: 1px solid #E5E7EB;
+  box-shadow: 0 2px 8px rgba(17, 18, 21, 0.03);
+}
+
+.goal-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.goal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.goal-indicator-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #047857;
+}
+
+.goal-title-heading {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #111215;
+}
+
+.goal-status-ontrack {
+  font-size: 10px;
+  font-weight: 800;
+  color: #047857;
+  background: #ECFDF5;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+.goal-caption-muted {
+  font-size: 11px;
+  color: #64748B;
+  margin: 0 0 12px 0;
+}
+
+.goal-val-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.goal-val-primary {
+  font-size: 24px;
+  font-weight: 900;
+  font-family: var(--font-heading);
+  color: #111215;
+}
+
+.goal-val-disbursed {
+  font-size: 11px;
+  color: #64748B;
+  margin-left: 6px;
+}
+
+.goal-bar-track {
+  width: 100%;
+  height: 6px;
+  background-color: #F1F5F9;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.goal-bar-emerald {
+  height: 100%;
+  background-color: #047857;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.goal-bar-alert {
+  height: 100%;
+  background-color: #E11D48;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.goal-percent-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748B;
+  margin-bottom: 12px;
+}
+
+.goal-safe-burn-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #F9F9FB;
+  border-radius: 8px;
+  font-size: 11.5px;
+  border: 1px solid #EEF0F4;
+}
+
+.goal-burn-allowance-num {
+  font-weight: 800;
+  color: #111215;
+}
+
+.goal-ring-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid #ECFDF5;
+  border-top-color: #047857;
+  border-right-color: #047857;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: #047857;
+}
+
+.goal-subtitle-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94A3B8;
+  letter-spacing: 0.06em;
+  margin-top: 2px;
+}
+
+.goal-btn-adjust {
+  flex: 1;
+  padding: 7px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: 8px;
+}
+
+.goal-btn-deposit {
+  flex: 1.2;
+  padding: 7px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: 8px;
+  background: #047857;
+  color: #FFFFFF;
+  border: none;
+  cursor: pointer;
+}
+
+.goal-btn-deposit:hover {
+  background: #065F46;
+}
+
+/* 5. Telemetry Strip */
+.telemetry-strip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.telemetry-card-box {
+  background: #FFFFFF;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+}
+
+.telemetry-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.telemetry-title-text {
+  font-size: 10px;
+  font-weight: 800;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.telemetry-value-dark {
+  font-size: 20px;
+  font-weight: 900;
+  color: #111215;
+  margin-top: 4px;
+}
+
+.telemetry-value-emerald {
+  font-size: 20px;
+  font-weight: 900;
+  color: #047857;
+  margin-top: 4px;
+}
+
+.telemetry-sub-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  margin-top: 4px;
+}
+
+.telemetry-pill-drop {
+  color: #047857;
+  background: #ECFDF5;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+/* 6. Live Clearance Table */
+.clearance-table-card {
+  background: #FFFFFF;
+  border-radius: 14px;
+  padding: 18px 20px;
+  border: 1px solid #E5E7EB;
+  box-shadow: 0 2px 8px rgba(17, 18, 21, 0.03);
+}
+
+.clearance-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.clearance-title-heading {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #111215;
+  margin: 0;
+}
+
+.clearance-subtitle-note {
+  font-size: 11px;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+.clearance-filter-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.clearance-search-field {
+  padding: 5px 10px 5px 28px;
+  border-radius: 6px;
+  border: 1px solid #E5E7EB;
+  font-size: 11.5px;
+  width: 140px;
+}
+
+.clearance-search-icon {
+  position: absolute;
+  left: 9px;
+  top: 8px;
+  pointer-events: none;
+}
+
+.clearance-tab-active {
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  background: #111215;
+  color: #FFFFFF;
+}
+
+.clearance-tab-inactive {
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  background: #F1F5F9;
+  color: #64748B;
+}
+
+.clearance-table-head {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.2fr 1fr 1fr;
+  padding: 8px 10px;
+  border-bottom: 1px solid #EEF0F4;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #8E92A0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.clearance-table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.2fr 1fr 1fr;
+  padding: 12px 10px;
+  border-bottom: 1px solid #F1F5F9;
+  align-items: center;
+  font-size: 12px;
+}
+
+.clearance-icon-income {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background: #ECFDF5;
+  color: #047857;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #E5E7EB;
+}
+
+.clearance-icon-expense {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background: #F9F9FB;
+  color: #111215;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #E5E7EB;
+}
+
+.clearance-category-income {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #ECFDF5;
+  color: #047857;
+  text-transform: uppercase;
+}
+
+.clearance-category-expense {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #F3F4F8;
+  color: #475569;
+  text-transform: uppercase;
+}
+
+.clearance-value-income {
+  text-align: right;
+  font-size: 13.5px;
+  font-weight: 800;
+  font-family: var(--font-heading);
+  color: #047857;
+}
+
+.clearance-value-expense {
+  text-align: right;
+  font-size: 13.5px;
+  font-weight: 800;
+  font-family: var(--font-heading);
+  color: #111215;
+}
+
+.clearance-footer-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid #EEF0F4;
+  font-size: 11px;
+  color: #8E92A0;
+}
+
+.clearance-footer-link {
+  color: #047857;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* Modal Styling */
+.modal-stitch-box {
+  max-width: 400px;
+  padding: 22px;
+}
+
+.modal-stitch-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.modal-stitch-quick-btn {
+  flex: 1;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #E5E7EB;
+  background: #F9F9FB;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.modal-stitch-submit {
+  width: 100%;
+  padding: 10px;
+  background: #047857;
+  color: #FFFFFF;
+  border-radius: 8px;
+  font-weight: 800;
+  border: none;
+  cursor: pointer;
+}
+
+.modal-stitch-submit:hover {
+  background: #065F46;
+}
+
+/* Footer Attestation */
+.stitch-attestation-bar {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 10.5px;
+  color: #94A3B8;
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
 }

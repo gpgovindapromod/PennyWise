@@ -6,26 +6,19 @@ import {
   TrendingUp, 
   TrendingDown, 
   ShieldCheck, 
-  ChevronRight,
-  GraduationCap,
-  Utensils,
-  Sparkles,
-  ArrowRight,
-  Target,
-  Receipt,
-  Download,
-  SlidersHorizontal,
-  Compass,
-  CheckCircle2,
-  Clock,
-  Coffee,
-  Plane,
-  BookOpen,
-  ShoppingBag,
-  Zap,
-  ArrowUpRight,
-  Check,
-  Search
+  Sparkles, 
+  Target, 
+  Receipt, 
+  Download, 
+  SlidersHorizontal, 
+  CheckCircle2, 
+  Clock, 
+  Coffee, 
+  Plane, 
+  BookOpen, 
+  ShoppingBag, 
+  ArrowUpRight, 
+  Search 
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import InstallPwaBanner from '../../components/InstallPwaBanner';
@@ -148,87 +141,69 @@ export default function Dashboard({ onOpenAddExpense }) {
   });
 
   return (
-    <div style={{ maxWidth: 1140, margin: '0 auto', padding: '16px 14px 80px 14px' }}>
+    <div className="stitch-container">
       
       <InstallPwaBanner />
 
       {/* 1. Protocol Sub-Header Status Row */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: 10,
-        marginBottom: 14,
-        fontSize: 11.5,
-        color: '#64748B',
-        fontWeight: 600
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: '#10B981', display: 'inline-block' }} />
+      <div className="proto-status-bar">
+        <div className="proto-status-left">
+          <span className="proto-pulse-dot" />
           <span>{todayDateStr}</span>
-          <span style={{ fontSize: 9.5, padding: '2px 6px', background: '#EEF0F4', borderRadius: 4, letterSpacing: '0.05em', color: '#475569', textTransform: 'uppercase', fontWeight: 800 }}>
+          <span className="proto-protocol-pill">
             PORTFOLIO PROTOCOL V4.8
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ padding: '3px 8px', borderRadius: 5, background: '#FFFFFF', border: '1px solid #E5E7EB', color: '#111215', fontWeight: 700 }}>
+        <div className="proto-status-right">
+          <span className="proto-filter-pill-active">
             This Month
           </span>
-          <span style={{ padding: '3px 8px', borderRadius: 5, background: '#F3F4F8', color: '#64748B' }}>
+          <span className="proto-filter-pill">
             Q4 2026
           </span>
-          <span style={{ padding: '3px 8px', borderRadius: 5, background: '#F3F4F8', color: '#64748B' }}>
+          <span className="proto-filter-pill">
             Yearly
           </span>
-          <span style={{ padding: '3px 8px', borderRadius: 5, background: '#ECFDF5', color: '#047857', fontWeight: 700, border: '1px solid #A7F3D0' }}>
+          <span className="proto-badge-base">
             BASE INR (₹)
           </span>
         </div>
       </div>
 
       {/* 2. Stitch Horizon Net Liquidity Hero Card */}
-      <div style={{
-        background: 'linear-gradient(135deg, #111215 0%, #18191D 100%)',
-        borderRadius: 18,
-        padding: '24px 22px',
-        color: '#FFFFFF',
-        marginBottom: 14,
-        border: '1px solid #2C2F38',
-        boxShadow: '0 8px 24px rgba(17, 18, 21, 0.15)'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+      <div className="horizon-card">
+        <div className="horizon-top-row">
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              <span style={{ fontSize: 10, fontWeight: 800, color: '#A1A7B4', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+            <div className="horizon-meta-header">
+              <span className="horizon-label-protocol">
                 HORIZON NET LIQUIDITY
               </span>
-              <span style={{ fontSize: 9, fontWeight: 800, padding: '1px 6px', borderRadius: 4, background: 'rgba(16, 185, 129, 0.2)', color: '#34D399', textTransform: 'uppercase' }}>
+              <span className="horizon-live-pill">
                 LIVE POSITIONS
               </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 38, fontWeight: 900, fontFamily: 'var(--font-heading)', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+            <div className="horizon-balance-wrap">
+              <span className="horizon-balance-num">
                 {formatRupees(currentBalancePaise)}
               </span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#34D399', display: 'flex', alignItems: 'center', gap: 2 }}>
-                ▲ +12.4% <span style={{ color: '#8E92A0', fontWeight: 500 }}>vs last month</span>
+              <span className="horizon-growth-tag">
+                ▲ +12.4% <span className="text-secondary font-medium">vs last month</span>
               </span>
             </div>
 
-            <p style={{ fontSize: 11.5, color: '#8E92A0', margin: '8px 0 0 0', maxWidth: 460 }}>
+            <p className="horizon-subtext-muted">
               Consolidated treasury across liquid balances, high-yield vaults, and automated savings buffers.
             </p>
           </div>
 
           {/* Mini 30-Day Velocity Curve */}
-          <div style={{ minWidth: 160, textAlign: 'right' }}>
-            <div style={{ fontSize: 9.5, fontWeight: 700, color: '#8E92A0', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
+          <div className="horizon-velocity-wrap">
+            <div className="horizon-velocity-title">
               30-DAY VELOCITY CURVE
             </div>
-            <svg width="150" height="38" viewBox="0 0 150 38" fill="none" style={{ overflow: 'visible' }}>
+            <svg width="150" height="38" viewBox="0 0 150 38" fill="none" className="overflow-visible">
               <path 
                 d="M 0 32 C 30 30, 45 35, 75 22 C 105 10, 120 18, 150 4" 
                 stroke="#10B981" 
@@ -241,49 +216,42 @@ export default function Dashboard({ onOpenAddExpense }) {
         </div>
 
         {/* Inflow / Outflow / Retained Surplus Bottom Banner */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: 10,
-          marginTop: 20,
-          paddingTop: 16,
-          borderTop: '1px solid #282B33'
-        }}>
+        <div className="horizon-metrics-grid">
           {/* Gross Inflow */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(16, 185, 129, 0.15)', color: '#34D399', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="horizon-metric-box">
+            <div className="horizon-icon-inflow">
               <TrendingUp size={16} />
             </div>
             <div>
-              <div style={{ fontSize: 9.5, color: '#8E92A0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Gross Inflow</div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: '#FFFFFF' }}>
-                +{formatRupees(incomeThisMonthPaise)} <span style={{ fontSize: 10, color: '#34D399' }}>+18%</span>
+              <div className="horizon-metric-label">Gross Inflow</div>
+              <div className="horizon-metric-val-white">
+                +{formatRupees(incomeThisMonthPaise)} <span className="text-emerald text-xs">+18%</span>
               </div>
             </div>
           </div>
 
           {/* Total Burn / Outflow */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(244, 63, 94, 0.15)', color: '#FB7185', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="horizon-metric-box">
+            <div className="horizon-icon-outflow">
               <TrendingDown size={16} />
             </div>
             <div>
-              <div style={{ fontSize: 9.5, color: '#8E92A0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Burn / Outflow</div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: '#FFFFFF' }}>
-                −{formatRupees(expensesThisMonthPaise)} <span style={{ fontSize: 10, color: '#FB7185' }}>-4.2%</span>
+              <div className="horizon-metric-label">Total Burn / Outflow</div>
+              <div className="horizon-metric-val-white">
+                −{formatRupees(expensesThisMonthPaise)} <span className="text-rose text-xs">-4.2%</span>
               </div>
             </div>
           </div>
 
           {/* Retained Surplus */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(16, 185, 129, 0.25)', color: '#34D399', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="horizon-metric-box">
+            <div className="horizon-icon-surplus">
               <CheckCircle2 size={16} />
             </div>
             <div>
-              <div style={{ fontSize: 9.5, color: '#8E92A0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Retained Liquidity Surplus</div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: '#34D399' }}>
-                {formatRupees(Math.max(0, incomeThisMonthPaise - expensesThisMonthPaise))} <span style={{ fontSize: 9.5, padding: '1px 5px', background: 'rgba(16, 185, 129, 0.2)', borderRadius: 3 }}>Surplus</span>
+              <div className="horizon-metric-label">Retained Liquidity Surplus</div>
+              <div className="horizon-metric-val-emerald">
+                {formatRupees(Math.max(0, incomeThisMonthPaise - expensesThisMonthPaise))} <span className="horizon-pill-surplus">Surplus</span>
               </div>
             </div>
           </div>
@@ -291,221 +259,125 @@ export default function Dashboard({ onOpenAddExpense }) {
       </div>
 
       {/* 3. Action Command Strip */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        flexWrap: 'wrap',
-        marginBottom: 16
-      }}>
+      <div className="action-strip-row">
         <button
           onClick={onOpenAddExpense}
-          className="btn"
-          style={{
-            background: '#111215',
-            color: '#FFFFFF',
-            borderRadius: 8,
-            padding: '8px 14px',
-            fontSize: 12,
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6
-          }}
+          className="btn-nordic-black"
         >
           <PlusCircle size={14} color="#34D399" /> Log Expense
         </button>
 
         <button
           onClick={() => setShowGoalModal(true)}
-          className="btn"
-          style={{
-            background: '#047857',
-            color: '#FFFFFF',
-            borderRadius: 8,
-            padding: '8px 14px',
-            fontSize: 12,
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6
-          }}
+          className="btn-nordic-emerald"
         >
           <Target size={14} /> Deposit to Goal
         </button>
 
         <Link
           to="/transactions"
-          className="btn"
-          style={{
-            background: '#FFFFFF',
-            color: '#111215',
-            border: '1px solid #E5E7EB',
-            borderRadius: 8,
-            padding: '8px 12px',
-            fontSize: 12,
-            fontWeight: 600,
-            textDecoration: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6
-          }}
+          className="btn-nordic-outline"
         >
-          <Download size={13} color="#64748B" /> Export Ledger <span style={{ fontSize: 9.5, color: '#94A3B8' }}>CSV</span>
+          <Download size={13} color="#64748B" /> Export Ledger <span className="text-muted text-xs">CSV</span>
         </Link>
 
         <Link
           to="/reports"
-          className="btn"
-          style={{
-            background: '#FFFFFF',
-            color: '#111215',
-            border: '1px solid #E5E7EB',
-            borderRadius: 8,
-            padding: '8px 12px',
-            fontSize: 12,
-            fontWeight: 600,
-            textDecoration: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6
-          }}
+          className="btn-nordic-outline"
         >
           <SlidersHorizontal size={13} color="#64748B" /> Analytics Insights
         </Link>
       </div>
 
       {/* 4. Dual Goal Horizon: Monthly Spending Cap & Dedicated Savings Target */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: 14,
-        marginBottom: 16
-      }}>
+      <div className="goal-dual-grid">
         
         {/* Card A: Monthly Spending Cap */}
-        <div style={{
-          background: '#FFFFFF',
-          borderRadius: 14,
-          padding: '18px 20px',
-          border: '1px solid #E5E7EB',
-          boxShadow: '0 2px 8px rgba(17, 18, 21, 0.03)'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#047857' }} />
-              <span style={{ fontSize: 13.5, fontWeight: 800, color: '#111215' }}>Monthly Spending Cap</span>
+        <div className="goal-card-surface">
+          <div className="goal-header-row">
+            <div className="goal-title-wrap">
+              <span className="goal-indicator-dot" />
+              <span className="goal-title-heading">Monthly Spending Cap</span>
             </div>
-            <span style={{ fontSize: 10, fontWeight: 800, color: '#047857', background: '#ECFDF5', padding: '2px 7px', borderRadius: 4, letterSpacing: '0.04em' }}>
+            <span className="goal-status-ontrack">
               ON TRACK
             </span>
           </div>
 
-          <p style={{ fontSize: 11, color: '#64748B', margin: '0 0 12px 0' }}>
+          <p className="goal-caption-muted">
             Disciplined discretionary ceiling for dining, digital subscriptions & transit.
           </p>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+          <div className="goal-val-row">
             <div>
-              <span style={{ fontSize: 24, fontWeight: 900, fontFamily: 'var(--font-heading)', color: '#111215' }}>
+              <span className="goal-val-primary">
                 {formatRupees(budgetSpent)}
               </span>
-              <span style={{ fontSize: 11, color: '#64748B', marginLeft: 6 }}>disbursed</span>
+              <span className="goal-val-disbursed">disbursed</span>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 12, fontWeight: 800, color: '#111215' }}>{formatRupees(safeBudgetLimit)}</div>
-              <div style={{ fontSize: 9.5, color: '#94A3B8' }}>hard ceiling</div>
+            <div className="text-right">
+              <div className="text-dark font-extrabold text-xs">{formatRupees(safeBudgetLimit)}</div>
+              <div className="text-muted text-xs">hard ceiling</div>
             </div>
           </div>
 
           {/* Progress Bar */}
-          <div style={{ width: '100%', height: 6, backgroundColor: '#F1F5F9', borderRadius: 3, overflow: 'hidden', marginBottom: 8 }}>
-            <div style={{
-              width: `${budgetPercent}%`,
-              height: '100%',
-              backgroundColor: budgetPercent > 85 ? '#E11D48' : '#047857',
-              borderRadius: 3,
-              transition: 'width 0.4s ease'
-            }} />
+          <div className="goal-bar-track">
+            <div 
+              className={budgetPercent > 85 ? 'goal-bar-alert' : 'goal-bar-emerald'} 
+              style={{ '--fill-width': `${budgetPercent}%`, width: 'var(--fill-width)' }}
+            />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 12 }}>
+          <div className="goal-percent-meta">
             <span>{budgetPercent}% UTILIZED</span>
-            <span style={{ color: '#047857' }}>{formatRupees(budgetRemaining)} REMAINING</span>
+            <span className="text-emerald">{formatRupees(budgetRemaining)} REMAINING</span>
           </div>
 
           {/* Safe Daily Burn Strip */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '8px 12px',
-            background: '#F9F9FB',
-            borderRadius: 8,
-            fontSize: 11.5,
-            border: '1px solid #EEF0F4'
-          }}>
-            <span style={{ color: '#475569', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div className="goal-safe-burn-strip">
+            <span className="text-secondary flex items-center gap-2">
               <ShieldCheck size={14} color="#047857" /> Safe Burn Allowance:
             </span>
-            <span style={{ fontWeight: 800, color: '#111215' }}>
-              {formatRupees(dailySafeAllowancePaise)} <span style={{ fontSize: 10, color: '#64748B', fontWeight: 500 }}>/ day remaining</span>
+            <span className="goal-burn-allowance-num">
+              {formatRupees(dailySafeAllowancePaise)} <span className="text-muted text-xs font-normal">/ day remaining</span>
             </span>
           </div>
         </div>
 
         {/* Card B: Dedicated Savings Target Goal */}
-        <div style={{
-          background: '#FFFFFF',
-          borderRadius: 14,
-          padding: '18px 20px',
-          border: '1px solid #E5E7EB',
-          boxShadow: '0 2px 8px rgba(17, 18, 21, 0.03)'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+        <div className="goal-card-surface">
+          <div className="goal-header-row">
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div className="goal-title-wrap">
                 <Plane size={15} color="#047857" />
-                <span style={{ fontSize: 13.5, fontWeight: 800, color: '#111215' }}>{savingsTarget.title}</span>
+                <span className="goal-title-heading">{savingsTarget.title}</span>
               </div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.06em', marginTop: 2 }}>
+              <div className="goal-subtitle-tag">
                 {savingsTarget.subtitle}
               </div>
             </div>
 
             {/* Circular Percent Badge */}
-            <div style={{
-              width: 36,
-              height: 36,
-              borderRadius: '50%',
-              border: '3px solid #ECFDF5',
-              borderTopColor: '#047857',
-              borderRightColor: '#047857',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 10,
-              fontWeight: 800,
-              color: '#047857'
-            }}>
+            <div className="goal-ring-badge">
               {goalPercent}%
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 14, marginBottom: 4 }}>
-            <span style={{ fontSize: 24, fontWeight: 900, fontFamily: 'var(--font-heading)', color: '#111215' }}>
+          <div className="goal-val-row mt-4 mb-1">
+            <span className="goal-val-primary">
               ₹{savingsTarget.currentRupees.toLocaleString('en-IN')}.00
             </span>
-            <span style={{ fontSize: 11, color: '#64748B' }}>
+            <span className="text-secondary text-xs">
               Target: ₹{savingsTarget.targetRupees.toLocaleString('en-IN')}.00
             </span>
           </div>
 
-          <div style={{ fontSize: 11, color: '#64748B', marginBottom: 14 }}>
+          <div className="text-secondary text-xs mb-4">
             ₹{(savingsTarget.targetRupees - savingsTarget.currentRupees).toLocaleString('en-IN')} remaining · Est. completion {savingsTarget.targetDate}
           </div>
 
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="flex gap-2">
             <button
               onClick={() => {
                 const newTitle = prompt('Goal Title:', savingsTarget.title) || savingsTarget.title;
@@ -514,15 +386,13 @@ export default function Dashboard({ onOpenAddExpense }) {
                 setSavingsTarget(updated);
                 localStorage.setItem('pennywise_primary_goal', JSON.stringify(updated));
               }}
-              className="btn btn-secondary"
-              style={{ flex: 1, padding: '7px 10px', fontSize: 11.5, fontWeight: 700, borderRadius: 8 }}
+              className="btn btn-secondary goal-btn-adjust"
             >
               Adjust Target
             </button>
             <button
               onClick={() => handleDepositToGoal(1000)}
-              className="btn btn-primary"
-              style={{ flex: 1.2, padding: '7px 12px', fontSize: 11.5, fontWeight: 700, borderRadius: 8, background: '#047857' }}
+              className="goal-btn-deposit"
             >
               + Deposit ₹1,000
             </button>
@@ -531,128 +401,95 @@ export default function Dashboard({ onOpenAddExpense }) {
       </div>
 
       {/* 5. Tri-Metric Operational Telemetry Strip */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-        gap: 12,
-        marginBottom: 16
-      }}>
+      <div className="telemetry-strip-grid">
         {/* Metric 1 */}
-        <div style={{ background: '#FFFFFF', padding: '14px 16px', borderRadius: 12, border: '1px solid #E5E7EB' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 10, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <div className="telemetry-card-box">
+          <div className="telemetry-title-row">
+            <span className="telemetry-title-text">
               TODAY'S REAL-TIME SPEND
             </span>
             <Clock size={13} color="#94A3B8" />
           </div>
-          <div style={{ fontSize: 20, fontWeight: 900, color: '#111215', marginTop: 4 }}>
+          <div className="telemetry-value-dark">
             ₹420.00
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5, marginTop: 4 }}>
-            <span style={{ color: '#047857', background: '#ECFDF5', padding: '1px 5px', borderRadius: 3, fontWeight: 700 }}>
+          <div className="telemetry-sub-row">
+            <span className="telemetry-pill-drop">
               ▼ -28% drop
             </span>
-            <span style={{ color: '#64748B' }}>Yesterday: ₹580.00</span>
+            <span className="text-secondary">Yesterday: ₹580.00</span>
           </div>
         </div>
 
         {/* Metric 2 */}
-        <div style={{ background: '#FFFFFF', padding: '14px 16px', borderRadius: 12, border: '1px solid #E5E7EB' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 10, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <div className="telemetry-card-box">
+          <div className="telemetry-title-row">
+            <span className="telemetry-title-text">
               DAILY AVERAGE OUTLAY
             </span>
             <Sparkles size={13} color="#94A3B8" />
           </div>
-          <div style={{ fontSize: 20, fontWeight: 900, color: '#111215', marginTop: 4 }}>
-            ₹1,288.00 <span style={{ fontSize: 11, color: '#64748B', fontWeight: 500 }}>/ day</span>
+          <div className="telemetry-value-dark">
+            ₹1,288.00 <span className="text-secondary text-xs font-normal">/ day</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5, marginTop: 4 }}>
-            <span style={{ color: '#047857', fontWeight: 700 }}>OPTIMAL</span>
-            <span style={{ color: '#64748B' }}>Target threshold: ₹1,500</span>
+          <div className="telemetry-sub-row">
+            <span className="text-emerald font-bold">OPTIMAL</span>
+            <span className="text-secondary">Target threshold: ₹1,500</span>
           </div>
         </div>
 
         {/* Metric 3 */}
-        <div style={{ background: '#FFFFFF', padding: '14px 16px', borderRadius: 12, border: '1px solid #E5E7EB' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 10, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <div className="telemetry-card-box">
+          <div className="telemetry-title-row">
+            <span className="telemetry-title-text">
               PROJECTED MONTH-END SURPLUS
             </span>
             <ArrowUpRight size={13} color="#047857" />
           </div>
-          <div style={{ fontSize: 20, fontWeight: 900, color: '#047857', marginTop: 4 }}>
+          <div className="telemetry-value-emerald">
             {formatRupees(Math.max(0, incomeThisMonthPaise - expensesThisMonthPaise))}
           </div>
-          <div style={{ fontSize: 10.5, color: '#64748B', marginTop: 4 }}>
+          <div className="text-secondary text-xs mt-1">
             Automated recurring models · 96% CONF.
           </div>
         </div>
       </div>
 
       {/* 6. Live Transaction Clearance Table & Protocol Feed */}
-      <div style={{
-        background: '#FFFFFF',
-        borderRadius: 14,
-        padding: '18px 20px',
-        border: '1px solid #E5E7EB',
-        boxShadow: '0 2px 8px rgba(17, 18, 21, 0.03)'
-      }}>
+      <div className="clearance-table-card">
         {/* Feed Header */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 12,
-          marginBottom: 16
-        }}>
+        <div className="clearance-header-bar">
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div className="flex items-center gap-2">
               <Receipt size={16} color="#111215" />
-              <h3 style={{ fontSize: 14.5, fontWeight: 800, color: '#111215', margin: 0 }}>
+              <h3 className="clearance-title-heading">
                 Live Transaction Feed
               </h3>
             </div>
-            <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>
+            <div className="clearance-subtitle-note">
               Tabular multi-channel clearance protocol
             </div>
           </div>
 
           {/* Quick Search & Filter Pills */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative' }}>
+          <div className="clearance-filter-wrap">
+            <div className="relative">
               <input
                 type="text"
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
                 placeholder="Filter records..."
-                style={{
-                  padding: '5px 10px 5px 28px',
-                  borderRadius: 6,
-                  border: '1px solid #E5E7EB',
-                  fontSize: 11.5,
-                  width: 140
-                }}
+                className="clearance-search-field"
               />
-              <Search size={12} color="#94A3B8" style={{ position: 'absolute', left: 9, top: 8 }} />
+              <Search size={12} color="#94A3B8" className="clearance-search-icon" />
             </div>
 
-            <div style={{ display: 'flex', gap: 4 }}>
+            <div className="flex gap-1">
               {['ALL', 'DINING', 'TRANSIT', 'BILLS', 'SAVINGS'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  style={{
-                    padding: '4px 8px',
-                    borderRadius: 5,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    border: 'none',
-                    cursor: 'pointer',
-                    background: activeTab === tab ? '#111215' : '#F1F5F9',
-                    color: activeTab === tab ? '#FFFFFF' : '#64748B'
-                  }}
+                  className={activeTab === tab ? 'clearance-tab-active' : 'clearance-tab-inactive'}
                 >
                   {tab}
                 </button>
@@ -663,28 +500,18 @@ export default function Dashboard({ onOpenAddExpense }) {
 
         {/* Tabular Clearance List */}
         {filteredTransactions.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '30px 16px', color: '#64748B', fontSize: 13 }}>
+          <div className="text-center py-8 text-secondary text-sm">
             No records matching current clearance filter.
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="flex flex-col">
             {/* Table Header Row */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '2fr 1fr 1.2fr 1fr 1fr',
-              padding: '8px 10px',
-              borderBottom: '1px solid #EEF0F4',
-              fontSize: 9.5,
-              fontWeight: 800,
-              color: '#8E92A0',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em'
-            }}>
+            <div className="clearance-table-head">
               <span>Entity & Purpose</span>
               <span>Classification</span>
               <span>Method & Route</span>
               <span>Timestamp</span>
-              <span style={{ textAlign: 'right' }}>Clearance Value</span>
+              <span className="text-right">Clearance Value</span>
             </div>
 
             {filteredTransactions.slice(0, 6).map((tx) => {
@@ -692,38 +519,21 @@ export default function Dashboard({ onOpenAddExpense }) {
               return (
                 <div
                   key={tx._id}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '2fr 1fr 1.2fr 1fr 1fr',
-                    padding: '12px 10px',
-                    borderBottom: '1px solid #F1F5F9',
-                    alignItems: 'center',
-                    fontSize: 12
-                  }}
+                  className="clearance-table-row"
                 >
                   {/* Entity & Purpose */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{
-                      width: 30,
-                      height: 30,
-                      borderRadius: 6,
-                      background: isIncome ? '#ECFDF5' : '#F9F9FB',
-                      color: isIncome ? '#047857' : '#111215',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '1px solid #E5E7EB'
-                    }}>
+                  <div className="flex items-center gap-3">
+                    <div className={isIncome ? 'clearance-icon-income' : 'clearance-icon-expense'}>
                       {tx.categoryId === 'food-drinks' ? <Coffee size={14} /> : 
                        tx.categoryId === 'travel' || tx.categoryId === 'fuel' ? <Plane size={14} /> :
                        tx.categoryId === 'academic' ? <BookOpen size={14} /> :
                        <ShoppingBag size={14} />}
                     </div>
                     <div>
-                      <div style={{ fontWeight: 700, color: '#111215' }}>
+                      <div className="font-bold text-dark">
                         {tx.subcategory || tx.categoryLabel}
                       </div>
-                      <div style={{ fontSize: 10.5, color: '#94A3B8' }}>
+                      <div className="text-muted text-xs">
                         {tx.note || 'Multi-channel settlement'}
                       </div>
                     </div>
@@ -731,37 +541,23 @@ export default function Dashboard({ onOpenAddExpense }) {
 
                   {/* Classification */}
                   <div>
-                    <span style={{
-                      fontSize: 9.5,
-                      fontWeight: 700,
-                      padding: '2px 6px',
-                      borderRadius: 4,
-                      background: isIncome ? '#ECFDF5' : '#F3F4F8',
-                      color: isIncome ? '#047857' : '#475569',
-                      textTransform: 'uppercase'
-                    }}>
+                    <span className={isIncome ? 'clearance-category-income' : 'clearance-category-expense'}>
                       {tx.categoryLabel}
                     </span>
                   </div>
 
                   {/* Method & Route */}
-                  <div style={{ fontSize: 11, color: '#64748B' }}>
+                  <div className="text-secondary text-xs">
                     {(tx.paymentMethod || 'UPI / Instant').toUpperCase()}
                   </div>
 
                   {/* Timestamp */}
-                  <div style={{ fontSize: 11, color: '#8E92A0' }}>
+                  <div className="text-muted text-xs">
                     {formatDate(tx.date)}
                   </div>
 
                   {/* Clearance Value */}
-                  <div style={{
-                    textAlign: 'right',
-                    fontSize: 13.5,
-                    fontWeight: 800,
-                    fontFamily: 'var(--font-heading)',
-                    color: isIncome ? '#047857' : '#111215'
-                  }}>
+                  <div className={isIncome ? 'clearance-value-income' : 'clearance-value-expense'}>
                     {isIncome ? '+' : '−'}{formatRupees(tx.amountPaise)}
                   </div>
                 </div>
@@ -770,18 +566,9 @@ export default function Dashboard({ onOpenAddExpense }) {
           </div>
         )}
 
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginTop: 14,
-          paddingTop: 10,
-          borderTop: '1px solid #EEF0F4',
-          fontSize: 11,
-          color: '#8E92A0'
-        }}>
+        <div className="clearance-footer-bar">
           <span>Displaying 5 of {recentTransactions.length} records</span>
-          <Link to="/transactions" style={{ color: '#047857', fontWeight: 700, textDecoration: 'none' }}>
+          <Link to="/transactions" className="clearance-footer-link">
             View Full Ledger →
           </Link>
         </div>
@@ -790,11 +577,11 @@ export default function Dashboard({ onOpenAddExpense }) {
       {/* Modal: Deposit to Savings Goal */}
       {showGoalModal && (
         <div className="modal-overlay" onClick={() => setShowGoalModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400, padding: 22 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="modal-content modal-stitch-box" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-stitch-header">
+              <div className="flex items-center gap-2">
                 <Target size={18} color="#047857" />
-                <h3 style={{ fontSize: 15, fontWeight: 800, color: '#111215', margin: 0 }}>
+                <h3 className="text-dark font-extrabold text-sm m-0">
                   Deposit to {savingsTarget.title}
                 </h3>
               </div>
@@ -803,39 +590,29 @@ export default function Dashboard({ onOpenAddExpense }) {
               </button>
             </div>
 
-            <p style={{ fontSize: 12, color: '#64748B', margin: '0 0 14px 0' }}>
+            <p className="text-secondary text-xs mb-3">
               Add liquid funds toward your target: ₹{savingsTarget.currentRupees.toLocaleString('en-IN')} / ₹{savingsTarget.targetRupees.toLocaleString('en-IN')}
             </p>
 
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#475569', marginBottom: 4 }}>
+            <div className="mb-3">
+              <label className="block text-secondary font-bold text-xs mb-1">
                 Deposit Amount (INR)
               </label>
               <input
                 type="number"
                 value={depositAmount}
                 onChange={(e) => setDepositAmount(e.target.value)}
-                className="form-input"
-                style={{ fontSize: 16, fontWeight: 800 }}
+                className="form-input font-extrabold text-base"
               />
             </div>
 
-            <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+            <div className="flex gap-2 mb-4">
               {[500, 1000, 2500, 5000].map((amt) => (
                 <button
                   key={amt}
                   type="button"
                   onClick={() => setDepositAmount(amt.toString())}
-                  style={{
-                    flex: 1,
-                    padding: '6px',
-                    borderRadius: 6,
-                    border: '1px solid #E5E7EB',
-                    background: '#F9F9FB',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    cursor: 'pointer'
-                  }}
+                  className="modal-stitch-quick-btn"
                 >
                   +₹{amt}
                 </button>
@@ -844,8 +621,7 @@ export default function Dashboard({ onOpenAddExpense }) {
 
             <button
               onClick={() => handleDepositToGoal(depositAmount)}
-              className="btn btn-primary"
-              style={{ width: '100%', padding: 10, background: '#047857', fontWeight: 800 }}
+              className="modal-stitch-submit"
             >
               Confirm Deposit
             </button>
@@ -854,19 +630,9 @@ export default function Dashboard({ onOpenAddExpense }) {
       )}
 
       {/* Footer Attestation */}
-      <div style={{
-        marginTop: 24,
-        textAlign: 'center',
-        fontSize: 10.5,
-        color: '#94A3B8',
-        fontWeight: 500,
-        display: 'flex',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: 8
-      }}>
+      <div className="stitch-attestation-bar">
         <span>© 2026 PENNYWISE WEALTH STUDIO. NORDIC PRECISION FINANCIAL SYSTEMS.</span>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div className="flex gap-3">
           <span>Treasury Protocol</span>
           <span>Security & Attestation</span>
           <span>API Architecture</span>
