@@ -25,12 +25,12 @@ export default function Sidebar({ onOpenAddExpense }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = [
-    { path: '/', label: 'Overview', icon: Compass },
-    { path: '/transactions', label: 'Cash & Expenses', icon: Receipt },
-    { path: '/academics', label: 'Study & Academics', icon: GraduationCap },
-    { path: '/goals', label: 'Monthly Budget', icon: Target },
-    { path: '/reports', label: 'Memories & Insights', icon: BarChart2 },
-    { path: '/settings', label: 'Profile & Settings', icon: Settings },
+    { path: '/', label: 'Horizon Dashboard', icon: Compass },
+    { path: '/transactions', label: 'Clearance Ledger', icon: Receipt },
+    { path: '/goals', label: 'Goals & Ceilings', icon: Target },
+    { path: '/academics', label: 'Academic Obligations', icon: GraduationCap },
+    { path: '/reports', label: 'Treasury Analytics', icon: BarChart2 },
+    { path: '/settings', label: 'Vault & Profile', icon: Settings },
   ];
 
   // On mobile drawer, sidebar should never be collapsed
@@ -46,12 +46,14 @@ export default function Sidebar({ onOpenAddExpense }) {
             style={{ background: 'none', border: 'none', color: '#FAF7F2', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}
             aria-label="Toggle navigation menu"
           >
-            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Sparkles size={18} color="#D97706" />
-            <span style={{ fontSize: 16, fontWeight: 900, color: '#FAF7F2', letterSpacing: '-0.02em', textTransform: 'uppercase' }}>
-              PENNY<span style={{ color: '#E08B9B' }}>WISE</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <div style={{ width: 22, height: 22, borderRadius: 5, background: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: 13, fontWeight: 900, color: '#111215' }}>P</span>
+            </div>
+            <span style={{ fontSize: 15, fontWeight: 900, color: '#FFFFFF', letterSpacing: '-0.02em', textTransform: 'uppercase' }}>
+              PENNY<span style={{ color: '#10B981' }}>WISE</span>
             </span>
           </div>
         </div>
@@ -95,24 +97,24 @@ export default function Sidebar({ onOpenAddExpense }) {
           <div className="sidebar-brand-row">
             <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
-                width: 34,
-                height: 34,
+                width: 32,
+                height: 32,
                 borderRadius: 8,
-                backgroundColor: 'var(--color-burgundy)',
+                backgroundColor: '#10B981',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 0 12px var(--color-burgundy-glow)'
+                boxShadow: '0 0 12px rgba(16, 185, 129, 0.4)'
               }}>
-                <Sparkles size={19} color="#FAF7F2" />
+                <span style={{ fontSize: 16, fontWeight: 900, color: '#111215' }}>P</span>
               </div>
               {!isEffectiveCollapsed && (
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: 17, fontWeight: 900, color: '#FAF7F2', letterSpacing: '-0.02em', textTransform: 'uppercase' }}>
-                    PENNY<span style={{ color: '#E08B9B' }}>WISE</span>
+                  <span style={{ fontSize: 16, fontWeight: 900, color: '#FFFFFF', letterSpacing: '-0.02em', textTransform: 'uppercase' }}>
+                    PENNY<span style={{ color: '#10B981' }}>WISE</span>
                   </span>
-                  <span style={{ fontSize: 9, fontWeight: 700, color: '#CBB9B0', letterSpacing: '0.1em' }}>
-                    FINANCE & MEMORIES
+                  <span style={{ fontSize: 9, fontWeight: 700, color: '#8E92A0', letterSpacing: '0.08em' }}>
+                    WEALTH STUDIO
                   </span>
                 </div>
               )}

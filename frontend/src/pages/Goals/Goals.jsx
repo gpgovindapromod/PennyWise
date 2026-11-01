@@ -117,20 +117,21 @@ export default function Goals() {
               textTransform: 'uppercase',
               padding: '2px 8px',
               borderRadius: 4,
-              backgroundColor: '#FFE4E6',
-              color: '#E11D48'
+              backgroundColor: '#ECFDF5',
+              color: '#047857',
+              border: '1px solid #A7F3D0'
             }}>
-              <Target size={12} /> SPENDING CONTROLS
+              <Target size={12} /> NORDIC TREASURY PROTOCOL
             </span>
             <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>
-              Fiscal Month: {monthName} {now.getFullYear()}
+              Fiscal Period: {monthName} {now.getFullYear()}
             </span>
           </div>
-          <h1 style={{ fontSize: 28, fontWeight: 900, color: '#0F172A', letterSpacing: '-0.02em', margin: 0 }}>
-            Monthly Expense Budget
+          <h1 style={{ fontSize: 28, fontWeight: 900, color: '#111215', letterSpacing: '-0.02em', margin: 0 }}>
+            Goals & Monthly Spending Ceiling
           </h1>
           <p style={{ fontSize: 13, color: '#64748B', margin: '4px 0 0 0' }}>
-            Set spending thresholds, monitor daily consumption pace, and prevent overspending
+            Multi-tier financial governance: hard monthly operational ceiling + dedicated milestone savings vaults
           </p>
         </div>
 

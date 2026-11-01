@@ -1,32 +1,32 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Compass, Receipt, Plus, UtensilsCrossed, User } from 'lucide-react';
+import { Compass, Receipt, Plus, Target, User } from 'lucide-react';
 
 export default function MobileBottomNav({ onOpenAddExpense }) {
   const location = useLocation();
 
   const navItems = [
-    { path: '/', label: 'Overview', icon: Compass },
+    { path: '/', label: 'Horizon', icon: Compass },
     { path: '/transactions', label: 'Ledger', icon: Receipt },
     { isFab: true },
-    { path: '/academics', label: 'Academics', icon: UtensilsCrossed },
-    { path: '/settings', label: 'Profile', icon: User },
+    { path: '/goals', label: 'Goals', icon: Target },
+    { path: '/settings', label: 'Vault', icon: User },
   ];
 
   return (
     <nav className="mobile-floating-dock">
       <div className="mobile-dock-inner">
-        {navItems.map((item, index) => {
+        {navItems.map((item) => {
           if (item.isFab) {
             return (
               <div key="fab-btn" className="dock-fab-wrapper">
                 <button
                   onClick={onOpenAddExpense}
                   className="dock-fab-btn"
-                  title="Add Expense or Fuel"
+                  title="Log Quick Expense"
                   aria-label="Add Expense"
                 >
-                  <Plus size={24} strokeWidth={2.5} color="#FFFFFF" />
+                  <Plus size={20} strokeWidth={2.5} color="#FFFFFF" />
                 </button>
               </div>
             );
@@ -42,10 +42,9 @@ export default function MobileBottomNav({ onOpenAddExpense }) {
               className={`dock-item ${isActive ? 'active' : ''}`}
             >
               <div className="dock-icon-box">
-                <Icon size={20} strokeWidth={isActive ? 2.4 : 1.8} />
+                <Icon size={17} strokeWidth={isActive ? 2.4 : 1.8} />
               </div>
               <span className="dock-label">{item.label}</span>
-              {isActive && <div className="dock-active-dot" />}
             </Link>
           );
         })}

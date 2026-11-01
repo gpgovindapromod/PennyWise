@@ -346,115 +346,118 @@ export default function Transactions({ onOpenAddExpense, onEditTransaction }) {
         </div>
       </div>
 
-      {/* 2. Structured Top KPI Stats Cards Row (Organized Grid) */}
+      {/* 2. Structured Top KPI Stats Cards Row (Nordic Clearance Grid) */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-        gap: 16,
-        marginBottom: 24
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        gap: 12,
+        marginBottom: 20
       }}>
         {/* Card 1: Records In View */}
-        <div className="card" style={{
+        <div style={{
           background: '#FFFFFF',
-          borderRadius: 16,
-          padding: '20px',
-          border: '1px solid #E2E8F0',
-          boxShadow: '0 4px 14px rgba(15, 23, 42, 0.04)'
+          borderRadius: 12,
+          padding: '16px 18px',
+          border: '1px solid #E5E7EB',
+          boxShadow: '0 1px 3px rgba(17, 18, 21, 0.04)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 800, color: '#64748B', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                Matching Records
+              <div style={{ fontSize: 10, fontWeight: 800, color: '#64748B', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                MATCHING RECORDS
               </div>
-              <div style={{ fontSize: 26, fontWeight: 900, fontFamily: 'var(--font-heading)', color: '#0F172A', marginTop: 4 }}>
+              <div style={{ fontSize: 22, fontWeight: 900, fontFamily: 'var(--font-heading)', color: '#111215', marginTop: 4 }}>
                 {totalCount}
               </div>
             </div>
             <div style={{
-              width: 38,
-              height: 38,
-              borderRadius: 10,
-              backgroundColor: '#EFF6FF',
-              color: '#3B82F6',
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              backgroundColor: '#F3F4F8',
+              color: '#111215',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              border: '1px solid #E5E7EB'
             }}>
-              <Receipt size={18} />
+              <Receipt size={16} />
             </div>
           </div>
-          <div style={{ fontSize: 12, color: '#64748B', marginTop: 10 }}>
-            Showing {transactions.length} loaded records
+          <div style={{ fontSize: 11, color: '#8E92A0', marginTop: 6 }}>
+            Showing {transactions.length} active postings
           </div>
         </div>
 
         {/* Card 2: Filtered Outflow */}
-        <div className="card" style={{
+        <div style={{
           background: '#FFFFFF',
-          borderRadius: 16,
-          padding: '20px',
-          border: '1px solid #E2E8F0',
-          boxShadow: '0 4px 14px rgba(15, 23, 42, 0.04)'
+          borderRadius: 12,
+          padding: '16px 18px',
+          border: '1px solid #E5E7EB',
+          boxShadow: '0 1px 3px rgba(17, 18, 21, 0.04)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 800, color: '#E11D48', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                Loaded Outflow (Expenses)
+              <div style={{ fontSize: 10, fontWeight: 800, color: '#9F1239', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                LOADED OUTFLOW (EXPENSES)
               </div>
-              <div style={{ fontSize: 26, fontWeight: 900, fontFamily: 'var(--font-heading)', color: '#0F172A', marginTop: 4 }}>
+              <div style={{ fontSize: 22, fontWeight: 900, fontFamily: 'var(--font-heading)', color: '#111215', marginTop: 4 }}>
                 {formatRupees(totalExpensePaise)}
               </div>
             </div>
             <div style={{
-              width: 38,
-              height: 38,
-              borderRadius: 10,
-              backgroundColor: '#FFE4E6',
-              color: '#E11D48',
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              backgroundColor: '#FFF1F2',
+              color: '#9F1239',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              border: '1px solid #FECDD3'
             }}>
-              <TrendingDown size={18} />
+              <TrendingDown size={16} />
             </div>
           </div>
-          <div style={{ fontSize: 12, color: '#64748B', marginTop: 10 }}>
-            Cumulative expenditure in current filter
+          <div style={{ fontSize: 11, color: '#8E92A0', marginTop: 6 }}>
+            Cumulative burn across active filter
           </div>
         </div>
 
         {/* Card 3: Filtered Inflow */}
-        <div className="card" style={{
+        <div style={{
           background: '#FFFFFF',
-          borderRadius: 16,
-          padding: '20px',
-          border: '1px solid #E2E8F0',
-          boxShadow: '0 4px 14px rgba(15, 23, 42, 0.04)'
+          borderRadius: 12,
+          padding: '16px 18px',
+          border: '1px solid #E5E7EB',
+          boxShadow: '0 1px 3px rgba(17, 18, 21, 0.04)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 800, color: '#059669', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                Loaded Inflow (Income)
+              <div style={{ fontSize: 10, fontWeight: 800, color: '#047857', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                LOADED INFLOW (INCOME)
               </div>
-              <div style={{ fontSize: 26, fontWeight: 900, fontFamily: 'var(--font-heading)', color: '#0F172A', marginTop: 4 }}>
+              <div style={{ fontSize: 22, fontWeight: 900, fontFamily: 'var(--font-heading)', color: '#047857', marginTop: 4 }}>
                 +{formatRupees(totalIncomePaise)}
               </div>
             </div>
             <div style={{
-              width: 38,
-              height: 38,
-              borderRadius: 10,
-              backgroundColor: '#DCFCE7',
-              color: '#15803D',
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              backgroundColor: '#ECFDF5',
+              color: '#047857',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              border: '1px solid #A7F3D0'
             }}>
-              <TrendingUp size={18} />
+              <TrendingUp size={16} />
             </div>
           </div>
-          <div style={{ fontSize: 12, color: '#64748B', marginTop: 10 }}>
-            Allowances, gifts, and grants
+          <div style={{ fontSize: 11, color: '#8E92A0', marginTop: 6 }}>
+            Deposits, allowances and credits
           </div>
         </div>
       </div>
