@@ -2,6 +2,7 @@ import React, { useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
+import MobileDock from './components/MobileDock';
 import AddExpenseModal from './components/AddExpenseModal';
 import ForcedPasswordModal from './components/ForcedPasswordModal';
 
@@ -34,11 +35,12 @@ function ProtectedLayout({ children, onOpenAddExpense }) {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar onOpenAddExpense={onOpenAddExpense} />
-      <main className="flex-1">
+      <main className="flex-1 pb-16">
         <div key={location.pathname}>
           {children}
         </div>
       </main>
+      <MobileDock onOpenAddExpense={onOpenAddExpense} />
     </div>
   );
 }

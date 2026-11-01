@@ -6289,3 +6289,100 @@ h3,
 .stitch-modal-overlay {
   animation: nordicScaleUp 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+
+/* ==========================================================================
+   STITCH FLOATING DOCK CAPSULE (GLOBAL - ZERO INLINE CSS)
+   ========================================================================== */
+
+.stitch-dock-fixed-wrap {
+  position: fixed;
+  bottom: 24px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.stitch-dock-capsule {
+  pointer-events: auto;
+  background: #111215;
+  border: 1px solid #2C2F38;
+  border-radius: 30px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 14px 34px rgba(17, 18, 21, 0.45);
+  backdrop-filter: blur(12px);
+  animation: dockFloatUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dockFloatUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stitch-dock-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8E92A0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.stitch-dock-btn:hover {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+}
+
+.stitch-dock-btn:active {
+  transform: translateY(0);
+}
+
+.stitch-dock-btn-active {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.stitch-dock-btn-center {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #047857;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(4, 120, 87, 0.4);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.stitch-dock-btn-center:hover {
+  background: #059669;
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(4, 120, 87, 0.55);
+}
+
+.stitch-dock-btn-center:active {
+  transform: scale(0.96);
+}
