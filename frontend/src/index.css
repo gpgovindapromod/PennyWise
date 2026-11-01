@@ -2633,3 +2633,540 @@ h3,
 .w-pct-37 { width: 37%; }
 .w-pct-53 { width: 53%; }
 .w-pct-0 { width: 0%; }
+
+
+/* ==========================================================================
+   STITCH TRANSACTION LEDGER SYSTEM (GLOBAL CLASSES - ZERO INLINE CSS)
+   ========================================================================== */
+
+/* Header Top Status */
+.ledger-proto-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #047857;
+  margin-bottom: 6px;
+}
+
+.ledger-records-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ledger-records-pill {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #EEF0F4;
+  color: #475569;
+  letter-spacing: 0.05em;
+  font-weight: 800;
+}
+
+.ledger-live-badge {
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #ECFDF5;
+  color: #047857;
+  border: 1px solid #A7F3D0;
+  font-weight: 800;
+}
+
+.ledger-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.ledger-main-heading {
+  font-size: 26px;
+  font-weight: 900;
+  font-family: var(--font-heading);
+  color: #111215;
+  margin: 0;
+  letter-spacing: -0.03em;
+}
+
+.ledger-sub-caption {
+  font-size: 12px;
+  color: #64748B;
+  margin: 4px 0 0 0;
+  max-width: 600px;
+}
+
+.ledger-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Trio Summary Cards */
+.ledger-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 860px) {
+  .ledger-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ledger-stat-card {
+  background: #FFFFFF;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+  padding: 16px 18px;
+  box-shadow: 0 2px 6px rgba(17, 18, 21, 0.02);
+}
+
+.ledger-stat-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #8E92A0;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.ledger-stat-count-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.ledger-stat-big-num {
+  font-size: 28px;
+  font-weight: 900;
+  font-family: var(--font-heading);
+  color: #111215;
+  line-height: 1.1;
+}
+
+.ledger-stat-tag-settled {
+  font-size: 11px;
+  font-weight: 600;
+  color: #047857;
+}
+
+.ledger-stat-sub {
+  font-size: 10px;
+  color: #94A3B8;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ledger-stat-outflow-num {
+  font-size: 26px;
+  font-weight: 900;
+  font-family: var(--font-heading);
+  color: #111215;
+  line-height: 1.1;
+}
+
+.ledger-stat-inflow-num {
+  font-size: 26px;
+  font-weight: 900;
+  font-family: var(--font-heading);
+  color: #047857;
+  line-height: 1.1;
+}
+
+.ledger-pill-mtd {
+  font-size: 8.5px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: #FEE2E2;
+  color: #EF4444;
+}
+
+.ledger-pill-growth {
+  font-size: 8.5px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: #ECFDF5;
+  color: #047857;
+}
+
+/* Control Bar (Search + Date Picker) */
+.ledger-controls-card {
+  background: #FFFFFF;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 6px rgba(17, 18, 21, 0.02);
+}
+
+.ledger-controls-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.ledger-search-box {
+  position: relative;
+  flex: 1;
+  min-width: 260px;
+}
+
+.ledger-search-input {
+  width: 100%;
+  padding: 8px 12px 8px 34px;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+  font-size: 12px;
+  background: #F9F9FB;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.ledger-search-icon {
+  position: absolute;
+  left: 11px;
+  top: 9px;
+  color: #94A3B8;
+  pointer-events: none;
+}
+
+.ledger-date-cycle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+  background: #FFFFFF;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #111215;
+  cursor: pointer;
+}
+
+/* Category Filter Pills Strip */
+.ledger-pills-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ledger-pill-btn {
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid #E5E7EB;
+  background: #FFFFFF;
+  color: #475569;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.ledger-pill-btn:hover {
+  background: #F9F9FB;
+}
+
+.ledger-pill-btn-active {
+  background: #111215;
+  color: #FFFFFF;
+  border-color: #111215;
+}
+
+.ledger-count-bubble {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.ledger-count-bubble-dark {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 10px;
+  background: #F1F5F9;
+  color: #64748B;
+}
+
+/* Day-grouped Feed Card */
+.ledger-feed-surface {
+  background: #FFFFFF;
+  border-radius: 14px;
+  border: 1px solid #E5E7EB;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(17, 18, 21, 0.03);
+}
+
+.ledger-day-group {
+  margin-bottom: 24px;
+}
+
+.ledger-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #EEF0F4;
+  margin-bottom: 6px;
+}
+
+.ledger-day-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ledger-day-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #111215;
+}
+
+.ledger-day-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #ECFDF5;
+  color: #047857;
+  text-transform: uppercase;
+}
+
+.ledger-day-net {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ledger-row-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 11px 8px;
+  border-bottom: 1px solid #F8FAFC;
+  transition: background 0.15s ease;
+  border-radius: 6px;
+}
+
+.ledger-row-item:hover {
+  background: #F9F9FB;
+}
+
+.ledger-row-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ledger-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ledger-icon-income {
+  background: #ECFDF5;
+  color: #047857;
+}
+
+.ledger-icon-vault {
+  background: #D1FAE5;
+  color: #047857;
+}
+
+.ledger-icon-expense {
+  background: #F9F9FB;
+  color: #111215;
+}
+
+.ledger-entity-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: #111215;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ledger-tag-pill {
+  font-size: 8.5px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.tag-treasury {
+  background: #D1FAE5;
+  color: #047857;
+}
+
+.tag-vault {
+  background: #047857;
+  color: #FFFFFF;
+}
+
+.ledger-meta-chain {
+  font-size: 10.5px;
+  color: #8E92A0;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ledger-meta-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #CBD5E1;
+}
+
+.ledger-row-right {
+  text-align: right;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.ledger-row-time {
+  font-size: 9.5px;
+  color: #94A3B8;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.ledger-row-amount-wrap {
+  min-width: 80px;
+}
+
+.ledger-row-val-expense {
+  font-size: 14px;
+  font-weight: 900;
+  font-family: var(--font-heading);
+  color: #111215;
+}
+
+.ledger-row-val-income {
+  font-size: 14px;
+  font-weight: 900;
+  font-family: var(--font-heading);
+  color: #047857;
+}
+
+.ledger-row-val-vault {
+  font-size: 14px;
+  font-weight: 900;
+  font-family: var(--font-heading);
+  color: #047857;
+}
+
+.ledger-row-status-tag {
+  font-size: 8.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 1px;
+}
+
+.status-settled {
+  color: #047857;
+}
+
+.status-credited {
+  color: #047857;
+}
+
+.status-vaulted {
+  color: #047857;
+}
+
+.status-recurring {
+  color: #64748B;
+}
+
+/* Pagination Footer */
+.ledger-pagination-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid #EEF0F4;
+  font-size: 11px;
+  color: #64748B;
+}
+
+.ledger-page-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ledger-page-btn {
+  padding: 4px 8px;
+  border-radius: 5px;
+  border: 1px solid #E5E7EB;
+  background: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  cursor: pointer;
+}
+
+.ledger-page-btn-active {
+  background: #111215;
+  color: #FFFFFF;
+  border-color: #111215;
+}
+
+.ledger-page-exports {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ledger-export-btn {
+  padding: 4px 8px;
+  border-radius: 5px;
+  border: 1px solid #E5E7EB;
+  background: #FFFFFF;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
