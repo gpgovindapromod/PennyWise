@@ -15,30 +15,26 @@ import {
   PenTool, 
   ShieldCheck, 
   SlidersHorizontal,
-  ChevronRight
+  ChevronRight,
+  AlertCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
+export default function Academics({ onOpenAddExpense }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showFeeModal, setShowFeeModal] = useState(false);
-  const [feeForm, setFeeForm] = useState({
-    title: '',
-    department: 'Dept. of Computer Science & Engineering',
-    installment: 'Installment 1 of 2',
-    clearedPaise: 0,
-    totalPaise: 2500000,
-    dueDate: '15 Dec 2026',
-    status: 'mandatory'
-  });
+  const [submittingFee, setSubmittingFee] = useState(false);
+  const [activePaymentFee, setActivePaymentFee] = useState(null);
+  const [paymentAmountRupees, setPaymentAmountRupees] = useState('');
+  const [submittingPayment, setSubmittingPayment] = useState(false);
 
   const fetchAcademics = async () => {
     try {
       const res = await API.get('/academics/summary');
       setData(res.data.data);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to load academic summary:', err);
     } finally {
       setLoading(false);
     }
@@ -48,129 +44,72 @@ export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
     fetchAcademics();
   }, []);
 
-  // Real-time data from API summary or live state
   const { 
-    currentMonthStudyOutlayPaise = 485000,
-    academicYearCumulativePaise = 18420000,
-    pendingImmediatePaise = 2850000,
-    recentStudyExpenses = [],
-    feeObligations = []
+    spendingThisMonthPaise = 0,
+    spendingThisYearPaise = 0,
+    subcategoryTotals = {},
+    fees = {},
+    recentAcademicTransactions = []
   } = data || {};
 
-  // Default rich obligations state synced with real-time payments
-  const [obligations, setObligations] = useState(() => {
-    try {
-      const saved = localStorage.getItem('pennywise_academic_obligations');
-      return saved ? JSON.parse(saved) : [
-        {
-          id: 'fee-1',
-          type: 'MANDATORY · INSTITUTIONAL',
-          typeClass: 'type-mandatory',
-          title: 'Semester 5 Tuition Fee',
-          dept: 'Dept. of Computer Science & Engineering • Installment 2 of 3',
-          clearedPaise: 6500000,
-          totalPaise: 9500000,
-          progress: 68.4,
-          dueDate: 'Due 15 Dec 2026',
-          installmentPayRupees: 15000,
-          cleared: false
-        },
-        {
-          id: 'fee-2',
-          type: 'FULLY CLEARED',
-          typeClass: 'type-cleared',
-          title: 'University Exam Protocol',
-          dept: 'Autonomous Examination Board • All Core Papers',
-          clearedPaise: 450000,
-          totalPaise: 450000,
-          progress: 100,
-          dueDate: 'Settled on 10 Nov via UPI',
-          cleared: true
-        },
-        {
-          id: 'fee-3',
-          type: 'EQUIPMENT ALLOCATION',
-          typeClass: 'type-equipment',
-          title: 'Robotics Lab & Hardware Kit',
-          dept: 'Embedded Systems Specialization Lab Fee',
-          clearedPaise: 900000,
-          totalPaise: 1800000,
-          progress: 50.0,
-          dueDate: 'Due 05 Jan 2027',
-          installmentPayRupees: 9000,
-          cleared: false
-        }
-      ];
-    } catch (e) {
-      return [];
-    }
-  });
+  const feeItems = fees.items || [];
+  const totalObligationsPaise = fees.totalObligationsPaise || 0;
+  const totalFeePaidPaise = fees.totalFeePaidPaise || 0;
+  const totalPendingFeesPaise = fees.totalPendingFeesPaise || 0;
 
-  const handlePayInstallment = (id, amountRupees) => {
-    const updated = obligations.map(ob => {
-      if (ob.id === id) {
-        const nextCleared = Math.min(ob.totalPaise, ob.clearedPaise + amountRupees * 100);
-        const nextProgress = Math.round((nextCleared / ob.totalPaise) * 100);
-        return {
-          ...ob,
-          clearedPaise: nextCleared,
-          progress: nextProgress,
-          cleared: nextCleared >= ob.totalPaise
-        };
-      }
-      return ob;
-    });
-    setObligations(updated);
-    localStorage.setItem('pennywise_academic_obligations', JSON.stringify(updated));
+  // Handle Recording New Obligation directly into MongoDB
+  const handleCreateFee = async (e) => {
+    e.preventDefault();
+    setSubmittingFee(true);
+    const form = e.target;
+    try {
+      await API.post('/academics/fees', {
+        title: form.obTitle.value,
+        feeType: form.feeType.value || 'semester',
+        semester: form.semester.value || 'Semester 1',
+        totalAmountPaise: Math.round(Number(form.obTotal.value) * 100),
+        dueDate: form.obDate.value,
+        notes: form.obDept.value || ''
+      });
+      setShowFeeModal(false);
+      await fetchAcademics();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to create obligation');
+    } finally {
+      setSubmittingFee(false);
+    }
   };
 
-  // Recent Study Outlay rows (from real API or rich live state)
-  const studyLogs = recentStudyExpenses.length > 0 ? recentStudyExpenses : [
-    {
-      id: 'log-1',
-      description: 'Crossword Book Depot',
-      sub: 'Distributed Systems Monograph',
-      category: 'ACADEMICS',
-      amountPaise: 64000,
-      method: 'Visa Platinum',
-      date: '17 Nov 2026'
-    },
-    {
-      id: 'log-2',
-      description: 'Campus Reprographics',
-      sub: 'Thesis Draft Spiral Binding',
-      category: 'PRINTS',
-      amountPaise: 18500,
-      method: 'UPI Fast',
-      date: '16 Nov 2026'
-    },
-    {
-      id: 'log-3',
-      description: 'Robotics Studio Component Store',
-      sub: 'ESP32 & Sensor Kit Expansion',
-      category: 'LAB KIT',
-      amountPaise: 145000,
-      method: 'UPI HDFC',
-      date: '14 Nov 2026'
-    },
-    {
-      id: 'log-4',
-      description: 'Stationery Hub',
-      sub: 'Technical Drafting Pens & Grid Sheets',
-      category: 'STATIONERY',
-      amountPaise: 32000,
-      method: 'Cash',
-      date: '12 Nov 2026'
+  // Handle Recording Real-Time Payment directly into MongoDB
+  const handleRecordPayment = async (e) => {
+    e.preventDefault();
+    if (!activePaymentFee || !paymentAmountRupees) return;
+    setSubmittingPayment(true);
+    try {
+      await API.post(`/academics/fees/${activePaymentFee._id}/payments`, {
+        amountPaise: Math.round(Number(paymentAmountRupees) * 100),
+        paymentMethod: 'UPI'
+      });
+      setActivePaymentFee(null);
+      setPaymentAmountRupees('');
+      await fetchAcademics();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to record fee payment');
+    } finally {
+      setSubmittingPayment(false);
     }
-  ];
+  };
+
+  // Dynamic Category Breakdown from real MongoDB subcategories
+  const subcategoryEntries = Object.entries(subcategoryTotals || {});
 
   return (
     <div className="stitch-container">
       {/* 1. Protocol Sub-Header & Breadcrumb */}
       <div className="academic-proto-bar">
         <span className="proto-pulse-dot" />
-        <span>ACADEMIC PORTFOLIO ALLOCATION · PROTOCOL V2.4</span>
-        <span className="academic-semester-badge">Active Semester 5</span>
+        <span>ACADEMIC PORTFOLIO ALLOCATION · MONGODB DATABASE RECONCILED</span>
+        <span className="academic-semester-badge">Real-Time Ledger</span>
       </div>
 
       {/* 2. Main Title Row & Actions */}
@@ -183,9 +122,6 @@ export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
         </div>
 
         <div className="academic-header-actions">
-          <button className="btn-goals-outline">
-            <Calendar size={13} /> TERM 2026-2027 (WINTER CYCLE)
-          </button>
           <button onClick={onOpenAddExpense} className="btn-goals-outline">
             + Record Study Cost
           </button>
@@ -195,20 +131,20 @@ export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
         </div>
       </div>
 
-      {/* 3. Three Stat Telemetry Cards */}
+      {/* 3. Three Stat Telemetry Cards Driven 100% by Live Database */}
       <div className="academic-stats-grid">
         {/* Metric 1 */}
         <div className="academic-stat-card">
           <div className="academic-stat-top">
             <span>CURRENT MONTH STUDY OUTLAY</span>
-            <span className="academic-badge-danger">▲ +4.2%</span>
+            <span className="academic-badge-schedule">● Live Database</span>
           </div>
           <div className="academic-stat-big-val">
-            {formatRupees(currentMonthStudyOutlayPaise)}
+            {formatRupees(spendingThisMonthPaise)}
           </div>
           <div className="academic-stat-sub-row">
-            <span>Textbooks, lab kit & research prints</span>
-            <span className="text-secondary font-bold">Burn: Normal</span>
+            <span>Course materials & academic expenses</span>
+            <span className="text-secondary font-bold">This Month</span>
           </div>
         </div>
 
@@ -216,29 +152,33 @@ export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
         <div className="academic-stat-card">
           <div className="academic-stat-top">
             <span>ACADEMIC YEAR CUMULATIVE</span>
-            <span className="academic-badge-schedule">● On Schedule</span>
+            <span className="academic-badge-schedule">● Cumulative</span>
           </div>
           <div className="academic-stat-big-val">
-            {formatRupees(academicYearCumulativePaise)}
+            {formatRupees(spendingThisYearPaise)}
           </div>
           <div className="academic-stat-sub-row">
-            <span>Across 2 semesters & amortizations</span>
-            <span className="text-emerald font-bold">Within projected budget</span>
+            <span>Total educational disbursements</span>
+            <span className="text-emerald font-bold">Year to Date</span>
           </div>
         </div>
 
         {/* Metric 3 */}
         <div className="academic-stat-card">
           <div className="academic-stat-top">
-            <span>PENDING IMMEDIATE OBLIGATIONS</span>
-            <span className="academic-badge-danger">! Due in 15 days</span>
+            <span>PENDING FEE OBLIGATIONS</span>
+            <span className={totalPendingFeesPaise > 0 ? "academic-badge-danger" : "academic-badge-schedule"}>
+              {totalPendingFeesPaise > 0 ? "! Unsettled" : "● Cleared"}
+            </span>
           </div>
           <div className="academic-stat-big-val">
-            {formatRupees(pendingImmediatePaise)}
+            {formatRupees(totalPendingFeesPaise)}
           </div>
           <div className="academic-stat-sub-row">
-            <span>2 installments due before 15 Dec 2026</span>
-            <span className="text-rose font-bold">Priority: High</span>
+            <span>Total dues across all institutional fees</span>
+            <span className={totalPendingFeesPaise > 0 ? "text-rose font-bold" : "text-emerald font-bold"}>
+              {feeItems.length} active fees
+            </span>
           </div>
         </div>
       </div>
@@ -246,138 +186,131 @@ export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
       {/* 4. Active Fee Obligations Section */}
       <div className="obligations-section-head">
         <h3 className="obligations-section-title">
-          Active Fee Obligations <span className="obligations-count-pill">{obligations.length} Active</span>
+          Active Fee Obligations <span className="obligations-count-pill">{feeItems.length} Registered</span>
         </h3>
-        <div className="flex gap-2">
-          <button className="btn-milestone-more"><SlidersHorizontal size={13} /></button>
+      </div>
+
+      {feeItems.length === 0 ? (
+        <div className="goals-card-surface text-center py-10 mb-6">
+          <GraduationCap size={36} className="mx-auto text-emerald-600 mb-2" />
+          <h4 className="font-extrabold text-sm text-dark mb-1">No Institutional Fee Obligations Found</h4>
+          <p className="text-muted text-xs mb-4">
+            Track college tuition, semester fees, and examination dues with automated installment reconciliation.
+          </p>
+          <button onClick={() => setShowFeeModal(true)} className="btn-goals-primary mx-auto">
+            + Arm Your First Obligation
+          </button>
         </div>
-      </div>
+      ) : (
+        <div className="obligations-grid-3">
+          {feeItems.map((fee) => {
+            const clearedPaise = fee.installments?.reduce((sum, i) => sum + i.amountPaise, 0) || 0;
+            const remPaise = Math.max(0, fee.totalAmountPaise - clearedPaise);
+            const progress = fee.totalAmountPaise > 0 ? Math.min(100, Math.round((clearedPaise / fee.totalAmountPaise) * 100)) : 100;
+            const isCleared = remPaise === 0 || fee.status === 'paid';
+            const dueFormatted = fee.dueDate ? new Date(fee.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Flexible';
 
-      <div className="obligations-grid-3">
-        {obligations.map((ob) => {
-          const remPaise = Math.max(0, ob.totalPaise - ob.clearedPaise);
-          return (
-            <div key={ob.id} className="obligation-card">
-              <div>
-                <div className="obligation-top-row">
-                  <span className={`obligation-type-pill ${ob.typeClass}`}>{ob.type}</span>
-                  <span className="text-muted text-xs cursor-pointer">•••</span>
+            return (
+              <div key={fee._id} className="obligation-card">
+                <div>
+                  <div className="obligation-top-row">
+                    <span className={`obligation-type-pill ${isCleared ? 'type-cleared' : 'type-mandatory'}`}>
+                      {isCleared ? 'FULLY CLEARED' : (fee.feeType?.toUpperCase() || 'MANDATORY')}
+                    </span>
+                  </div>
+
+                  <h4 className="obligation-title">{fee.title}</h4>
+                  <div className="obligation-dept-sub">
+                    {fee.notes || `${fee.semester || 'Semester'} • ${fee.academicYear || 'Academic Year'}`}
+                  </div>
+
+                  <div className="obligation-cleared-bar-meta">
+                    <span>CLEARED TO DATE</span>
+                    <span className="obligation-cleared-val">
+                      {formatRupees(clearedPaise)} / {formatRupees(fee.totalAmountPaise)}
+                    </span>
+                  </div>
+
+                  <div className="obligation-track">
+                    <div 
+                      className={isCleared ? 'obligation-fill-emerald' : 'obligation-fill-dark'}
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+
+                  <div className="obligation-progress-meta">
+                    <span>Progress: {progress}%</span>
+                    <span>Rem: {formatRupees(remPaise)}</span>
+                  </div>
+
+                  <div className="obligation-due-row">
+                    <span>Due: {dueFormatted}</span>
+                    <span className="text-emerald font-bold">
+                      {isCleared ? 'SETTLED' : `${fee.installments?.length || 0} Installments`}
+                    </span>
+                  </div>
                 </div>
 
-                <h4 className="obligation-title">{ob.title}</h4>
-                <div className="obligation-dept-sub">{ob.dept}</div>
-
-                <div className="obligation-cleared-bar-meta">
-                  <span>CLEARED TO DATE</span>
-                  <span className="obligation-cleared-val">
-                    ₹{(ob.clearedPaise / 100).toLocaleString('en-IN')}.00 / ₹{(ob.totalPaise / 100).toLocaleString('en-IN')}.00
-                  </span>
-                </div>
-
-                <div className="obligation-track">
-                  <div className={ob.cleared ? 'obligation-fill-emerald w-pct-full' : 'obligation-fill-dark'} />
-                </div>
-
-                <div className="obligation-progress-meta">
-                  <span>Progress: {ob.progress}%</span>
-                  <span>Rem: ₹{(remPaise / 100).toLocaleString('en-IN')}.00</span>
-                </div>
-
-                <div className="obligation-due-row">
-                  <span>{ob.dueDate}</span>
-                  <span className="text-emerald font-bold cursor-pointer">
-                    {ob.cleared ? 'SETTLED' : 'View Invoice ↗'}
-                  </span>
+                <div>
+                  {isCleared ? (
+                    <button className="btn-obligation-cleared" disabled>
+                      <CheckCircle2 size={13} color="#047857" /> Obligation Cleared
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => {
+                        setActivePaymentFee(fee);
+                        setPaymentAmountRupees(Math.min(Math.round(remPaise / 100), 5000).toString());
+                      }}
+                      className="btn-obligation-pay"
+                    >
+                      <CreditCard size={13} /> Record Payment
+                    </button>
+                  )}
                 </div>
               </div>
-
-              <div>
-                {ob.cleared ? (
-                  <button className="btn-obligation-cleared">
-                    <CheckCircle2 size={13} color="#047857" /> Receipt Downloaded (PDF)
-                  </button>
-                ) : (
-                  <button 
-                    onClick={() => handlePayInstallment(ob.id, ob.installmentPayRupees || 10000)}
-                    className="btn-obligation-pay"
-                  >
-                    <CreditCard size={13} /> Pay Installment (₹{(ob.installmentPayRupees || 10000).toLocaleString('en-IN')})
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* 5. Two-column Bottom: Category Breakdown & Recent Study Outlay */}
       <div className="academic-bottom-grid">
         
-        {/* Column A: Category Breakdown */}
+        {/* Column A: Dynamic Category Breakdown */}
         <div className="academic-breakdown-card">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h4 className="font-extrabold text-sm m-0 text-dark">Category Breakdown</h4>
-              <div className="text-muted text-xs">Allocated Study Material Ceilings</div>
+              <h4 className="font-extrabold text-sm m-0 text-dark">Courseware Category Breakdown</h4>
+              <div className="text-muted text-xs">Dynamic aggregation from MongoDB study receipts</div>
             </div>
-            <span className="text-muted text-xs font-bold">SEMESTER 5 CAP</span>
+            <span className="text-muted text-xs font-bold">DATABASE RECONCILED</span>
           </div>
 
-          <div className="breakdown-item">
-            <div className="breakdown-head">
-              <span className="breakdown-label">Textbooks & Academic Monographs</span>
-              <span className="breakdown-vals">₹6,200 / ₹8,000</span>
+          {subcategoryEntries.length === 0 ? (
+            <div className="text-center py-8 text-muted text-xs">
+              No academic subcategory expenses logged yet.
             </div>
-            <div className="breakdown-track">
-              <div className="breakdown-fill-emerald w-pct-78" />
-            </div>
-            <div className="breakdown-sub-row">
-              <span>77.5% consumed</span>
-              <span className="text-emerald font-bold">₹1,800 room left</span>
-            </div>
-          </div>
-
-          <div className="breakdown-item">
-            <div className="breakdown-head">
-              <span className="breakdown-label">Photostat, Research & Xerox Prints</span>
-              <span className="breakdown-vals">₹1,450 / ₹2,500</span>
-            </div>
-            <div className="breakdown-track">
-              <div className="breakdown-fill-emerald w-pct-58" />
-            </div>
-            <div className="breakdown-sub-row">
-              <span>58.0% consumed</span>
-              <span className="text-emerald font-bold">₹1,050 room left</span>
-            </div>
-          </div>
-
-          <div className="breakdown-item">
-            <div className="breakdown-head">
-              <span className="breakdown-label">Drafting & Engineering Stationery</span>
-              <span className="breakdown-vals">₹850 / ₹1,500</span>
-            </div>
-            <div className="breakdown-track">
-              <div className="breakdown-fill-emerald w-pct-57" />
-            </div>
-            <div className="breakdown-sub-row">
-              <span>56.6% consumed</span>
-              <span className="text-emerald font-bold">₹650 room left</span>
-            </div>
-          </div>
-
-          <div className="breakdown-item">
-            <div className="breakdown-head">
-              <span className="breakdown-label">Lab Equipment & Microcontrollers</span>
-              <span className="breakdown-vals">₹4,200 / ₹5,000</span>
-            </div>
-            <div className="breakdown-track">
-              <div className="breakdown-fill-emerald w-pct-84" />
-            </div>
-            <div className="breakdown-sub-row">
-              <span>84.0% consumed (Near cap)</span>
-              <span className="text-emerald font-bold">₹800 room left</span>
-            </div>
-          </div>
+          ) : (
+            subcategoryEntries.map(([subcat, amountPaise]) => {
+              const ratio = spendingThisYearPaise > 0 ? Math.min(100, Math.round((amountPaise / spendingThisYearPaise) * 100)) : 0;
+              return (
+                <div key={subcat} className="breakdown-item">
+                  <div className="breakdown-head">
+                    <span className="breakdown-label capitalize">{subcat || 'General Courseware'}</span>
+                    <span className="breakdown-vals">{formatRupees(amountPaise)}</span>
+                  </div>
+                  <div className="breakdown-track">
+                    <div className="breakdown-fill-emerald" style={{ width: `${ratio}%` }} />
+                  </div>
+                  <div className="breakdown-sub-row">
+                    <span>{ratio}% of academic total</span>
+                    <span className="text-emerald font-bold">Reconciled</span>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
 
         {/* Column B: Recent Study Outlay Log */}
@@ -385,72 +318,59 @@ export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
           <div className="flex justify-between items-center mb-4">
             <div>
               <h4 className="font-extrabold text-sm m-0 text-dark">Recent Study Outlay Log</h4>
-              <div className="text-muted text-xs">Micro-audit of courseware & material receipts</div>
+              <div className="text-muted text-xs">Live database audit of courseware & material receipts</div>
             </div>
-            <button className="btn-goals-outline text-xs py-1 px-2">Export CSV ⤓</button>
+            <Link to="/transactions" className="btn-goals-outline text-xs py-1 px-2">
+              View All ↗
+            </Link>
           </div>
 
           <div className="clearance-table-head">
             <span>Description</span>
             <span>Category</span>
             <span>Amount</span>
-            <span className="text-right">Method / Date</span>
+            <span className="text-right">Date</span>
           </div>
 
-          {studyLogs.map((log) => (
-            <div key={log.id} className="clearance-table-row">
-              <div className="flex items-center gap-2">
-                <div className="clearance-icon-expense">
-                  {log.category === 'ACADEMICS' ? <BookOpen size={13} /> :
-                   log.category === 'PRINTS' ? <Printer size={13} /> :
-                   log.category === 'LAB KIT' ? <Cpu size={13} /> :
-                   <PenTool size={13} />}
-                </div>
-                <div>
-                  <div className="font-bold text-dark text-xs">{log.description}</div>
-                  <div className="text-muted text-xs">{log.sub}</div>
-                </div>
-              </div>
-
-              <div>
-                <span className="clearance-category-expense">{log.category}</span>
-              </div>
-
-              <div className="font-extrabold text-dark text-xs">
-                {formatRupees(log.amountPaise)}
-              </div>
-
-              <div className="text-right text-xs">
-                <div className="text-dark font-medium">{log.method}</div>
-                <div className="text-muted text-xs">{log.date}</div>
-              </div>
+          {recentAcademicTransactions.length === 0 ? (
+            <div className="text-center py-8 text-muted text-xs">
+              No recent study transactions recorded. Click '+ Record Study Cost' above to add one.
             </div>
-          ))}
+          ) : (
+            recentAcademicTransactions.map((tx) => (
+              <div key={tx._id} className="clearance-table-row">
+                <div className="flex items-center gap-2">
+                  <div className="clearance-icon-expense">
+                    <BookOpen size={13} />
+                  </div>
+                  <div>
+                    <div className="font-bold text-dark text-xs">{tx.note || tx.subcategory || 'Study Outlay'}</div>
+                    <div className="text-muted text-xs">{tx.subcategory || 'Academics'}</div>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="clearance-category-expense">{tx.categoryLabel || 'Academic'}</span>
+                </div>
+
+                <div className="font-extrabold text-dark text-xs">
+                  {formatRupees(tx.amountPaise)}
+                </div>
+
+                <div className="text-right text-xs">
+                  <div className="text-dark font-medium">{tx.paymentMethod || 'UPI'}</div>
+                  <div className="text-muted text-xs">
+                    {new Date(tx.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
 
           <div className="clearance-footer-bar">
-            <span>Showing 4 of 28 disbursements</span>
-            <Link to="/transactions" className="clearance-footer-link">View Full Log →</Link>
+            <span>Showing {recentAcademicTransactions.length} recent database disbursements</span>
+            <Link to="/transactions" className="clearance-footer-link">View Full Ledger →</Link>
           </div>
-        </div>
-      </div>
-
-      {/* 6. Automatic Capital Buffer Allocation Strip */}
-      <div className="academic-buffer-banner">
-        <div className="buffer-left">
-          <div className="buffer-icon-box">
-            <ShieldCheck size={16} />
-          </div>
-          <div>
-            <div className="buffer-title">Automatic Capital Buffer Allocation Active</div>
-            <div className="buffer-subtitle">
-              PennyWise AutoSweep reserves ₹10,000 on the 1st of every month into the Education Sinking Fund.
-            </div>
-          </div>
-        </div>
-
-        <div className="buffer-right">
-          <span className="buffer-held-val">Buffer: ₹10,000 Held</span>
-          <button className="btn-buffer-adjust">Adjust Sweep</button>
         </div>
       </div>
 
@@ -462,34 +382,28 @@ export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
               <h3 className="font-extrabold text-sm m-0">Arm New Educational Obligation</h3>
               <button onClick={() => setShowFeeModal(false)} className="modal-close-btn">✕</button>
             </div>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const form = e.target;
-              const newOb = {
-                id: `fee-${Date.now()}`,
-                type: 'MANDATORY · CUSTOM',
-                typeClass: 'type-mandatory',
-                title: form.obTitle.value,
-                dept: form.obDept.value || 'Departmental Fee Board',
-                clearedPaise: 0,
-                totalPaise: Number(form.obTotal.value) * 100,
-                progress: 0,
-                dueDate: `Due ${form.obDate.value}`,
-                installmentPayRupees: Math.round(Number(form.obTotal.value) / 2),
-                cleared: false
-              };
-              const updated = [newOb, ...obligations];
-              setObligations(updated);
-              localStorage.setItem('pennywise_academic_obligations', JSON.stringify(updated));
-              setShowFeeModal(false);
-            }}>
+            <form onSubmit={handleCreateFee}>
               <div className="mb-3">
                 <label className="block text-secondary font-bold text-xs mb-1">Obligation Title</label>
                 <input name="obTitle" required placeholder="e.g. Semester 6 Tuition Fee" className="form-input text-xs" />
               </div>
               <div className="mb-3">
-                <label className="block text-secondary font-bold text-xs mb-1">Department / Board</label>
-                <input name="obDept" placeholder="e.g. Examination Directorate" className="form-input text-xs" />
+                <label className="block text-secondary font-bold text-xs mb-1">Fee Type</label>
+                <select name="feeType" className="form-input text-xs">
+                  <option value="semester">Semester Fee</option>
+                  <option value="exam">Examination Fee</option>
+                  <option value="lab">Lab & Equipment Fee</option>
+                  <option value="hostel">Hostel & Living Fee</option>
+                  <option value="books">Courseware & Books</option>
+                </select>
+              </div>
+              <div className="mb-3">
+                <label className="block text-secondary font-bold text-xs mb-1">Semester / Term</label>
+                <input name="semester" placeholder="e.g. Semester 6" className="form-input text-xs" />
+              </div>
+              <div className="mb-3">
+                <label className="block text-secondary font-bold text-xs mb-1">Notes / Department</label>
+                <input name="obDept" placeholder="e.g. Department of Engineering" className="form-input text-xs" />
               </div>
               <div className="mb-3">
                 <label className="block text-secondary font-bold text-xs mb-1">Total Fee Amount (INR)</label>
@@ -497,10 +411,43 @@ export default function Academics({ onOpenAddExpense, onPayFeeInstallment }) {
               </div>
               <div className="mb-3">
                 <label className="block text-secondary font-bold text-xs mb-1">Due Date</label>
-                <input name="obDate" required placeholder="15 Jan 2027" className="form-input text-xs" />
+                <input name="obDate" type="date" required className="form-input text-xs" />
               </div>
-              <button type="submit" className="modal-stitch-submit">
-                Initialize Obligation
+              <button type="submit" disabled={submittingFee} className="modal-stitch-submit">
+                {submittingFee ? 'Saving to MongoDB...' : 'Initialize Obligation'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Record Fee Payment */}
+      {activePaymentFee && (
+        <div className="modal-overlay" onClick={() => setActivePaymentFee(null)}>
+          <div className="modal-content modal-stitch-box" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-stitch-header">
+              <h3 className="font-extrabold text-sm m-0">Record Fee Installment</h3>
+              <button onClick={() => setActivePaymentFee(null)} className="modal-close-btn">✕</button>
+            </div>
+            <form onSubmit={handleRecordPayment}>
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg mb-3">
+                <div className="font-bold text-dark text-xs">{activePaymentFee.title}</div>
+                <div className="text-muted text-xs mt-1">
+                  Total: {formatRupees(activePaymentFee.totalAmountPaise)}
+                </div>
+              </div>
+              <div className="mb-3">
+                <label className="block text-secondary font-bold text-xs mb-1">Payment Amount (INR)</label>
+                <input 
+                  type="number" 
+                  required 
+                  value={paymentAmountRupees}
+                  onChange={(e) => setPaymentAmountRupees(e.target.value)}
+                  className="form-input text-xs" 
+                />
+              </div>
+              <button type="submit" disabled={submittingPayment} className="modal-stitch-submit">
+                {submittingPayment ? 'Recording to Ledger...' : 'Commit Payment'}
               </button>
             </form>
           </div>
