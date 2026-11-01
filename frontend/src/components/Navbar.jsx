@@ -20,84 +20,65 @@ export default function Navbar({ onOpenAddExpense }) {
   ];
 
   return (
-    <>
-      {/* Stitch Minimal Header */}
-      <header className="stitch-navbar-header">
-        <div className="stitch-navbar-inner">
-          <div className="stitch-nav-left">
-            <Link to="/" className="stitch-nav-logo">
-              <div className="stitch-nav-logo-icon">P</div>
-              <span className="stitch-nav-logo-text">PennyWise</span>
-            </Link>
+    <header className="stitch-navbar-header">
+      <div className="stitch-navbar-inner">
+        <div className="stitch-nav-left">
+          <Link to="/" className="stitch-nav-logo">
+            <div className="stitch-nav-logo-icon">P</div>
+            <span className="stitch-nav-logo-text">PennyWise</span>
+          </Link>
 
-            {/* Desktop Navigation Links matching Stitch screenshot */}
-            <nav className="stitch-nav-links desktop-only">
-              {navItems.map((item) => {
-                const isActive = location.pathname === item.path;
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={isActive ? 'stitch-nav-tab stitch-nav-tab-active' : 'stitch-nav-tab'}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
-
-          <div className="stitch-nav-right">
-            {/* Live Sync Nov 2026 Pill */}
-            <div className="stitch-nav-sync-pill desktop-only">
-              <span className="proto-pulse-dot" />
-              <span>LIVE SYNC · NOV 2026</span>
-            </div>
-
-            <span className="stitch-nav-inr-tag desktop-only">INR ₹</span>
-
-            <button 
-              title="Notifications" 
-              className="btn-milestone-more"
-            >
-              <Bell size={14} color="#64748B" />
-            </button>
-
-            {/* User Profile Avatar */}
-            <Link to="/settings">
-              <img 
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=80" 
-                alt="Profile" 
-                className="stitch-nav-avatar"
-              />
-            </Link>
-
-            <button
-              onClick={logout}
-              title="Logout"
-              className="btn-milestone-more desktop-only"
-            >
-              <LogOut size={13} color="#64748B" />
-            </button>
-          </div>
+          {/* Desktop Navigation Tabs (Hidden on mobile via .desktop-only) */}
+          <nav className="stitch-nav-links desktop-only">
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={isActive ? 'stitch-nav-tab stitch-nav-tab-active' : 'stitch-nav-tab'}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
         </div>
-      </header>
 
-      {/* Mobile App Bottom Navigation Bar */}
-      <nav className="mobile-bottom-nav">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`mobile-tab ${isActive ? 'active' : ''}`}
-            >
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-    </>
+        <div className="stitch-nav-right">
+          {/* Live Sync Nov 2026 Pill */}
+          <div className="stitch-nav-sync-pill desktop-only">
+            <span className="proto-pulse-dot" />
+            <span>LIVE SYNC · NOV 2026</span>
+          </div>
+
+          <span className="stitch-nav-inr-tag desktop-only">INR ₹</span>
+
+          <button 
+            title="Notifications" 
+            className="btn-milestone-more"
+          >
+            <Bell size={14} color="#64748B" />
+          </button>
+
+          {/* User Profile Avatar */}
+          <Link to="/settings">
+            <img 
+              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=80" 
+              alt="Profile" 
+              className="stitch-nav-avatar"
+            />
+          </Link>
+
+          <button
+            onClick={logout}
+            title="Logout"
+            className="btn-milestone-more desktop-only"
+          >
+            <LogOut size={13} color="#64748B" />
+          </button>
+        </div>
+      </div>
+    </header>
   );
 }
