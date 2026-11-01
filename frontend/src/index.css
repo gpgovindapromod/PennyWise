@@ -2012,3 +2012,624 @@ h3,
   flex-wrap: wrap;
   gap: 8px;
 }
+
+
+/* ==========================================================================
+   STITCH GOALS & BUDGET CEILING SYSTEM (GLOBAL CLASSES - ZERO INLINE CSS)
+   ========================================================================== */
+
+/* Sub-header Protocol Bar */
+.goals-proto-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #047857;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.goals-header-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.goals-main-heading {
+  font-size: 26px;
+  font-weight: 900;
+  font-family: var(--font-heading);
+  color: #111215;
+  margin: 0;
+  letter-spacing: -0.03em;
+}
+
+.goals-sub-caption {
+  font-size: 12px;
+  color: #64748B;
+  margin: 4px 0 0 0;
+  max-width: 600px;
+}
+
+.goals-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-goals-outline {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  color: #111215;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-goals-outline:hover {
+  background: #F9F9FB;
+}
+
+.btn-goals-primary {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #111215;
+  border: 1px solid #111215;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.btn-goals-primary:hover {
+  opacity: 0.9;
+}
+
+/* Two-column Hero Grid (Gauge + Micro-Caps) */
+.goals-envelope-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+@media (max-width: 900px) {
+  .goals-envelope-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.goals-card-surface {
+  background: #FFFFFF;
+  border-radius: 14px;
+  border: 1px solid #E5E7EB;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(17, 18, 21, 0.03);
+}
+
+.goals-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.goals-badge-protocol {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #047857;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.goals-badge-pacing {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #ECFDF5;
+  color: #047857;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.goals-gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin: 10px 0 16px 0;
+}
+
+.goals-gauge-center-text {
+  text-align: center;
+  margin-top: -24px;
+}
+
+.goals-burn-ratio-title {
+  font-size: 9px;
+  font-weight: 800;
+  color: #64748B;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.goals-burn-ratio-val {
+  font-size: 32px;
+  font-weight: 900;
+  font-family: var(--font-heading);
+  color: #111215;
+  line-height: 1.1;
+}
+
+.goals-burn-ratio-sub {
+  font-size: 10.5px;
+  color: #64748B;
+  font-weight: 600;
+}
+
+.goals-gauge-limits {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 260px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #94A3B8;
+  margin-top: 4px;
+}
+
+.goals-trio-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid #EEF0F4;
+  margin-top: 10px;
+}
+
+.goals-metric-box {
+  background: #F9F9FB;
+  border-radius: 8px;
+  padding: 8px 10px;
+  border: 1px solid #EEF0F4;
+}
+
+.goals-metric-box-label {
+  font-size: 8.5px;
+  font-weight: 800;
+  color: #8E92A0;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.goals-metric-box-val {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #111215;
+  margin-top: 2px;
+}
+
+.goals-metric-box-sub {
+  font-size: 9.5px;
+  color: #64748B;
+  margin-top: 1px;
+}
+
+/* Micro-Caps Category Velocity Column */
+.microcaps-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #111215;
+  margin: 0;
+}
+
+.microcaps-armed-pill {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.microcaps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.microcap-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.microcap-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.microcap-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.microcap-icon-box {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  background: #F1F5F9;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.microcap-label {
+  font-weight: 800;
+  color: #111215;
+}
+
+.microcap-spent-meta {
+  font-size: 10px;
+  color: #64748B;
+}
+
+.microcap-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.microcap-status-pill {
+  font-size: 8.5px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.status-controlled {
+  background: #F3F4F8;
+  color: #475569;
+}
+
+.status-optimal {
+  background: #ECFDF5;
+  color: #047857;
+}
+
+.status-untouched {
+  background: #F1F5F9;
+  color: #64748B;
+}
+
+.microcap-left-val {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #111215;
+}
+
+.microcap-track {
+  width: 100%;
+  height: 5px;
+  border-radius: 3px;
+  background: #F1F5F9;
+  overflow: hidden;
+}
+
+.microcap-fill-emerald {
+  height: 100%;
+  background: #047857;
+  border-radius: 3px;
+}
+
+.microcap-fill-dark {
+  height: 100%;
+  background: #111215;
+  border-radius: 3px;
+}
+
+.microcaps-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #EEF0F4;
+  font-size: 11px;
+}
+
+/* Multi-Horizon Savings Milestones Section */
+.milestones-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.milestones-title-group h3 {
+  font-size: 18px;
+  font-weight: 900;
+  color: #111215;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.milestones-meta-pill {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #8E92A0;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.milestones-tab-strip {
+  display: flex;
+  gap: 4px;
+  background: #F3F4F8;
+  padding: 3px;
+  border-radius: 6px;
+}
+
+.milestones-tab-btn {
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: #64748B;
+}
+
+.milestones-tab-btn-active {
+  background: #FFFFFF;
+  color: #111215;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.milestones-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.milestone-vault-card {
+  background: #FFFFFF;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(17, 18, 21, 0.02);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.milestone-vault-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(17, 18, 21, 0.06);
+}
+
+.milestone-top-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 9px;
+  font-weight: 800;
+  color: #8E92A0;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.milestone-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.milestone-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #E5E7EB;
+}
+
+.milestone-icon-default {
+  background: #F9F9FB;
+  color: #111215;
+}
+
+.milestone-icon-secured {
+  background: #ECFDF5;
+  color: #047857;
+}
+
+.milestone-title-text {
+  font-size: 13px;
+  font-weight: 800;
+  color: #111215;
+  margin: 0;
+}
+
+.milestone-days-left {
+  font-size: 10px;
+  color: #8E92A0;
+  margin-top: 1px;
+}
+
+.milestone-financial-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.milestone-current-val {
+  font-size: 20px;
+  font-weight: 900;
+  font-family: var(--font-heading);
+  color: #111215;
+}
+
+.milestone-target-val {
+  font-size: 10.5px;
+  color: #64748B;
+}
+
+.milestone-percent-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #64748B;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.milestone-progress-bar {
+  width: 100%;
+  height: 5px;
+  background: #F1F5F9;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.milestone-progress-fill {
+  height: 100%;
+  background: #047857;
+  border-radius: 3px;
+}
+
+.milestone-footer-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #64748B;
+  padding: 6px 8px;
+  background: #F9F9FB;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.milestone-action-row {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-milestone-deposit {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #111215;
+  color: #FFFFFF;
+  border: none;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.btn-milestone-deposit:hover {
+  opacity: 0.9;
+}
+
+.btn-milestone-more {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #E5E7EB;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748B;
+}
+
+/* Auto-Save Velocity Simulator Card */
+.simulator-card-surface {
+  background: #FFFFFF;
+  border-radius: 14px;
+  border: 1px solid #E5E7EB;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(17, 18, 21, 0.03);
+}
+
+.simulator-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.simulator-title-group h4 {
+  font-size: 15px;
+  font-weight: 800;
+  color: #111215;
+  margin: 0;
+}
+
+.simulator-meta-pill {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #047857;
+  text-transform: uppercase;
+}
+
+.simulator-controls-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .simulator-controls-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Dynamic fill helper utility classes */
+.w-pct-60 { width: 60%; }
+.w-pct-37 { width: 37%; }
+.w-pct-53 { width: 53%; }
+.w-pct-0 { width: 0%; }
