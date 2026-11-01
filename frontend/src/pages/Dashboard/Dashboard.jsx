@@ -39,21 +39,21 @@ export default function Dashboard({ onOpenAddExpense }) {
   const [activeTab, setActiveTab] = useState('ALL');
   const [searchFilter, setSearchFilter] = useState('');
 
-  // Primary Savings Goal State (synced with user's target)
+  // Primary Savings Goal State
   const [savingsTarget, setSavingsTarget] = useState(() => {
     try {
       const saved = localStorage.getItem('pennywise_primary_goal');
       return saved ? JSON.parse(saved) : {
-        title: 'Next Trip to Goa',
-        subtitle: 'Q1 LEISURE & RETREAT VAULT',
+        title: 'Emergency Buffer Vault',
+        subtitle: 'LIQUIDITY CONTINGENCY RESERVE',
         targetRupees: 25000,
         currentRupees: 18500,
         targetDate: '28 Dec 2026'
       };
     } catch (e) {
       return {
-        title: 'Next Trip to Goa',
-        subtitle: 'Q1 LEISURE & RETREAT VAULT',
+        title: 'Emergency Buffer Vault',
+        subtitle: 'LIQUIDITY CONTINGENCY RESERVE',
         targetRupees: 25000,
         currentRupees: 18500,
         targetDate: '28 Dec 2026'
@@ -89,6 +89,16 @@ export default function Dashboard({ onOpenAddExpense }) {
     setSavingsTarget(updated);
     localStorage.setItem('pennywise_primary_goal', JSON.stringify(updated));
     setShowGoalModal(false);
+
+    // Also commit transaction to real DB
+    API.post('/transactions', {
+      type: 'expense',
+      amountPaise: amt * 100,
+      categoryId: 'academic',
+      categoryLabel: 'Goal Deposit',
+      subcategory: savingsTarget.title,
+      note: 'Direct Goal Deposit from Dashboard'
+    }).then(() => fetchSummary()).catch(() => {});
   };
 
   const {
@@ -99,18 +109,28 @@ export default function Dashboard({ onOpenAddExpense }) {
     recentTransactions = []
   } = data || {};
 
-  const safeBudgetLimit = budget?.limitPaise || 800000; // default ₹8,000 ceiling
+  const safeBudgetLimit = budget?.limitPaise || 800000; // default ceiling
   const budgetSpent = expensesThisMonthPaise;
   const budgetRemaining = Math.max(0, safeBudgetLimit - budgetSpent);
   const budgetPercent = safeBudgetLimit > 0 
     ? Math.min(Math.round((budgetSpent / safeBudgetLimit) * 100), 100) 
     : 0;
 
-  // Days left in current month calculation for daily burn allowance
+  // Real-time days left calculation
   const now = new Date();
   const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
   const daysLeft = Math.max(1, lastDay - now.getDate() + 1);
   const dailySafeAllowancePaise = Math.round(budgetRemaining / daysLeft);
+
+  // Real-time daily burn rate from actual current month expenses
+  const currentDayOfMonth = Math.max(1, now.getDate());
+  const actualDailyAvgPaise = Math.round(expensesThisMonthPaise / currentDayOfMonth);
+
+  // Compute Today's actual spend from recent transactions
+  const todayStr = now.toISOString().split('T')[0];
+  const todaySpentPaise = recentTransactions
+    .filter(t => t.date && t.date.startsWith(todayStr) && t.type === 'expense')
+    .reduce((sum, t) => sum + t.amountPaise, 0);
 
   const goalPercent = Math.min(
     100, 
@@ -124,12 +144,12 @@ export default function Dashboard({ onOpenAddExpense }) {
     year: 'numeric' 
   });
 
-  // Filter recent transactions
+  // Filter real-time transactions
   const filteredTransactions = recentTransactions.filter((tx) => {
     const matchesSearch = !searchFilter || 
-      tx.subcategory?.toLowerCase().includes(searchFilter.toLowerCase()) ||
-      tx.categoryLabel?.toLowerCase().includes(searchFilter.toLowerCase()) ||
-      tx.note?.toLowerCase().includes(searchFilter.toLowerCase());
+      (tx.subcategory && tx.subcategory.toLowerCase().includes(searchFilter.toLowerCase())) ||
+      (tx.categoryLabel && tx.categoryLabel.toLowerCase().includes(searchFilter.toLowerCase())) ||
+      (tx.note && tx.note.toLowerCase().includes(searchFilter.toLowerCase()));
 
     if (!matchesSearch) return false;
     if (activeTab === 'ALL') return true;
@@ -189,7 +209,7 @@ export default function Dashboard({ onOpenAddExpense }) {
                 {formatRupees(currentBalancePaise)}
               </span>
               <span className="horizon-growth-tag">
-                ▲ +12.4% <span className="text-secondary font-medium">vs last month</span>
+                ▲ Verified Balance <span className="text-secondary font-medium">in database</span>
               </span>
             </div>
 
@@ -198,7 +218,6 @@ export default function Dashboard({ onOpenAddExpense }) {
             </p>
           </div>
 
-          {/* Mini 30-Day Velocity Curve */}
           <div className="horizon-velocity-wrap">
             <div className="horizon-velocity-title">
               30-DAY VELOCITY CURVE
@@ -208,7 +227,7 @@ export default function Dashboard({ onOpenAddExpense }) {
                 d="M 0 32 C 30 30, 45 35, 75 22 C 105 10, 120 18, 150 4" 
                 stroke="#10B981" 
                 strokeWidth="2.5" 
-                strokeLinecap="round"
+                strokeLinecap="round" 
               />
               <circle cx="150" cy="4" r="3.5" fill="#34D399" />
             </svg>
@@ -223,9 +242,9 @@ export default function Dashboard({ onOpenAddExpense }) {
               <TrendingUp size={16} />
             </div>
             <div>
-              <div className="horizon-metric-label">Gross Inflow</div>
+              <div className="horizon-metric-label">Gross Inflow (Month)</div>
               <div className="horizon-metric-val-white">
-                +{formatRupees(incomeThisMonthPaise)} <span className="text-emerald text-xs">+18%</span>
+                +{formatRupees(incomeThisMonthPaise)}
               </div>
             </div>
           </div>
@@ -236,9 +255,9 @@ export default function Dashboard({ onOpenAddExpense }) {
               <TrendingDown size={16} />
             </div>
             <div>
-              <div className="horizon-metric-label">Total Burn / Outflow</div>
+              <div className="horizon-metric-label">Total Outflow (Month)</div>
               <div className="horizon-metric-val-white">
-                −{formatRupees(expensesThisMonthPaise)} <span className="text-rose text-xs">-4.2%</span>
+                −{formatRupees(expensesThisMonthPaise)}
               </div>
             </div>
           </div>
@@ -300,7 +319,7 @@ export default function Dashboard({ onOpenAddExpense }) {
               <span className="goal-title-heading">Monthly Spending Cap</span>
             </div>
             <span className="goal-status-ontrack">
-              ON TRACK
+              {budgetPercent > 85 ? 'HIGH BURN' : 'ON TRACK'}
             </span>
           </div>
 
@@ -325,7 +344,7 @@ export default function Dashboard({ onOpenAddExpense }) {
           <div className="goal-bar-track">
             <div 
               className={budgetPercent > 85 ? 'goal-bar-alert' : 'goal-bar-emerald'} 
-              style={{ '--fill-width': `${budgetPercent}%`, width: 'var(--fill-width)' }}
+              style={{ width: `${budgetPercent}%` }}
             />
           </div>
 
@@ -337,7 +356,7 @@ export default function Dashboard({ onOpenAddExpense }) {
           {/* Safe Daily Burn Strip */}
           <div className="goal-safe-burn-strip">
             <span className="text-secondary flex items-center gap-2">
-              <ShieldCheck size={14} color="#047857" /> Safe Burn Allowance:
+              <ShieldCheck size={14} color="#047857" /> Safe Daily Allowance:
             </span>
             <span className="goal-burn-allowance-num">
               {formatRupees(dailySafeAllowancePaise)} <span className="text-muted text-xs font-normal">/ day remaining</span>
@@ -350,7 +369,7 @@ export default function Dashboard({ onOpenAddExpense }) {
           <div className="goal-header-row">
             <div>
               <div className="goal-title-wrap">
-                <Plane size={15} color="#047857" />
+                <Target size={15} color="#047857" />
                 <span className="goal-title-heading">{savingsTarget.title}</span>
               </div>
               <div className="goal-subtitle-tag">
@@ -358,7 +377,6 @@ export default function Dashboard({ onOpenAddExpense }) {
               </div>
             </div>
 
-            {/* Circular Percent Badge */}
             <div className="goal-ring-badge">
               {goalPercent}%
             </div>
@@ -374,7 +392,7 @@ export default function Dashboard({ onOpenAddExpense }) {
           </div>
 
           <div className="text-secondary text-xs mb-4">
-            ₹{(savingsTarget.targetRupees - savingsTarget.currentRupees).toLocaleString('en-IN')} remaining · Est. completion {savingsTarget.targetDate}
+            ₹{Math.max(0, savingsTarget.targetRupees - savingsTarget.currentRupees).toLocaleString('en-IN')} remaining · Est. completion {savingsTarget.targetDate}
           </div>
 
           <div className="flex gap-2">
@@ -400,9 +418,8 @@ export default function Dashboard({ onOpenAddExpense }) {
         </div>
       </div>
 
-      {/* 5. Tri-Metric Operational Telemetry Strip */}
+      {/* 5. Real-Time Telemetry Strip Calculated Directly From Live Data */}
       <div className="telemetry-strip-grid">
-        {/* Metric 1 */}
         <div className="telemetry-card-box">
           <div className="telemetry-title-row">
             <span className="telemetry-title-text">
@@ -411,17 +428,16 @@ export default function Dashboard({ onOpenAddExpense }) {
             <Clock size={13} color="#94A3B8" />
           </div>
           <div className="telemetry-value-dark">
-            ₹420.00
+            {formatRupees(todaySpentPaise)}
           </div>
           <div className="telemetry-sub-row">
             <span className="telemetry-pill-drop">
-              ▼ -28% drop
+              Live Verified
             </span>
-            <span className="text-secondary">Yesterday: ₹580.00</span>
+            <span className="text-secondary">Today's transactions</span>
           </div>
         </div>
 
-        {/* Metric 2 */}
         <div className="telemetry-card-box">
           <div className="telemetry-title-row">
             <span className="telemetry-title-text">
@@ -430,15 +446,14 @@ export default function Dashboard({ onOpenAddExpense }) {
             <Sparkles size={13} color="#94A3B8" />
           </div>
           <div className="telemetry-value-dark">
-            ₹1,288.00 <span className="text-secondary text-xs font-normal">/ day</span>
+            {formatRupees(actualDailyAvgPaise)} <span className="text-secondary text-xs font-normal">/ day</span>
           </div>
           <div className="telemetry-sub-row">
-            <span className="text-emerald font-bold">OPTIMAL</span>
-            <span className="text-secondary">Target threshold: ₹1,500</span>
+            <span className="text-emerald font-bold">CURRENT PACING</span>
+            <span className="text-secondary">Across {currentDayOfMonth} days</span>
           </div>
         </div>
 
-        {/* Metric 3 */}
         <div className="telemetry-card-box">
           <div className="telemetry-title-row">
             <span className="telemetry-title-text">
@@ -450,14 +465,13 @@ export default function Dashboard({ onOpenAddExpense }) {
             {formatRupees(Math.max(0, incomeThisMonthPaise - expensesThisMonthPaise))}
           </div>
           <div className="text-secondary text-xs mt-1">
-            Automated recurring models · 96% CONF.
+            Realized liquid cash surplus
           </div>
         </div>
       </div>
 
       {/* 6. Live Transaction Clearance Table & Protocol Feed */}
       <div className="clearance-table-card">
-        {/* Feed Header */}
         <div className="clearance-header-bar">
           <div>
             <div className="flex items-center gap-2">
@@ -467,11 +481,10 @@ export default function Dashboard({ onOpenAddExpense }) {
               </h3>
             </div>
             <div className="clearance-subtitle-note">
-              Tabular multi-channel clearance protocol
+              Tabular multi-channel clearance protocol directly from MongoDB
             </div>
           </div>
 
-          {/* Quick Search & Filter Pills */}
           <div className="clearance-filter-wrap">
             <div className="relative">
               <input
@@ -505,7 +518,6 @@ export default function Dashboard({ onOpenAddExpense }) {
           </div>
         ) : (
           <div className="flex flex-col">
-            {/* Table Header Row */}
             <div className="clearance-table-head">
               <span>Entity & Purpose</span>
               <span>Classification</span>
@@ -521,7 +533,6 @@ export default function Dashboard({ onOpenAddExpense }) {
                   key={tx._id}
                   className="clearance-table-row"
                 >
-                  {/* Entity & Purpose */}
                   <div className="flex items-center gap-3">
                     <div className={isIncome ? 'clearance-icon-income' : 'clearance-icon-expense'}>
                       {tx.categoryId === 'food-drinks' ? <Coffee size={14} /> : 
@@ -539,24 +550,20 @@ export default function Dashboard({ onOpenAddExpense }) {
                     </div>
                   </div>
 
-                  {/* Classification */}
                   <div>
                     <span className={isIncome ? 'clearance-category-income' : 'clearance-category-expense'}>
                       {tx.categoryLabel}
                     </span>
                   </div>
 
-                  {/* Method & Route */}
                   <div className="text-secondary text-xs">
                     {(tx.paymentMethod || 'UPI / Instant').toUpperCase()}
                   </div>
 
-                  {/* Timestamp */}
                   <div className="text-muted text-xs">
                     {formatDate(tx.date)}
                   </div>
 
-                  {/* Clearance Value */}
                   <div className={isIncome ? 'clearance-value-income' : 'clearance-value-expense'}>
                     {isIncome ? '+' : '−'}{formatRupees(tx.amountPaise)}
                   </div>
@@ -567,7 +574,7 @@ export default function Dashboard({ onOpenAddExpense }) {
         )}
 
         <div className="clearance-footer-bar">
-          <span>Displaying 5 of {recentTransactions.length} records</span>
+          <span>Displaying {Math.min(6, filteredTransactions.length)} of {recentTransactions.length} records</span>
           <Link to="/transactions" className="clearance-footer-link">
             View Full Ledger →
           </Link>

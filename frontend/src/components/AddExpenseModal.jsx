@@ -4,7 +4,6 @@ import { rupeesToPaise } from '../services/currency';
 import { 
   X, 
   Check, 
-  Sparkles, 
   Coffee, 
   BookOpen, 
   Compass, 
@@ -18,11 +17,11 @@ import {
 export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuccess, defaultAcademicFee = null, editingTransaction = null }) {
   const notifySuccess = onSuccess || onExpenseAdded || (() => {});
   const [type, setType] = useState('expense');
-  const [amount, setAmount] = useState('1450');
+  const [amount, setAmount] = useState('');
   const [sector, setSector] = useState('Dining & Coffee');
   const [route, setRoute] = useState('UPI FastPay');
-  const [merchantMemo, setMerchantMemo] = useState('Blue Tokai Roasters • Pour-over batch');
-  const [date, setDate] = useState('18 Nov 2026');
+  const [merchantMemo, setMerchantMemo] = useState('');
+  const [date, setDate] = useState(() => new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -37,7 +36,10 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
         setType('expense');
         setSector('Academics');
         setMerchantMemo('Installment for: ' + defaultAcademicFee.title);
-        setAmount('15000');
+        setAmount((defaultAcademicFee.totalAmountPaise / 100).toString());
+      } else {
+        setAmount('');
+        setMerchantMemo('');
       }
     }
   }, [isOpen, defaultAcademicFee, editingTransaction]);
@@ -47,7 +49,7 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!amount || Number(amount) <= 0) {
-      setError('Please enter a valid settlement volume');
+      setError('Please enter a valid settlement amount');
       return;
     }
 
@@ -92,10 +94,9 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
   return (
     <div className="stitch-modal-overlay" onClick={onClose}>
       <div className="stitch-modal-card" onClick={(e) => e.stopPropagation()}>
-        {/* Top Protocol Header */}
         <div className="stitch-modal-top-meta">
-          <span>RAPID CLEARANCE PROTOCOL · 3-SEC LOG</span>
-          <span className="cursor-pointer" onClick={onClose}>⌘N  ✕</span>
+          <span>RAPID CLEARANCE PROTOCOL · LIVE LOG</span>
+          <span className="cursor-pointer" onClick={onClose}>✕</span>
         </div>
 
         <div className="stitch-modal-title-row">
@@ -121,12 +122,13 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
 
         {/* Settlement Volume Input Box */}
         <div className="stitch-modal-amount-box">
-          <div className="stitch-modal-volume-title">SETTLEMENT VOLUME</div>
+          <div className="stitch-modal-volume-title">SETTLEMENT AMOUNT (INR)</div>
           <div className="stitch-amount-input-row">
             <span className="stitch-currency-symbol">₹</span>
             <input 
               type="number"
               value={amount}
+              placeholder="0"
               onChange={(e) => setAmount(e.target.value)}
               className="stitch-amount-number-input"
               autoFocus
@@ -179,7 +181,7 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
 
         {/* Origin Route */}
         <div className="stitch-taxonomy-header">
-          <span>ORIGIN ROUTE</span>
+          <span>PAYMENT METHOD</span>
         </div>
         <div className="stitch-routes-strip">
           {['UPI FastPay', 'Cash Reserve', 'HDFC Platinum', 'Bank Wire'].map((r) => (
@@ -213,10 +215,9 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
 
         {error && <div className="text-rose text-xs font-bold mb-3">{error}</div>}
 
-        {/* Footer Actions */}
         <div className="stitch-modal-submit-row">
           <div className="text-muted text-xs">
-            Press <kbd className="font-mono bg-slate-100 p-1 rounded">⌘ + ↵</kbd> to commit
+            Directly syncs to MongoDB Ledger
           </div>
           <button 
             type="button"

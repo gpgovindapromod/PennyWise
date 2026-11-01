@@ -3,12 +3,9 @@ import { useAuth } from '../../context/AuthContext';
 import { 
   User, 
   ShieldCheck, 
-  Key, 
-  Smartphone, 
   Laptop, 
   Download, 
   Check, 
-  Sparkles, 
   Lock, 
   DownloadCloud,
   LogOut,
@@ -19,13 +16,20 @@ export default function Settings() {
   const { user, logout } = useAuth();
   
   // Real user state initialized directly from auth profile
-  const [fullName, setFullName] = useState(user?.name || 'Dr. Maya Lindqvist');
-  const [email, setEmail] = useState(user?.email || 'maya.lindqvist@nordic.bank');
+  const [fullName, setFullName] = useState(user?.name || 'Authorized Member');
+  const [email, setEmail] = useState(user?.email || '');
   const [currency, setCurrency] = useState('₹ INR (Indian Rupee)');
-  const [dateFormat, setDateFormat] = useState('DD MMM YYYY (14 Nov 2026)');
+  const [dateFormat, setDateFormat] = useState('DD MMM YYYY');
   const [anonymousDiag, setAnonymousDiag] = useState(false);
   const [biometricsEnabled, setBiometricsEnabled] = useState(true);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Dynamic Account Age in days since user.createdAt
+  const createdDate = user?.createdAt ? new Date(user.createdAt) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const accountAgeDays = Math.max(1, Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24)));
+  const createdMonthYear = createdDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  const userUID = user?._id ? `UID: ${user._id.toString().toUpperCase().slice(-8)}` : 'UID: SECURE-NODE';
+  const deviceOS = navigator.userAgent.includes('Mac') ? 'macOS Client' : navigator.userAgent.includes('Android') ? 'Android Mobile' : navigator.userAgent.includes('iPhone') ? 'iOS Mobile' : 'Windows PC';
 
   const handleSaveChanges = (e) => {
     e.preventDefault();
@@ -58,11 +62,9 @@ export default function Settings() {
       <div className="stitch-profile-hero">
         <div className="stitch-profile-left">
           <div className="stitch-avatar-wrap">
-            <img 
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" 
-              alt="Profile" 
-              className="stitch-avatar-img"
-            />
+            <div className="w-14 h-14 rounded-full bg-slate-900 text-emerald-400 font-extrabold text-2xl flex items-center justify-center font-heading border-2 border-emerald-500">
+              {fullName.charAt(0).toUpperCase()}
+            </div>
             <div className="stitch-avatar-edit-badge" title="Change Avatar">
               <Pencil size={10} />
             </div>
@@ -71,11 +73,11 @@ export default function Settings() {
           <div>
             <div className="stitch-user-name-row">
               <h2 className="stitch-user-name-title">{fullName}</h2>
-              <span className="stitch-tier-badge">● Tier-1 Verified</span>
+              <span className="stitch-tier-badge">● Active Member</span>
             </div>
             <div className="stitch-user-email-text">{email}</div>
             <div className="stitch-user-uid-meta">
-              UID: ATLAS-8842-DK • Nordic Quantitative Chair
+              {userUID} • {user?.college || 'PennyWise Global Member'}
             </div>
           </div>
         </div>
@@ -83,20 +85,20 @@ export default function Settings() {
         <div className="stitch-profile-stats">
           <div className="stitch-stat-col">
             <div className="stitch-stat-col-title">ACCOUNT AGE</div>
-            <div className="stitch-stat-col-val">844 Days</div>
-            <div className="stitch-stat-col-sub">Since Aug 2024</div>
+            <div className="stitch-stat-col-val">{accountAgeDays} Days</div>
+            <div className="stitch-stat-col-sub">Since {createdMonthYear}</div>
           </div>
 
           <div className="stitch-stat-col">
             <div className="stitch-stat-col-title">SYNC STATUS</div>
             <div className="stitch-stat-col-val text-emerald">● Live</div>
-            <div className="stitch-stat-col-sub">P2P Real-time</div>
+            <div className="stitch-stat-col-sub">Cloud Connected</div>
           </div>
 
           <div className="stitch-stat-col">
-            <div className="stitch-stat-col-title">SECURITY SCORE</div>
-            <div className="stitch-stat-col-val">98<span className="text-muted text-xs font-normal">/100</span></div>
-            <div className="stitch-stat-col-sub text-emerald">Optimal (A+)</div>
+            <div className="stitch-stat-col-title">SECURITY STATUS</div>
+            <div className="stitch-stat-col-val text-emerald">Active</div>
+            <div className="stitch-stat-col-sub text-emerald">Level 3 Protected</div>
           </div>
         </div>
       </div>
@@ -157,9 +159,9 @@ export default function Settings() {
                   onChange={(e) => setDateFormat(e.target.value)}
                   className="stitch-input-box"
                 >
-                  <option>DD MMM YYYY (14 Nov 2026)</option>
-                  <option>YYYY-MM-DD (2026-11-14)</option>
-                  <option>MM/DD/YYYY (11/14/2026)</option>
+                  <option>DD MMM YYYY</option>
+                  <option>YYYY-MM-DD</option>
+                  <option>MM/DD/YYYY</option>
                 </select>
               </div>
             </div>
@@ -192,7 +194,7 @@ export default function Settings() {
           <div className="flex justify-between items-center p-3 rounded-lg bg-slate-50 border border-slate-200 mb-4">
             <div>
               <div className="font-bold text-dark text-xs">Account Password</div>
-              <div className="text-muted text-xs">•••••••••••••••• · Rotated 42d ago</div>
+              <div className="text-muted text-xs">•••••••••••••••• · Active Password</div>
             </div>
             <button className="btn-goals-outline text-xs py-1 px-3">
               Change Password
@@ -207,7 +209,7 @@ export default function Settings() {
                 <span className="stitch-tier-badge">Active</span>
               </div>
               <div className="text-muted text-xs mt-1">
-                Use Touch ID, Windows Hello, or YubiKey FIDO2 for one-tap biometric access.
+                Use Touch ID, Windows Hello, or hardware key for one-tap access.
               </div>
             </div>
             <input 
@@ -221,35 +223,19 @@ export default function Settings() {
           {/* Active Devices & Sessions */}
           <div>
             <div className="flex justify-between items-center mb-2">
-              <span className="font-bold text-dark text-xs">Active Devices & Sessions</span>
-              <span className="text-rose text-xs font-bold cursor-pointer">Sign out other devices</span>
+              <span className="font-bold text-dark text-xs">Current Session & Node</span>
             </div>
 
             <div className="flex justify-between items-center text-xs p-2 rounded bg-slate-50 border border-slate-200 mb-2">
               <div className="flex items-center gap-2">
                 <Laptop size={14} color="#047857" />
                 <div>
-                  <span className="font-bold text-dark">Mac Studio M3 Ultra</span>
+                  <span className="font-bold text-dark">{deviceOS}</span>
                   <span className="stitch-tier-badge ml-2">This Device</span>
-                  <div className="text-muted text-xs">Chrome 131 • Bengaluru, IN</div>
+                  <div className="text-muted text-xs">Encrypted HTTPS Session</div>
                 </div>
               </div>
               <span className="text-emerald font-bold">Active now</span>
-            </div>
-
-            <div className="flex justify-between items-center text-xs p-2 rounded bg-slate-50 border border-slate-200">
-              <div className="flex items-center gap-2">
-                <Smartphone size={14} color="#64748B" />
-                <div>
-                  <span className="font-bold text-dark">iPhone 16 Pro</span>
-                  <span className="text-muted text-xs ml-2">PWA</span>
-                  <div className="text-muted text-xs">iOS 18.2 • Bengaluru, IN</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 text-muted">
-                <span>12m ago</span>
-                <span className="cursor-pointer">✕</span>
-              </div>
             </div>
           </div>
         </div>
@@ -281,9 +267,8 @@ export default function Settings() {
       <div className="flex justify-between items-center text-xs text-muted mb-4 px-2">
         <div className="flex items-center gap-2">
           <ShieldCheck size={13} color="#047857" />
-          <span>Ledger hash verified • Hardware enclave locked</span>
+          <span>MongoDB Atlas Cluster • SSL Encrypted</span>
         </div>
-        <span className="cursor-pointer text-dark font-bold">API Keys</span>
       </div>
 
       {/* 6. Session & Account Actions */}
