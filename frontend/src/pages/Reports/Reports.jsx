@@ -4,18 +4,13 @@ import { formatRupees, formatDate } from '../../services/currency';
 import { 
   TrendingUp, 
   TrendingDown, 
-  PieChart as PieIcon, 
   Calendar, 
   Download, 
-  SlidersHorizontal, 
   Sparkles, 
   ArrowUpRight, 
   CheckCircle2, 
-  Target, 
   ShieldCheck, 
-  Lock,
-  Layers,
-  ChevronRight
+  Layers
 } from 'lucide-react';
 
 export default function Reports() {
@@ -24,13 +19,24 @@ export default function Reports() {
   const [range, setRange] = useState('3M');
 
   useEffect(() => {
-    API.get('/reports/expenses?period=monthly')
+    API.get('/reports/summary')
       .then(res => {
         setData(res.data.data);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  const { monthlyTrend = [], categoryBreakdown = [] } = data || {};
+
+  // Compute live aggregates from monthlyTrend
+  const currentMonthData = monthlyTrend[monthlyTrend.length - 1] || { income: 0, expense: 0, fees: 0 };
+  const prevMonthData = monthlyTrend[monthlyTrend.length - 2] || { income: 0, expense: 0, fees: 0 };
+
+  const currentMonthIncomePaise = currentMonthData.income * 100;
+  const currentMonthExpensePaise = (currentMonthData.expense + currentMonthData.fees) * 100;
+  const retainedSurplusPaise = Math.max(0, currentMonthIncomePaise - currentMonthExpensePaise);
+  const dailyBurnRupees = Math.round((currentMonthData.expense + currentMonthData.fees) / 30);
 
   return (
     <div className="stitch-container">
@@ -39,7 +45,7 @@ export default function Reports() {
         <div className="flex items-center gap-2">
           <span className="proto-pulse-dot" />
           <span>MACRO LIQUIDITY TELEMETRY · ANALYTICS ENGINE V3.2</span>
-          <span className="academic-semester-badge">● Live Audit · 98.4% Confidence</span>
+          <span className="academic-semester-badge">● Live MongoDB Engine</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -73,24 +79,26 @@ export default function Reports() {
         <div className="telemetry-card-box">
           <div className="telemetry-title-row">
             <span className="telemetry-title-text">NET CAPITAL ACCUMULATION</span>
-            <span className="telemetry-pill-drop">▲ +14.2% MoM</span>
+            <span className="telemetry-pill-drop">Realized</span>
           </div>
           <div className="telemetry-value-dark">
-            ₹45,550.00 <span className="text-muted text-xs font-normal">/ mo</span>
+            {formatRupees(retainedSurplusPaise)} <span className="text-muted text-xs font-normal">/ mo</span>
           </div>
           <div className="telemetry-sub-row">
-            <span className="text-secondary">● Retained cash margin:</span>
-            <span className="text-emerald font-bold">54.1%</span>
+            <span className="text-secondary">● Retained liquidity margin:</span>
+            <span className="text-emerald font-bold">
+              {currentMonthIncomePaise > 0 ? Math.round((retainedSurplusPaise / currentMonthIncomePaise) * 100) : 0}%
+            </span>
           </div>
         </div>
 
         <div className="telemetry-card-box">
           <div className="telemetry-title-row">
             <span className="telemetry-title-text">ROLLING BURN VELOCITY</span>
-            <span className="telemetry-pill-drop">▼ -8.4% Burn</span>
+            <span className="telemetry-pill-drop">Burn Pacing</span>
           </div>
           <div className="telemetry-value-dark">
-            ₹1,288.33 <span className="text-muted text-xs font-normal">/ day</span>
+            ₹{dailyBurnRupees.toLocaleString('en-IN')}.00 <span className="text-muted text-xs font-normal">/ day</span>
           </div>
           <div className="telemetry-sub-row">
             <span className="text-secondary">● Dynamic ceiling status:</span>
@@ -100,15 +108,15 @@ export default function Reports() {
 
         <div className="telemetry-card-box">
           <div className="telemetry-title-row">
-            <span className="telemetry-title-text">COMPOUND VELOCITY INDEX</span>
-            <span className="text-muted text-xs font-bold">EST. 1.4x DELTA</span>
+            <span className="telemetry-title-text">INFLOW VS OUTFLOW COVERAGE</span>
+            <span className="text-muted text-xs font-bold">COVERAGE RATIO</span>
           </div>
           <div className="telemetry-value-emerald">
-            1.38x <span className="text-muted text-xs font-normal">+0.14 Pacing</span>
+            {currentMonthExpensePaise > 0 ? (currentMonthIncomePaise / currentMonthExpensePaise).toFixed(2) : '1.00'}x
           </div>
           <div className="telemetry-sub-row">
             <span className="text-secondary">● Reserve posture:</span>
-            <span className="text-dark font-extrabold">HIGH LIQUIDITY BUFFER</span>
+            <span className="text-dark font-extrabold">SOLVENT</span>
           </div>
         </div>
       </div>
@@ -160,140 +168,71 @@ export default function Reports() {
 
         <div className="analytics-trio-bottom">
           <div>
-            <div className="text-muted text-xs font-bold uppercase">AVERAGE GROSS INFLOW</div>
-            <div className="text-xl font-black text-dark font-heading mt-1">₹84,200.00</div>
-            <div className="text-emerald text-xs font-bold">+9.6% above baseline model</div>
+            <div className="text-muted text-xs font-bold uppercase">GROSS INFLOW (CURRENT MONTH)</div>
+            <div className="text-xl font-black text-dark font-heading mt-1">{formatRupees(currentMonthIncomePaise)}</div>
+            <div className="text-emerald text-xs font-bold">Verified ledger deposits</div>
           </div>
           <div>
-            <div className="text-muted text-xs font-bold uppercase">AVERAGE MONTHLY BURN</div>
-            <div className="text-xl font-black text-dark font-heading mt-1">₹38,650.00</div>
-            <div className="text-secondary text-xs">Discretionary ratio: 45.9%</div>
+            <div className="text-muted text-xs font-bold uppercase">TOTAL BURN (CURRENT MONTH)</div>
+            <div className="text-xl font-black text-dark font-heading mt-1">{formatRupees(currentMonthExpensePaise)}</div>
+            <div className="text-secondary text-xs">Total settled disbursements</div>
           </div>
           <div>
             <div className="text-muted text-xs font-bold uppercase">NET FLOW EFFICIENCY</div>
-            <div className="text-xl font-black text-emerald font-heading mt-1">+118% Coverage</div>
-            <div className="text-emerald text-xs font-bold">Surplus liquidity sustained</div>
+            <div className="text-xl font-black text-emerald font-heading mt-1">
+              {formatRupees(retainedSurplusPaise)}
+            </div>
+            <div className="text-emerald text-xs font-bold">Retained capital buffer</div>
           </div>
         </div>
       </div>
 
-      {/* 5. Lower Section: Discretionary Outflow Drivers + Savings Velocity & Milestones */}
+      {/* 5. Lower Section: Live Discretionary Outflow Drivers */}
       <div className="academic-bottom-grid">
-        {/* Box A: Outflow Drivers */}
         <div className="academic-breakdown-card">
           <div className="flex justify-between items-center mb-4">
             <div>
               <h4 className="font-extrabold text-sm m-0 text-dark">Discretionary Outflow Drivers</h4>
               <div className="text-muted text-xs">Breakdown by capital destination & burn volatility</div>
             </div>
-            <span className="telemetry-pill-drop">−8.4% DINING BURN</span>
+            <span className="telemetry-pill-drop">LIVE DATABASE</span>
           </div>
 
-          <div className="flex items-center gap-6 mb-4">
-            <div className="w-24 h-24 rounded-full border-8 border-slate-100 border-t-emerald-600 border-r-emerald-600 flex flex-col items-center justify-center">
-              <span className="text-xs font-black text-dark font-heading">₹38,650</span>
-              <span className="text-muted text-xs">Under Budget</span>
+          {categoryBreakdown.length === 0 ? (
+            <div className="text-center py-8 text-muted text-xs">
+              No categorical outlays logged yet.
             </div>
-
-            <div className="flex-1 flex flex-col gap-2">
-              <div className="flex justify-between text-xs">
-                <span className="font-bold text-dark">■ Food & Specialty Dining</span>
-                <span className="font-black text-dark">₹14,000</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="font-bold text-emerald">■ Academic & Study Outlay</span>
-                <span className="font-black text-dark">₹9,600</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="font-bold text-secondary">■ Travel & Urban Mobility</span>
-                <span className="font-black text-dark">₹8,280</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="font-bold text-muted">■ Shopping & Tech Gear</span>
-                <span className="font-black text-dark">₹6,770</span>
-              </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {categoryBreakdown.map((cat) => (
+                <div key={cat.name} className="flex justify-between items-center text-xs py-2 border-b border-slate-100">
+                  <span className="font-bold text-dark">{cat.name}</span>
+                  <span className="font-black text-dark">₹{cat.amountRupees.toLocaleString('en-IN')}.00</span>
+                </div>
+              ))}
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Box B: Savings Velocity & Goal Milestones */}
         <div className="academic-breakdown-card">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h4 className="font-extrabold text-sm m-0 text-dark">Savings Velocity & Goal Milestones</h4>
-              <div className="text-muted text-xs">Predictive milestone pacing based on 90-day surplus</div>
+              <h4 className="font-extrabold text-sm m-0 text-dark">Monthly Trend Velocity</h4>
+              <div className="text-muted text-xs">Continuous 6-month historical reconciliation</div>
             </div>
-            <span className="text-muted text-xs font-bold">TOTAL: ₹75,500</span>
+            <span className="text-muted text-xs font-bold">6-MONTH WINDOW</span>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <div className="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={14} color="#047857" />
-                <span className="text-xs font-bold text-dark">Emergency Vault (₹15,000 / ₹15,000)</span>
+          <div className="flex flex-col gap-2">
+            {monthlyTrend.map((m) => (
+              <div key={m.monthKey} className="flex justify-between items-center text-xs py-2 border-b border-slate-100">
+                <span className="font-bold text-dark">{m.label} ({m.monthKey})</span>
+                <div className="flex gap-4">
+                  <span className="text-emerald font-bold">+{formatRupees(m.income * 100)}</span>
+                  <span className="text-rose font-bold">−{formatRupees(m.expense * 100)}</span>
+                </div>
               </div>
-              <span className="academic-badge-schedule">COMPLETED</span>
-            </div>
-
-            <div className="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
-              <div className="flex items-center gap-2">
-                <Target size={14} color="#047857" />
-                <span className="text-xs font-bold text-dark">Goa Retreat Fund (₹18,500 / ₹25,000)</span>
-              </div>
-              <span className="telemetry-pill-drop">+14D ACCELERATED</span>
-            </div>
-
-            <div className="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
-              <div className="flex items-center gap-2">
-                <Target size={14} color="#64748B" />
-                <span className="text-xs font-bold text-dark">MacBook Pro Tech Fund (₹42,000 / ₹65,000)</span>
-              </div>
-              <span className="text-muted text-xs font-bold">ON TARGET</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 6. Algorithmic Telemetry Audit & Capital Actions */}
-      <div className="flex items-center gap-2 mb-3">
-        <Sparkles size={14} color="#047857" />
-        <h3 className="font-extrabold text-sm m-0 text-dark">Algorithmic Telemetry Audit & Capital Actions</h3>
-      </div>
-
-      <div className="analytics-audit-actions-grid">
-        <div className="analytics-action-box">
-          <div className="text-muted text-xs font-bold uppercase mb-1">BURN COMPRESSION</div>
-          <h4 className="font-extrabold text-sm text-dark m-0">Weekend Dining Normalized</h4>
-          <p className="text-secondary text-xs mt-1 mb-3">
-            Weekly recurring weekend leisure spend contracted by ₹640 versus last month's running median.
-          </p>
-          <div className="flex justify-between items-center text-xs pt-2 border-t border-slate-100">
-            <span className="text-muted font-bold">STATUS: STABILIZED</span>
-            <span className="text-emerald font-bold">DELTA: -15%</span>
-          </div>
-        </div>
-
-        <div className="analytics-action-box">
-          <div className="text-muted text-xs font-bold uppercase mb-1">SINKING FUND ALLOCATION</div>
-          <h4 className="font-extrabold text-sm text-dark m-0">Education Sweep Scheduled</h4>
-          <p className="text-secondary text-xs mt-1 mb-3">
-            Automatic sweep of ₹10,000 queued for December 1st into term fees escrow vault without liquidity breach.
-          </p>
-          <div className="flex justify-between items-center text-xs pt-2 border-t border-slate-100">
-            <span className="text-muted font-bold">EXECUTION: 01 DEC 2026</span>
-            <span className="text-emerald font-bold">PRE-APPROVED</span>
-          </div>
-        </div>
-
-        <div className="analytics-action-box">
-          <div className="text-muted text-xs font-bold uppercase mb-1">ESCROW & TREASURY YIELD</div>
-          <h4 className="font-extrabold text-sm text-dark m-0">High-Yield Buffer Provisioning</h4>
-          <p className="text-secondary text-xs mt-1 mb-3">
-            ₹28,000 deployed across sovereign liquid instruments generating a continuous 7.2% APR risk-free return.
-          </p>
-          <div className="flex justify-between items-center text-xs pt-2 border-t border-slate-100">
-            <span className="text-muted font-bold">YIELD: +₹168.20 / mo</span>
-            <span className="text-emerald font-bold">7.2% APR</span>
+            ))}
           </div>
         </div>
       </div>

@@ -1,14 +1,11 @@
 import React, { useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Sidebar from './components/Sidebar';
-import TravelSidebar from './components/TravelSidebar';
+import Navbar from './components/Navbar';
 import AddExpenseModal from './components/AddExpenseModal';
 import ForcedPasswordModal from './components/ForcedPasswordModal';
-import FadeContent from './components/FadeContent';
 
-// Code-split pages for high performance
-// Student modules
+// Code-split pages
 const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard'));
 const Transactions = lazy(() => import('./pages/Transactions/Transactions'));
 const Academics = lazy(() => import('./pages/Academics/Academics'));
@@ -18,36 +15,14 @@ const Settings = lazy(() => import('./pages/Settings/Settings'));
 const Login = lazy(() => import('./pages/Auth/Login'));
 const Register = lazy(() => import('./pages/Auth/Register'));
 
-// Travel Company Admin modules
-const TravelDashboard = lazy(() => import('./pages/Travel/TravelDashboard'));
-const TravelTrips = lazy(() => import('./pages/Travel/TravelTrips'));
-const TravelPassengers = lazy(() => import('./pages/Travel/TravelPassengers'));
-const TravelPayments = lazy(() => import('./pages/Travel/TravelPayments'));
-const TravelExpenses = lazy(() => import('./pages/Travel/TravelExpenses'));
-const TravelCommissions = lazy(() => import('./pages/Travel/TravelCommissions'));
-const TravelOtherIncome = lazy(() => import('./pages/Travel/TravelOtherIncome'));
-const TravelTransactions = lazy(() => import('./pages/Travel/TravelTransactions'));
-const TravelReports = lazy(() => import('./pages/Travel/TravelReports'));
-const TravelSettings = lazy(() => import('./pages/Travel/TravelSettings'));
-
-import MobileBottomNav from './components/MobileBottomNav';
-
-function RoleBasedHomeRedirect() {
-  const { user } = useAuth();
-  if (user?.role === 'travel_admin') {
-    return <Navigate to="/travel" replace />;
-  }
-  return <Navigate to="/" replace />;
-}
-
-function StudentProtectedLayout({ children, onOpenAddExpense }) {
+function ProtectedLayout({ children, onOpenAddExpense }) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0D1117', color: '#8B949E' }}>
-        Ignition in progress...
+      <div className="min-h-screen flex items-center justify-center bg-dark text-secondary">
+        Initializing PennyWise Wealth Studio...
       </div>
     );
   }
@@ -56,57 +31,14 @@ function StudentProtectedLayout({ children, onOpenAddExpense }) {
     return <Navigate to="/login" replace />;
   }
 
-  // If travel_admin tries to view student dashboard, redirect them to their dedicated Travel ERP
-  if (user.role === 'travel_admin') {
-    return <Navigate to="/travel" replace />;
-  }
-
   return (
-    <div className="car-app-shell">
-      <Sidebar onOpenAddExpense={onOpenAddExpense} />
-      <div className="car-main-content-wrapper">
-        <main className="car-main-content" style={{ flex: 1, overflowY: 'auto' }}>
-          <div key={location.pathname} className="premium-page-transition">
-            {children}
-          </div>
-        </main>
-        <MobileBottomNav onOpenAddExpense={onOpenAddExpense} />
-      </div>
-    </div>
-  );
-}
-
-function TravelProtectedLayout({ children, onOpenAddModal }) {
-  const { user, loading } = useAuth();
-  const location = useLocation();
-
-  if (loading) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0B132B', color: '#94A3B8' }}>
-        Loading PennyWise Travel ERP...
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Only travel_admin or admin can enter travel ERP
-  if (user.role !== 'travel_admin' && user.role !== 'admin') {
-    return <Navigate to="/" replace />;
-  }
-
-  return (
-    <div className="car-app-shell" style={{ backgroundColor: '#F8FAFC' }}>
-      <TravelSidebar onOpenAddModal={onOpenAddModal} />
-      <div className="car-main-content-wrapper" style={{ backgroundColor: '#F8FAFC' }}>
-        <main className="car-main-content" style={{ flex: 1, overflowY: 'auto', backgroundColor: '#F8FAFC' }}>
-          <div key={location.pathname} className="premium-page-transition">
-            {children}
-          </div>
-        </main>
-      </div>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <Navbar onOpenAddExpense={onOpenAddExpense} />
+      <main className="flex-1">
+        <div key={location.pathname}>
+          {children}
+        </div>
+      </main>
     </div>
   );
 }
@@ -135,153 +67,75 @@ function AppContent() {
 
   return (
     <BrowserRouter>
-      {/* Forced Password Change Modal for initial credentials */}
       <ForcedPasswordModal />
 
       <Suspense fallback={
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0D1117', color: '#8B949E' }}>
-          Ignition in progress...
+        <div className="min-h-screen flex items-center justify-center bg-dark text-secondary">
+          Initializing PennyWise Wealth Studio...
         </div>
       }>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Root dynamic redirect based on authenticated user role */}
           <Route
             path="/"
             element={
-              <StudentProtectedLayout onOpenAddExpense={() => handleOpenAddExpense(null)}>
+              <ProtectedLayout onOpenAddExpense={() => handleOpenAddExpense(null)}>
                 <Dashboard key={refreshKey} onOpenAddExpense={() => handleOpenAddExpense(null)} />
-              </StudentProtectedLayout>
+              </ProtectedLayout>
             }
           />
           <Route
             path="/transactions"
             element={
-              <StudentProtectedLayout onOpenAddExpense={() => handleOpenAddExpense(null)}>
+              <ProtectedLayout onOpenAddExpense={() => handleOpenAddExpense(null)}>
                 <Transactions 
                   key={refreshKey} 
                   onOpenAddExpense={() => handleOpenAddExpense(null)} 
                   onEditTransaction={handleOpenEditTransaction}
                 />
-              </StudentProtectedLayout>
+              </ProtectedLayout>
             }
           />
           <Route
             path="/academics"
             element={
-              <StudentProtectedLayout onOpenAddExpense={() => handleOpenAddExpense(null)}>
+              <ProtectedLayout onOpenAddExpense={() => handleOpenAddExpense(null)}>
                 <Academics
                   key={refreshKey}
                   onOpenAddExpense={() => handleOpenAddExpense(null)}
                   onPayFeeInstallment={(fee) => handleOpenAddExpense(fee)}
                 />
-              </StudentProtectedLayout>
+              </ProtectedLayout>
             }
           />
           <Route
             path="/goals"
             element={
-              <StudentProtectedLayout onOpenAddExpense={() => handleOpenAddExpense(null)}>
+              <ProtectedLayout onOpenAddExpense={() => handleOpenAddExpense(null)}>
                 <Goals key={refreshKey} />
-              </StudentProtectedLayout>
+              </ProtectedLayout>
             }
           />
           <Route
             path="/reports"
             element={
-              <StudentProtectedLayout onOpenAddExpense={() => handleOpenAddExpense(null)}>
+              <ProtectedLayout onOpenAddExpense={() => handleOpenAddExpense(null)}>
                 <Reports key={refreshKey} />
-              </StudentProtectedLayout>
+              </ProtectedLayout>
             }
           />
           <Route
             path="/settings"
             element={
-              <StudentProtectedLayout onOpenAddExpense={() => handleOpenAddExpense(null)}>
+              <ProtectedLayout onOpenAddExpense={() => handleOpenAddExpense(null)}>
                 <Settings />
-              </StudentProtectedLayout>
+              </ProtectedLayout>
             }
           />
 
-          {/* ======================================================= */}
-          {/* TRAVEL COMPANY MANAGEMENT MODULE (DEDICATED DASHBOARD)   */}
-          {/* ======================================================= */}
-          <Route
-            path="/travel"
-            element={
-              <TravelProtectedLayout>
-                <TravelDashboard />
-              </TravelProtectedLayout>
-            }
-          />
-          <Route
-            path="/travel/trips"
-            element={
-              <TravelProtectedLayout>
-                <TravelTrips />
-              </TravelProtectedLayout>
-            }
-          />
-          <Route
-            path="/travel/passengers"
-            element={<Navigate to="/travel/trips" replace />}
-          />
-          <Route
-            path="/travel/payments"
-            element={<Navigate to="/travel/trips" replace />}
-          />
-          <Route
-            path="/travel/expenses"
-            element={
-              <TravelProtectedLayout>
-                <TravelExpenses />
-              </TravelProtectedLayout>
-            }
-          />
-          <Route
-            path="/travel/commissions"
-            element={
-              <TravelProtectedLayout>
-                <TravelCommissions />
-              </TravelProtectedLayout>
-            }
-          />
-          <Route
-            path="/travel/other-income"
-            element={
-              <TravelProtectedLayout>
-                <TravelOtherIncome />
-              </TravelProtectedLayout>
-            }
-          />
-          <Route
-            path="/travel/transactions"
-            element={
-              <TravelProtectedLayout>
-                <TravelTransactions />
-              </TravelProtectedLayout>
-            }
-          />
-          <Route
-            path="/travel/reports"
-            element={
-              <TravelProtectedLayout>
-                <TravelReports />
-              </TravelProtectedLayout>
-            }
-          />
-          <Route
-            path="/travel/settings"
-            element={
-              <TravelProtectedLayout>
-                <TravelSettings />
-              </TravelProtectedLayout>
-            }
-          />
-
-          <Route path="*" element={<RoleBasedHomeRedirect />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
 

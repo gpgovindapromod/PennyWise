@@ -10,8 +10,6 @@ import {
   Download, 
   Lock, 
   Radio, 
-  CheckCircle2, 
-  FileCode2,
   AlertTriangle
 } from 'lucide-react';
 
@@ -27,15 +25,12 @@ export default function Settings() {
         <div className="flex items-center gap-2">
           <span className="proto-pulse-dot" />
           <span>ACCOUNT GOVERNANCE & CRYPTOGRAPHIC SECURITY · ATLAS PROTOCOL V2.2</span>
-          <span className="academic-semester-badge">● SOVEREIGN ATTESTED · HARDWARE ENCLAVE ACTIVE</span>
+          <span className="academic-semester-badge">● LIVE AUTHENTICATED SESSION</span>
         </div>
 
         <div className="flex items-center gap-2">
           <button className="btn-goals-outline text-xs py-1 px-2">
             <Download size={12} /> Export Security Audit Log
-          </button>
-          <button className="btn-goals-outline text-xs py-1 px-2">
-            <FileCode2 size={12} /> API Credentials
           </button>
         </div>
       </div>
@@ -50,76 +45,68 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* 3. Nordic Profile Enclave Hero Card */}
+      {/* 3. Real User Profile Hero Banner */}
       <div className="security-hero-banner">
         <div className="security-profile-left">
-          <img 
-            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" 
-            alt="Profile" 
-            className="security-avatar-circle"
-          />
+          <div className="w-16 h-16 rounded-full bg-emerald-700 text-white font-black text-2xl flex items-center justify-center font-heading border-2 border-emerald-400">
+            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+          </div>
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-black text-white m-0 font-heading">
-                {user?.name || 'Dr. Maya Lindqvist'}
+                {user?.name || 'Authorized Member'}
               </h2>
-              <span className="academic-semester-badge">VERIFIED TIER-1 KYC</span>
+              <span className="academic-semester-badge">VERIFIED ACCOUNT</span>
             </div>
             <div className="text-xs text-slate-400 mt-1">
-              {user?.email || 'maya.lindqvist@nordic.bank'} • UID: ATLAS-8842-DK
+              {user?.email || 'user@pennywise.finance'} • Role: {user?.role || 'student'}
             </div>
             <div className="text-xs text-emerald-400 font-bold mt-1">
-              RESEARCH CHAIR • QUANTITATIVE FINANCE • SEMESTER 5 FELLOW
+              INSTITUTION: {user?.college?.toUpperCase() || 'PENNYWISE GLOBAL WEALTH STUDIO'}
             </div>
           </div>
         </div>
 
         <div className="security-hero-stats">
           <div className="security-stat-group">
-            <div className="security-stat-title">AUDITED LONGEVITY</div>
-            <div className="security-stat-val">844 Days</div>
-            <div className="text-xs text-slate-400">Since Aug 2024</div>
+            <div className="security-stat-title">DATABASE STATUS</div>
+            <div className="security-stat-val text-emerald-400">CONNECTED</div>
+            <div className="text-xs text-slate-400">MongoDB Atlas Cluster</div>
           </div>
 
           <div className="security-stat-group">
-            <div className="security-stat-title">SECURITY SCORE</div>
-            <div className="security-stat-val text-emerald-400">98/100</div>
-            <div className="text-xs text-slate-400">Zero vulnerabilities</div>
-          </div>
-
-          <div className="security-stat-group">
-            <div className="security-stat-title">SYNC ENGINE</div>
-            <div className="security-stat-val text-white">ZK-Local Cache</div>
-            <div className="text-xs text-slate-400">Latency: 14ms (P2P Mesh)</div>
+            <div className="security-stat-title">SECURITY STATUS</div>
+            <div className="security-stat-val text-white">LEVEL 3 ENFORCED</div>
+            <div className="text-xs text-slate-400">JWT Protected Session</div>
           </div>
         </div>
       </div>
 
       {/* 4. Two-Column Security Grid */}
       <div className="security-two-col-grid">
-        
-        {/* Column 1: Authentication & Access Control */}
         <div className="security-box-surface">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2">
               <ShieldCheck size={16} color="#047857" />
               <h3 className="font-extrabold text-sm text-dark m-0">Authentication & Access Control</h3>
             </div>
-            <span className="text-muted text-xs font-bold">LEVEL 3 ENFORCED</span>
+            <span className="text-muted text-xs font-bold">ACTIVE</span>
           </div>
 
-          <div className="flex justify-between items-center p-3 rounded-lg bg-slate-50 border border-slate-200 mb-3">
-            <div>
-              <div className="font-bold text-dark text-xs">Account Passphrase</div>
-              <div className="text-muted text-xs">Last rotated 42 days ago. Entropy score 94%.</div>
+          <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 mb-3">
+            <div className="font-bold text-dark text-xs">Primary User Identity</div>
+            <div className="text-secondary text-xs mt-1">
+              Email: <span className="font-bold">{user?.email}</span>
             </div>
-            <button className="btn-goals-primary text-xs py-1 px-3">Update Password</button>
+            <div className="text-secondary text-xs">
+              College / Org: <span className="font-bold">{user?.college || 'N/A'}</span>
+            </div>
           </div>
 
           <div className="flex justify-between items-center p-3 rounded-lg bg-slate-50 border border-slate-200 mb-4">
             <div>
-              <div className="font-bold text-dark text-xs">Biometric & FIDO2 Hardware Keys</div>
-              <div className="text-muted text-xs">MacBook Touch ID Enclave & YubiKey 5C NFC.</div>
+              <div className="font-bold text-dark text-xs">Biometric & FIDO2 Security</div>
+              <div className="text-muted text-xs">Touch ID / Face ID hardware binding</div>
             </div>
             <input 
               type="checkbox" 
@@ -131,126 +118,80 @@ export default function Settings() {
 
           <div className="border-t border-slate-200 pt-3">
             <div className="flex justify-between items-center mb-2">
-              <span className="font-bold text-dark text-xs">Active Sessions & Authorized Nodes</span>
-              <span className="text-rose text-xs font-bold cursor-pointer">Revoke Other Sessions</span>
+              <span className="font-bold text-dark text-xs">Current Session</span>
             </div>
-
-            <div className="flex justify-between items-center text-xs p-2 rounded bg-slate-50 border border-slate-200 mb-2">
+            <div className="flex justify-between items-center text-xs p-2 rounded bg-slate-50 border border-slate-200">
               <div className="flex items-center gap-2">
                 <Laptop size={14} color="#047857" />
                 <div>
-                  <span className="font-bold text-dark">Mac Studio M3 Ultra • Chrome 131</span>
-                  <span className="academic-semester-badge ml-2">THIS SESSION</span>
-                  <div className="text-muted text-xs">Bengaluru, KA, IN • TLS 1.3 Hardware Pinning</div>
+                  <span className="font-bold text-dark">{navigator.userAgent.includes('Mac') ? 'macOS Client' : 'Windows Client'} • Chrome / Web App</span>
+                  <div className="text-muted text-xs">Authenticated & Encrypted</div>
                 </div>
               </div>
               <span className="text-emerald font-bold">Active Now</span>
             </div>
-
-            <div className="flex justify-between items-center text-xs p-2 rounded bg-slate-50 border border-slate-200">
-              <div className="flex items-center gap-2">
-                <Smartphone size={14} color="#64748B" />
-                <div>
-                  <span className="font-bold text-dark">iPhone 16 Pro • Standalone PWA</span>
-                  <div className="text-muted text-xs">Bengaluru, KA, IN • iOS 18.2</div>
-                </div>
-              </div>
-              <span className="text-muted">12m AGO</span>
-            </div>
           </div>
         </div>
 
-        {/* Column 2: Platform & Ledger Vault */}
         <div className="security-box-surface">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2">
               <Radio size={16} color="#047857" />
-              <h3 className="font-extrabold text-sm text-dark m-0">Platform & Ledger Vault</h3>
+              <h3 className="font-extrabold text-sm text-dark m-0">Platform & Cache Governance</h3>
             </div>
             <span className="text-muted text-xs font-bold">SYNCHRONIZED</span>
           </div>
 
           <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 mb-3">
             <div className="flex justify-between text-xs mb-1">
-              <span className="font-bold text-dark">Progressive Web App (PWA)</span>
-              <span className="text-emerald font-bold">● Instant Offline Cache</span>
+              <span className="font-bold text-dark">Data Storage Mode</span>
+              <span className="text-emerald font-bold">● Pure Cloud Database</span>
             </div>
-            <div className="text-muted text-xs mb-2">
-              Run PennyWise Wealth Studio as an ultra-low latency desktop application.
-            </div>
-            <button className="btn-goals-primary w-full text-xs py-2 justify-center">
-              <Download size={13} /> Install Native Desktop Client
-            </button>
-          </div>
-
-          <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-            <div className="flex justify-between text-xs mb-1">
-              <span className="font-bold text-dark">Atlas Vault Cryptography</span>
-              <span className="text-muted font-bold">SHA-256 CHECK</span>
-            </div>
-            <div className="flex justify-between text-xs py-1 border-b border-slate-200">
-              <span className="text-muted">Encryption Standard:</span>
-              <span className="font-bold text-dark">AES-256-GCM Hardware Tied</span>
-            </div>
-            <div className="flex justify-between text-xs py-1 border-b border-slate-200">
-              <span className="text-muted">Ledger Hash Integrity:</span>
-              <span className="text-emerald font-bold">0 Block Drift • Verified</span>
-            </div>
-            <div className="flex justify-between text-xs pt-1">
-              <span className="text-muted">Cloud Relay Region:</span>
-              <span className="font-bold text-dark">Stockholm (se-central-1)</span>
+            <div className="text-muted text-xs">
+              All financial transactions, budgets, and academics sync directly with your cloud cluster.
             </div>
           </div>
 
           {/* Danger Zone */}
           <div className="security-danger-zone">
             <div className="security-danger-title">
-              <AlertTriangle size={14} /> Danger Zone: Ledger Governance
+              <AlertTriangle size={14} /> Danger Zone: Local Session Purge
             </div>
             <div className="text-xs text-rose-700 mb-3">
-              Irreversibly purge cached transactions from this local machine. Server attestation keys remain untouched.
+              Clear all locally cached auth tokens and cookies from this workstation.
             </div>
             <button 
               onClick={() => {
-                if (window.confirm('Are you sure you want to purge local cache?')) {
-                  localStorage.clear();
-                  window.location.reload();
+                if (window.confirm('Clear local authentication token and sign out?')) {
+                  logout();
                 }
               }}
               className="btn btn-secondary w-full text-rose-600 font-bold text-xs py-2"
             >
-              Initiate Ledger Purge
+              Sign Out & Clear Session Cache
             </button>
           </div>
         </div>
       </div>
 
-      {/* 5. Studio Localization & Telemetry Bar */}
+      {/* 5. Studio Localization */}
       <div className="security-box-surface mb-4">
         <div className="flex justify-between items-center flex-wrap gap-4 text-xs">
           <div>
-            <div className="font-bold text-dark">Studio Localization & Telemetry</div>
-            <div className="text-muted">Default valuation currency, chronological stamps, and privacy toggles.</div>
+            <div className="font-bold text-dark">Studio Valuation Currency</div>
+            <div className="text-muted">Default currency denomination applied across dashboard and ledger.</div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div>
-              <span className="text-muted mr-2">REPORTING CURRENCY:</span>
-              <select 
-                value={currency} 
-                onChange={(e) => setCurrency(e.target.value)}
-                className="p-1 rounded border border-slate-200 font-bold"
-              >
-                <option>INR (Indian Rupee)</option>
-                <option>USD ($)</option>
-                <option>EUR (€)</option>
-              </select>
-            </div>
-
-            <div>
-              <span className="text-muted mr-2">LEDGER TIMESTAMP:</span>
-              <span className="font-bold text-dark">DD MMM YYYY (e.g. 18 Nov 2026)</span>
-            </div>
+          <div>
+            <select 
+              value={currency} 
+              onChange={(e) => setCurrency(e.target.value)}
+              className="p-1 rounded border border-slate-200 font-bold text-xs"
+            >
+              <option>INR (Indian Rupee - ₹)</option>
+              <option>USD ($)</option>
+              <option>EUR (€)</option>
+            </select>
           </div>
         </div>
       </div>
@@ -258,10 +199,9 @@ export default function Settings() {
       {/* 6. Sign Out Actions */}
       <div className="flex justify-between items-center p-3 rounded-xl bg-white border border-slate-200">
         <div className="text-xs text-muted flex items-center gap-2">
-          <Lock size={13} /> Session automatically invalidates after 15 minutes of zero activity.
+          <Lock size={13} /> Active authentication session verified.
         </div>
         <div className="flex gap-2">
-          <button className="btn-goals-outline text-xs">Emergency Lock Account</button>
           <button onClick={logout} className="btn-goals-primary text-xs">
             <LogOut size={13} /> Sign Out of PennyWise
           </button>
