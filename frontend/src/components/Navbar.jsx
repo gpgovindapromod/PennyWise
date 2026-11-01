@@ -1,60 +1,45 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Receipt, GraduationCap, Target, BarChart3, Settings, LogOut, PlusCircle } from 'lucide-react';
+import { 
+  Bell, 
+  LogOut 
+} from 'lucide-react';
 
 export default function Navbar({ onOpenAddExpense }) {
   const { user, logout } = useAuth();
   const location = useLocation();
 
   const navItems = [
-    { path: '/', label: 'Overview', icon: LayoutDashboard },
-    { path: '/transactions', label: 'Transactions', icon: Receipt },
-    { path: '/academics', label: 'Academics', icon: GraduationCap },
-    { path: '/goals', label: 'Monthly Goals', icon: Target },
-    { path: '/reports', label: 'Reports', icon: BarChart3 },
-    { path: '/settings', label: 'Settings', icon: Settings },
+    { path: '/', label: 'Dashboard' },
+    { path: '/transactions', label: 'Ledger' },
+    { path: '/goals', label: 'Goals' },
+    { path: '/reports', label: 'Analytics' },
+    { path: '/academics', label: 'Academics' },
+    { path: '/settings', label: 'Settings' }
   ];
 
   return (
     <>
-      {/* Top Header */}
-      <header style={{ borderBottom: '1px solid var(--color-border)', background: 'var(--color-clean-white)', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-            <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ fontFamily: 'var(--font-heading)', fontSize: 24, fontWeight: 700, color: 'var(--color-burgundy)', letterSpacing: '-0.02em' }}>
-                pennywise
-              </span>
-              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-warm-orange)', letterSpacing: '0.05em' }}>
-                INR
-              </span>
+      {/* Stitch Minimal Header */}
+      <header className="stitch-navbar-header">
+        <div className="stitch-navbar-inner">
+          <div className="stitch-nav-left">
+            <Link to="/" className="stitch-nav-logo">
+              <div className="stitch-nav-logo-icon">P</div>
+              <span className="stitch-nav-logo-text">PennyWise</span>
             </Link>
 
-            {/* Desktop Navigation */}
-            <nav className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {/* Desktop Navigation Links matching Stitch screenshot */}
+            <nav className="stitch-nav-links desktop-only">
               {navItems.map((item) => {
-                const Icon = item.icon;
                 const isActive = location.pathname === item.path;
                 return (
                   <Link
                     key={item.path}
                     to={item.path}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '8px 12px',
-                      borderRadius: 'var(--radius-md)',
-                      textDecoration: 'none',
-                      fontSize: 13,
-                      fontWeight: isActive ? 600 : 500,
-                      color: isActive ? 'var(--color-burgundy)' : 'var(--color-chocolate-light)',
-                      backgroundColor: isActive ? 'var(--color-baby-pink-soft)' : 'transparent',
-                      transition: 'all 0.15s ease'
-                    }}
+                    className={isActive ? 'stitch-nav-tab stitch-nav-tab-active' : 'stitch-nav-tab'}
                   >
-                    <Icon size={16} color={isActive ? 'var(--color-burgundy)' : 'var(--color-chocolate-light)'} />
                     {item.label}
                   </Link>
                 );
@@ -62,31 +47,38 @@ export default function Navbar({ onOpenAddExpense }) {
             </nav>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button
-              onClick={onOpenAddExpense}
-              className="btn btn-primary"
-              style={{ padding: '7px 12px', fontSize: 13 }}
+          <div className="stitch-nav-right">
+            {/* Live Sync Nov 2026 Pill */}
+            <div className="stitch-nav-sync-pill desktop-only">
+              <span className="proto-pulse-dot" />
+              <span>LIVE SYNC · NOV 2026</span>
+            </div>
+
+            <span className="stitch-nav-inr-tag desktop-only">INR ₹</span>
+
+            <button 
+              title="Notifications" 
+              className="btn-milestone-more"
             >
-              <PlusCircle size={15} />
-              <span className="desktop-only">Add Expense</span>
+              <Bell size={14} color="#64748B" />
             </button>
 
-            <div style={{ height: 20, width: 1, backgroundColor: 'var(--color-border)' }} />
+            {/* User Profile Avatar */}
+            <Link to="/settings">
+              <img 
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=80" 
+                alt="Profile" 
+                className="stitch-nav-avatar"
+              />
+            </Link>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div className="desktop-only" style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-chocolate)' }}>{user?.name || 'Student'}</div>
-                <div style={{ fontSize: 11, color: 'var(--color-chocolate-light)' }}>{user?.college || 'Student'}</div>
-              </div>
-              <button
-                onClick={logout}
-                title="Logout"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--color-chocolate-light)' }}
-              >
-                <LogOut size={16} />
-              </button>
-            </div>
+            <button
+              onClick={logout}
+              title="Logout"
+              className="btn-milestone-more desktop-only"
+            >
+              <LogOut size={13} color="#64748B" />
+            </button>
           </div>
         </div>
       </header>
@@ -94,7 +86,6 @@ export default function Navbar({ onOpenAddExpense }) {
       {/* Mobile App Bottom Navigation Bar */}
       <nav className="mobile-bottom-nav">
         {navItems.map((item) => {
-          const Icon = item.icon;
           const isActive = location.pathname === item.path;
           return (
             <Link
@@ -102,7 +93,6 @@ export default function Navbar({ onOpenAddExpense }) {
               to={item.path}
               className={`mobile-tab ${isActive ? 'active' : ''}`}
             >
-              <Icon size={20} color={isActive ? 'var(--color-burgundy)' : 'var(--color-chocolate-light)'} />
               <span>{item.label}</span>
             </Link>
           );
