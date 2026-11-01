@@ -4,604 +4,229 @@ import { rupeesToPaise } from '../services/currency';
 import { 
   X, 
   Check, 
-  AlertCircle, 
-  Loader2, 
-  TrendingDown, 
-  TrendingUp, 
-  RotateCcw,
-  Fuel,
-  Sparkles,
-  Calendar,
-  FileText
+  Sparkles, 
+  Coffee, 
+  BookOpen, 
+  Compass, 
+  Laptop, 
+  ShoppingBag, 
+  Zap, 
+  Heart, 
+  MoreHorizontal
 } from 'lucide-react';
 
 export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuccess, defaultAcademicFee = null, editingTransaction = null }) {
   const notifySuccess = onSuccess || onExpenseAdded || (() => {});
   const [type, setType] = useState('expense');
-  const [amount, setAmount] = useState('');
-  const [categoryId, setCategoryId] = useState('food-drinks');
-  const [categoryLabel, setCategoryLabel] = useState('Food & Drinks');
-  const [subcategory, setSubcategory] = useState('Tea with snacks');
-  const [customItem, setCustomItem] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('upi');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [note, setNote] = useState('');
-  const [categories, setCategories] = useState([]);
+  const [amount, setAmount] = useState('1450');
+  const [sector, setSector] = useState('Dining & Coffee');
+  const [route, setRoute] = useState('UPI FastPay');
+  const [merchantMemo, setMerchantMemo] = useState('Blue Tokai Roasters • Pour-over batch');
+  const [date, setDate] = useState('18 Nov 2026');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
     if (isOpen) {
       setError('');
-      setSuccessMsg('');
-      API.get('/categories')
-        .then((res) => {
-          setCategories(res.data.data);
-        })
-        .catch(() => {});
-
       if (editingTransaction) {
         setType(editingTransaction.type || 'expense');
         setAmount((editingTransaction.amountPaise / 100).toString());
-        setCategoryId(editingTransaction.categoryId || 'food-drinks');
-        setCategoryLabel(editingTransaction.categoryLabel || 'Food & Drinks');
-        setSubcategory(editingTransaction.subcategory || '');
-        setPaymentMethod(editingTransaction.paymentMethod || 'upi');
-        setDate(editingTransaction.date ? new Date(editingTransaction.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
-        setNote(editingTransaction.note || '');
+        setMerchantMemo(editingTransaction.subcategory || editingTransaction.note || '');
       } else if (defaultAcademicFee) {
         setType('expense');
-        setCategoryId('academic');
-        setCategoryLabel('Academic Expenses');
-        setSubcategory('College fees');
-        setNote('Installment for: ' + defaultAcademicFee.title);
-        setAmount('');
-      } else {
-        setAmount('');
-        setNote('');
-        setCustomItem('');
+        setSector('Academics');
+        setMerchantMemo('Installment for: ' + defaultAcademicFee.title);
+        setAmount('15000');
       }
     }
   }, [isOpen, defaultAcademicFee, editingTransaction]);
 
-  const activeCategory = categories.find((c) => c.id === categoryId);
-
-  const handleCategoryChange = (e) => {
-    const id = e.target.value;
-    setCategoryId(id);
-    const cat = categories.find((c) => c.id === id);
-    if (cat) {
-      setCategoryLabel(cat.label);
-      if (cat.subcategories && cat.subcategories.length > 0) {
-        setSubcategory(cat.subcategories[0]);
-      } else {
-        setSubcategory('General');
-      }
-    }
-  };
+  if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-
-    const amountNum = parseFloat(amount);
-    if (isNaN(amountNum) || amountNum <= 0) {
-      setError('Please enter a valid amount greater than ₹0');
+    if (!amount || Number(amount) <= 0) {
+      setError('Please enter a valid settlement volume');
       return;
-    }
-
-    if (!date) {
-      setError('Please select a transaction date');
-      return;
-    }
-
-    const finalSubcategory = subcategory === '__custom__' ? customItem.trim() : subcategory;
-    if (!finalSubcategory) {
-      setError('Please specify an item name');
-      return;
-    }
-
-    let finalCategoryId = categoryId;
-    let finalCategoryLabel = categoryLabel;
-
-    if (categoryId === '__custom_cat__') {
-      if (!categoryLabel.trim()) {
-        setError('Please enter a valid category name');
-        return;
-      }
-      finalCategoryLabel = categoryLabel.trim();
-      finalCategoryId = finalCategoryLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'custom';
     }
 
     setIsSubmitting(true);
-
     try {
-      const amountPaise = rupeesToPaise(amount);
       const payload = {
         type,
-        amountPaise,
-        categoryId: finalCategoryId,
-        categoryLabel: finalCategoryLabel,
-        subcategory: finalSubcategory,
-        paymentMethod,
-        date,
-        note
+        amountPaise: rupeesToPaise(amount),
+        categoryId: sector === 'Dining & Coffee' ? 'food-drinks' :
+                    sector === 'Academics' ? 'academic' :
+                    sector === 'Transit & Metro' ? 'travel' :
+                    sector === 'Tech & SaaS' ? 'academic' :
+                    sector === 'Groceries' ? 'food-drinks' : 'bills-utilities',
+        categoryLabel: sector,
+        subcategory: merchantMemo || sector,
+        note: merchantMemo,
+        paymentMethod: route.toLowerCase(),
+        date: new Date().toISOString()
       };
 
-      if (editingTransaction) {
-        await API.patch(`/transactions/${editingTransaction._id}`, payload);
-      } else {
-        await API.post('/transactions', payload);
-      }
-
-      setSuccessMsg(editingTransaction ? 'Updated successfully!' : 'Saved successfully!');
-      setTimeout(() => {
-        setIsSubmitting(false);
-        setAmount('');
-        setNote('');
-        setCustomItem('');
-        notifySuccess();
-        onClose();
-      }, 700);
+      const res = await API.post('/transactions', payload);
+      notifySuccess(res.data.data);
+      onClose();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save transaction');
+      setError(err.response?.data?.message || 'Failed to record clearance');
+    } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (!isOpen) return null;
+  const sectors = [
+    { label: 'Dining & Coffee', sub: 'HOSPITALITY', icon: Coffee },
+    { label: 'Academics', sub: 'KNOWLEDGE', icon: BookOpen },
+    { label: 'Transit & Metro', sub: 'MOBILITY', icon: Compass },
+    { label: 'Tech & SaaS', sub: 'SOFTWARE', icon: Laptop },
+    { label: 'Groceries', sub: 'PROVISIONS', icon: ShoppingBag },
+    { label: 'Utilities', sub: 'OVERHEAD', icon: Zap },
+    { label: 'Wellness', sub: 'HEALTH', icon: Heart },
+    { label: 'Buffer Misc', sub: 'FLOATING', icon: MoreHorizontal }
+  ];
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content transaction-modal-card" onClick={(e) => e.stopPropagation()}>
-        {/* Mobile Drag Indicator Handle */}
-        <div className="modal-drag-handle" />
-
-        {/* Modal Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <h3 style={{ fontSize: 18, fontWeight: 900, color: '#0F172A', margin: 0, letterSpacing: '-0.02em' }}>
-                {editingTransaction ? 'Edit Transaction' : (defaultAcademicFee ? 'Pay Fee Installment' : 'New Transaction')}
-              </h3>
-            </div>
-            <p style={{ fontSize: 12, color: '#64748B', margin: '3px 0 0 0' }}>
-              {editingTransaction ? `Updating entry #${editingTransaction._id.slice(-6)}` : (defaultAcademicFee ? defaultAcademicFee.title : 'Record expense, fuel, or income')}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            aria-label="Close modal"
-            className="modal-close-btn"
-          >
-            <X size={18} />
-          </button>
+    <div className="stitch-modal-overlay" onClick={onClose}>
+      <div className="stitch-modal-card" onClick={(e) => e.stopPropagation()}>
+        {/* Top Protocol Header */}
+        <div className="stitch-modal-top-meta">
+          <span>RAPID CLEARANCE PROTOCOL · 3-SEC LOG</span>
+          <span className="cursor-pointer" onClick={onClose}>⌘N  ✕</span>
         </div>
 
-        {error && (
-          <div style={{
-            padding: '10px 14px',
-            background: '#FFF1F2',
-            color: '#E11D48',
-            borderRadius: 12,
-            fontSize: 13,
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            marginBottom: 16,
-            border: '1px solid #FECDD3'
-          }}>
-            <AlertCircle size={16} /> {error}
-          </div>
-        )}
+        <div className="stitch-modal-title-row">
+          <h2 className="stitch-modal-title">Log New Entry</h2>
+        </div>
 
-        {successMsg && (
-          <div style={{
-            padding: '10px 14px',
-            background: '#ECFDF5',
-            color: '#065F46',
-            borderRadius: 12,
-            fontSize: 13,
-            fontWeight: 600,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            marginBottom: 16,
-            border: '1px solid #A7F3D0'
-          }}>
-            <Check size={16} /> {successMsg}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          {/* 1. Transaction Type Segmented Toggle */}
-          {!defaultAcademicFee && (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr 1fr',
-              gap: 6,
-              marginBottom: 18,
-              background: '#F1F5F9',
-              padding: 4,
-              borderRadius: 14
-            }}>
+        {/* Expense / Income / Deposit to Goal Selector */}
+        <div className="stitch-modal-type-tabs">
+          {['Expense', 'Income', 'Deposit to Goal'].map((t) => {
+            const key = t === 'Expense' ? 'expense' : t === 'Income' ? 'income' : 'vault';
+            return (
               <button
+                key={t}
                 type="button"
-                onClick={() => setType('expense')}
-                style={{
-                  padding: '9px 10px',
-                  borderRadius: 10,
-                  border: 'none',
-                  fontWeight: 700,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  background: type === 'expense' ? '#FFFFFF' : 'transparent',
-                  color: type === 'expense' ? '#E11D48' : '#64748B',
-                  boxShadow: type === 'expense' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  transition: 'all 0.15s ease'
-                }}
+                onClick={() => setType(key)}
+                className={type === key ? 'stitch-type-tab-btn stitch-type-tab-active' : 'stitch-type-tab-btn'}
               >
-                <TrendingDown size={14} /> Expense
+                {t}
               </button>
+            );
+          })}
+        </div>
 
+        {/* Settlement Volume Input Box */}
+        <div className="stitch-modal-amount-box">
+          <div className="stitch-modal-volume-title">SETTLEMENT VOLUME</div>
+          <div className="stitch-amount-input-row">
+            <span className="stitch-currency-symbol">₹</span>
+            <input 
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="stitch-amount-number-input"
+              autoFocus
+            />
+          </div>
+
+          <div className="stitch-quick-increments">
+            {['+₹100', '+₹500', '+₹1,000', '+₹2,500', 'Round to ₹100'].map((btn) => (
               <button
+                key={btn}
                 type="button"
                 onClick={() => {
-                  setType('income');
-                  setCategoryId('allowance');
-                  setCategoryLabel('Allowance / Pocket Money');
-                  setSubcategory('Monthly allowance from home');
+                  if (btn === 'Round to ₹100') {
+                    setAmount(Math.ceil((Number(amount) || 0) / 100) * 100);
+                  } else {
+                    const add = Number(btn.replace(/[^0-9]/g, ''));
+                    setAmount((Number(amount) || 0) + add);
+                  }
                 }}
-                style={{
-                  padding: '9px 10px',
-                  borderRadius: 10,
-                  border: 'none',
-                  fontWeight: 700,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  background: type === 'income' ? '#FFFFFF' : 'transparent',
-                  color: type === 'income' ? '#059669' : '#64748B',
-                  boxShadow: type === 'income' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  transition: 'all 0.15s ease'
-                }}
+                className="stitch-quick-btn"
               >
-                <TrendingUp size={14} /> Income
+                {btn}
               </button>
-
-              <button
-                type="button"
-                onClick={() => setType('refund')}
-                style={{
-                  padding: '9px 10px',
-                  borderRadius: 10,
-                  border: 'none',
-                  fontWeight: 700,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  background: type === 'refund' ? '#FFFFFF' : 'transparent',
-                  color: type === 'refund' ? '#D97706' : '#64748B',
-                  boxShadow: type === 'refund' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                <RotateCcw size={14} /> Refund
-              </button>
-            </div>
-          )}
-
-          {/* 2. Amount Input Hero Box */}
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-              Amount
-            </label>
-            <div style={{
-              position: 'relative',
-              background: '#F8FAFC',
-              borderRadius: 16,
-              border: '1.5px solid #E2E8F0',
-              transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
-            }}>
-              <span style={{
-                position: 'absolute',
-                left: 18,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                fontSize: 22,
-                color: type === 'income' ? '#059669' : '#E11D48',
-                fontWeight: 900
-              }}>
-                ₹
-              </span>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '14px 18px 14px 44px',
-                  fontSize: 28,
-                  fontWeight: 900,
-                  fontFamily: 'var(--font-heading)',
-                  color: '#0F172A',
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-                autoFocus
-              />
-            </div>
+            ))}
           </div>
+        </div>
 
-          {/* 3. Category Dropdown */}
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-              Category
-            </label>
-            <select
-              value={categoryId}
-              onChange={handleCategoryChange}
-              disabled={!!defaultAcademicFee}
-              style={{
-                width: '100%',
-                padding: '11px 14px',
-                borderRadius: 12,
-                border: '1.5px solid #CBD5E1',
-                fontSize: 14,
-                fontWeight: 600,
-                color: '#0F172A',
-                background: '#FFFFFF',
-                outline: 'none',
-                boxSizing: 'border-box'
-              }}
-            >
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
-                </option>
-              ))}
-              <option value="__custom_cat__">+ Create Custom Category...</option>
-            </select>
-          </div>
+        {/* Classification Taxonomy */}
+        <div className="stitch-taxonomy-header">
+          <span>CLASSIFICATION TAXONOMY</span>
+          <span>8 Sectors</span>
+        </div>
 
-          {categoryId === '__custom_cat__' && (
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 4 }}>
-                Enter New Category Name
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Gym & Fitness, Hostel Rent, Bike Service"
-                value={categoryLabel === 'Food & Drinks' ? '' : categoryLabel}
-                onChange={(e) => setCategoryLabel(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 14px',
-                  borderRadius: 10,
-                  border: '1.5px solid #CBD5E1',
-                  fontSize: 13,
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-                required
-              />
-            </div>
-          )}
-
-          {/* 4. Subcategory / Specific Item */}
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-              {categoryId === 'fuel' ? 'Fuel Type' : (categoryId === 'food-drinks' ? 'Food / Drink Item' : 'Specific Item / Subcategory')}
-            </label>
-            {activeCategory && activeCategory.subcategories ? (
-              <select
-                value={subcategory}
-                onChange={(e) => setSubcategory(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '11px 14px',
-                  borderRadius: 12,
-                  border: '1.5px solid #CBD5E1',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: '#0F172A',
-                  background: '#FFFFFF',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              >
-                {activeCategory.subcategories.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-                <option value="__custom__">+ Custom specific item...</option>
-              </select>
-            ) : (
-              <input
-                type="text"
-                placeholder="Item name"
-                value={subcategory}
-                onChange={(e) => setSubcategory(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '11px 14px',
-                  borderRadius: 12,
-                  border: '1.5px solid #CBD5E1',
-                  fontSize: 14,
-                  color: '#0F172A',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
-            )}
-          </div>
-
-          {subcategory === '__custom__' && (
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748B', marginBottom: 4 }}>
-                Enter custom item name
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Lime juice, Parotta, Bike fuel"
-                value={customItem}
-                onChange={(e) => setCustomItem(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 14px',
-                  borderRadius: 10,
-                  border: '1.5px solid #CBD5E1',
-                  fontSize: 13,
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-          )}
-
-          {/* 5. Payment Method Selector Segmented Buttons */}
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-              Payment Method
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-              {[
-                { id: 'upi', label: '⚡ UPI' },
-                { id: 'cash', label: '💵 Cash' },
-                { id: 'card', label: '💳 Card' }
-              ].map((m) => {
-                const isSelected = paymentMethod === m.id;
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setPaymentMethod(m.id)}
-                    style={{
-                      padding: '10px 8px',
-                      borderRadius: 12,
-                      border: isSelected ? '1.5px solid #E11D48' : '1px solid #E2E8F0',
-                      backgroundColor: isSelected ? '#FFF1F2' : '#FFFFFF',
-                      color: isSelected ? '#E11D48' : '#334155',
-                      fontWeight: isSelected ? 800 : 600,
-                      fontSize: 13,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                      boxShadow: isSelected ? '0 2px 6px rgba(225, 29, 72, 0.12)' : 'none'
-                    }}
-                  >
-                    {m.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 6. Date & Note Two-Column Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 10, marginBottom: 20 }}>
-            <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-                Date
-              </label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: 10,
-                  border: '1.5px solid #CBD5E1',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: '#0F172A',
-                  background: '#FFFFFF',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-                Note (Optional)
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Canteen lunch"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: 10,
-                  border: '1.5px solid #CBD5E1',
-                  fontSize: 13,
-                  color: '#0F172A',
-                  background: '#FFFFFF',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-          </div>
-
-          {/* 7. Action Buttons */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+        <div className="stitch-taxonomy-grid">
+          {sectors.map((sec) => (
             <button
+              key={sec.label}
               type="button"
-              onClick={onClose}
-              className="btn btn-secondary"
-              disabled={isSubmitting}
-              style={{
-                padding: '11px 18px',
-                borderRadius: 12,
-                fontSize: 13,
-                fontWeight: 700
-              }}
+              onClick={() => setSector(sec.label)}
+              className={sector === sec.label ? 'stitch-sector-btn stitch-sector-btn-active' : 'stitch-sector-btn'}
             >
-              Cancel
+              <div className="flex items-center gap-1">
+                <sec.icon size={12} color={sector === sec.label ? '#047857' : '#475569'} />
+                <span className="stitch-sector-label">{sec.label.split(' ')[0]}</span>
+              </div>
+              <span className="stitch-sector-sub">{sec.sub}</span>
             </button>
+          ))}
+        </div>
+
+        {/* Origin Route */}
+        <div className="stitch-taxonomy-header">
+          <span>ORIGIN ROUTE</span>
+        </div>
+        <div className="stitch-routes-strip">
+          {['UPI FastPay', 'Cash Reserve', 'HDFC Platinum', 'Bank Wire'].map((r) => (
             <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={isSubmitting}
-              style={{
-                padding: '11px 24px',
-                borderRadius: 12,
-                fontSize: 13,
-                fontWeight: 800,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                cursor: 'pointer'
-              }}
+              key={r}
+              type="button"
+              onClick={() => setRoute(r)}
+              className={route === r ? 'stitch-route-pill stitch-route-active' : 'stitch-route-pill'}
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" /> Saving...
-                </>
-              ) : (
-                'Save Record'
-              )}
+              {r}
             </button>
+          ))}
+        </div>
+
+        {/* Memo & Date Fields */}
+        <div className="stitch-memo-input-wrap">
+          <input 
+            type="text" 
+            value={merchantMemo}
+            onChange={(e) => setMerchantMemo(e.target.value)}
+            placeholder="Merchant note / settlement purpose..."
+            className="stitch-memo-field"
+          />
+          <input 
+            type="text" 
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="stitch-memo-field text-center font-bold text-dark"
+          />
+        </div>
+
+        {error && <div className="text-rose text-xs font-bold mb-3">{error}</div>}
+
+        {/* Footer Actions */}
+        <div className="stitch-modal-submit-row">
+          <div className="text-muted text-xs">
+            Press <kbd className="font-mono bg-slate-100 p-1 rounded">⌘ + ↵</kbd> to commit
           </div>
-        </form>
+          <button 
+            type="button"
+            disabled={isSubmitting}
+            onClick={handleSubmit}
+            className="btn-stitch-record"
+          >
+            <Check size={14} /> {isSubmitting ? 'Recording...' : 'Record Transaction'}
+          </button>
+        </div>
       </div>
     </div>
   );
