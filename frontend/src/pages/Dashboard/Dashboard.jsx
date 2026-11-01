@@ -24,41 +24,18 @@ import { Link } from 'react-router-dom';
 import InstallPwaBanner from '../../components/InstallPwaBanner';
 
 export default function Dashboard({ onOpenAddExpense }) {
-  const [data, setData] = useState(() => {
-    try {
-      const cached = localStorage.getItem('pennywise_dashboard_cache');
-      return cached ? JSON.parse(cached) : null;
-    } catch (e) {
-      return null;
-    }
-  });
-  const [loading, setLoading] = useState(() => {
-    return !localStorage.getItem('pennywise_dashboard_cache');
-  });
-
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('ALL');
   const [searchFilter, setSearchFilter] = useState('');
 
   // Primary Savings Goal State
-  const [savingsTarget, setSavingsTarget] = useState(() => {
-    try {
-      const saved = localStorage.getItem('pennywise_primary_goal');
-      return saved ? JSON.parse(saved) : {
-        title: 'Emergency Buffer Vault',
-        subtitle: 'LIQUIDITY CONTINGENCY RESERVE',
-        targetRupees: 25000,
-        currentRupees: 18500,
-        targetDate: '28 Dec 2026'
-      };
-    } catch (e) {
-      return {
-        title: 'Emergency Buffer Vault',
-        subtitle: 'LIQUIDITY CONTINGENCY RESERVE',
-        targetRupees: 25000,
-        currentRupees: 18500,
-        targetDate: '28 Dec 2026'
-      };
-    }
+  const [savingsTarget, setSavingsTarget] = useState({
+    title: 'Emergency Buffer Vault',
+    subtitle: 'LIQUIDITY CONTINGENCY RESERVE',
+    targetRupees: 25000,
+    currentRupees: 0,
+    targetDate: '28 Dec 2026'
   });
 
   const [showGoalModal, setShowGoalModal] = useState(false);
@@ -66,9 +43,22 @@ export default function Dashboard({ onOpenAddExpense }) {
 
   const fetchSummary = async () => {
     try {
+      // Clear legacy mock caches so fresh MongoDB figures render immediately
+      localStorage.removeItem('pennywise_dashboard_cache');
+      
       const res = await API.get('/dashboard/summary');
       setData(res.data.data);
-      localStorage.setItem('pennywise_dashboard_cache', JSON.stringify(res.data.data));
+
+      // Load saved user goal from localStorage if customized, or initialize cleanly
+      const savedGoal = localStorage.getItem('pennywise_primary_goal');
+      if (savedGoal) {
+        try {
+          const parsed = JSON.parse(savedGoal);
+          if (parsed && parsed.title && parsed.title !== 'Next Trip to Goa') {
+            setSavingsTarget(parsed);
+          }
+        } catch (e) {}
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -90,7 +80,7 @@ export default function Dashboard({ onOpenAddExpense }) {
     localStorage.setItem('pennywise_primary_goal', JSON.stringify(updated));
     setShowGoalModal(false);
 
-    // Also commit transaction to real DB
+    // Commit transaction to MongoDB
     API.post('/transactions', {
       type: 'expense',
       amountPaise: amt * 100,
@@ -109,7 +99,7 @@ export default function Dashboard({ onOpenAddExpense }) {
     recentTransactions = []
   } = data || {};
 
-  const safeBudgetLimit = budget?.limitPaise || 800000; // default ceiling
+  const safeBudgetLimit = budget?.limitPaise || 800000;
   const budgetSpent = expensesThisMonthPaise;
   const budgetRemaining = Math.max(0, safeBudgetLimit - budgetSpent);
   const budgetPercent = safeBudgetLimit > 0 
@@ -122,7 +112,7 @@ export default function Dashboard({ onOpenAddExpense }) {
   const daysLeft = Math.max(1, lastDay - now.getDate() + 1);
   const dailySafeAllowancePaise = Math.round(budgetRemaining / daysLeft);
 
-  // Real-time daily burn rate from actual current month expenses
+  // Real-time daily average outlay based strictly on database disbursements
   const currentDayOfMonth = Math.max(1, now.getDate());
   const actualDailyAvgPaise = Math.round(expensesThisMonthPaise / currentDayOfMonth);
 
@@ -144,7 +134,7 @@ export default function Dashboard({ onOpenAddExpense }) {
     year: 'numeric' 
   });
 
-  // Filter real-time transactions
+  // Filter transactions
   const filteredTransactions = recentTransactions.filter((tx) => {
     const matchesSearch = !searchFilter || 
       (tx.subcategory && tx.subcategory.toLowerCase().includes(searchFilter.toLowerCase())) ||
@@ -236,7 +226,6 @@ export default function Dashboard({ onOpenAddExpense }) {
 
         {/* Inflow / Outflow / Retained Surplus Bottom Banner */}
         <div className="horizon-metrics-grid">
-          {/* Gross Inflow */}
           <div className="horizon-metric-box">
             <div className="horizon-icon-inflow">
               <TrendingUp size={16} />
@@ -249,7 +238,6 @@ export default function Dashboard({ onOpenAddExpense }) {
             </div>
           </div>
 
-          {/* Total Burn / Outflow */}
           <div className="horizon-metric-box">
             <div className="horizon-icon-outflow">
               <TrendingDown size={16} />
@@ -262,7 +250,6 @@ export default function Dashboard({ onOpenAddExpense }) {
             </div>
           </div>
 
-          {/* Retained Surplus */}
           <div className="horizon-metric-box">
             <div className="horizon-icon-surplus">
               <CheckCircle2 size={16} />
@@ -340,7 +327,6 @@ export default function Dashboard({ onOpenAddExpense }) {
             </div>
           </div>
 
-          {/* Progress Bar */}
           <div className="goal-bar-track">
             <div 
               className={budgetPercent > 85 ? 'goal-bar-alert' : 'goal-bar-emerald'} 
@@ -353,7 +339,6 @@ export default function Dashboard({ onOpenAddExpense }) {
             <span className="text-emerald">{formatRupees(budgetRemaining)} REMAINING</span>
           </div>
 
-          {/* Safe Daily Burn Strip */}
           <div className="goal-safe-burn-strip">
             <span className="text-secondary flex items-center gap-2">
               <ShieldCheck size={14} color="#047857" /> Safe Daily Allowance:
