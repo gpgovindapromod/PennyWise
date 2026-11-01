@@ -25,62 +25,58 @@ export default function Goals() {
   const [activeVaultTab, setActiveVaultTab] = useState('ALL');
   const [showCapModal, setShowCapModal] = useState(false);
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
+  const [creatingGoal, setCreatingGoal] = useState(false);
+
+  // 100% Real-time savings goals queried from MongoDB backend
+  const [goals, setGoals] = useState([]);
 
   const now = new Date();
   const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-  // Real-time savings vaults stored dynamically per user
-  const [milestones, setMilestones] = useState(() => {
+  const fetchGoalsData = async () => {
     try {
-      const saved = localStorage.getItem('pennywise_savings_vaults');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+      const [budgetRes, goalsRes] = await Promise.all([
+        API.get(`/budgets/${monthKey}`),
+        API.get('/goals')
+      ]);
 
-  const fetchGoal = async () => {
-    try {
-      const res = await API.get(`/budgets/${monthKey}`);
-      setData(res.data.data);
-      if (res.data.data?.budget) {
-        setLimitRupees((res.data.data.budget.limitPaise / 100).toString());
+      setData(budgetRes.data.data);
+      if (budgetRes.data.data?.budget) {
+        setLimitRupees((budgetRes.data.data.budget.limitPaise / 100).toString());
       }
+      setGoals(goalsRes.data.data || []);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to load goals or budget:', err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchGoal();
+    fetchGoalsData();
   }, []);
 
-  const handleDepositToVault = (id, amt = 1000) => {
-    const updated = milestones.map((m) => {
-      if (m.id === id) {
-        const nextVal = Math.min(m.targetRupees, m.currentRupees + amt);
-        return { 
-          ...m, 
-          currentRupees: nextVal, 
-          status: nextVal >= m.targetRupees ? 'completed' : 'active' 
-        };
-      }
-      return m;
-    });
-    setMilestones(updated);
-    localStorage.setItem('pennywise_savings_vaults', JSON.stringify(updated));
+  // Atomic deposit into Goal vault using transfer_out on Account
+  const handleDepositToVault = async (goalId, amt = 1000) => {
+    try {
+      await API.post(`/goals/${goalId}/deposit`, {
+        amountPaise: rupeesToPaise(amt)
+      });
+      await fetchGoalsData();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to deposit to vault');
+    }
+  };
 
-    // Also record transaction in real DB
-    API.post('/transactions', {
-      type: 'expense',
-      amountPaise: rupeesToPaise(amt),
-      categoryId: 'academic',
-      categoryLabel: 'Goal Deposit',
-      subcategory: 'Vault Deposit',
-      note: `Direct contribution to vault ID ${id}`
-    }).then(() => fetchGoal()).catch(() => {});
+  // Delete Goal from MongoDB
+  const handleDeleteGoal = async (goalId) => {
+    if (!window.confirm('Are you sure you want to remove this milestone vault?')) return;
+    try {
+      await API.delete(`/goals/${goalId}`);
+      await fetchGoalsData();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to remove goal');
+    }
   };
 
   const handleUpdateLimit = async (e) => {
@@ -91,11 +87,31 @@ export default function Goals() {
         limitPaise: rupeesToPaise(limitRupees)
       });
       setShowCapModal(false);
-      fetchGoal();
+      await fetchGoalsData();
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to update budget limit');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCreateNewGoal = async (e) => {
+    e.preventDefault();
+    setCreatingGoal(true);
+    const form = e.target;
+    try {
+      await API.post('/goals', {
+        name: form.goalTitle.value,
+        targetPaise: Number(form.goalTarget.value) * 100,
+        deadline: form.goalDate?.value || null,
+        priority: 'CUSTOM GOAL'
+      });
+      setShowNewGoalModal(false);
+      await fetchGoalsData();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to create goal');
+    } finally {
+      setCreatingGoal(false);
     }
   };
 
@@ -106,7 +122,7 @@ export default function Goals() {
     ? Math.min(Math.round((currentSpentPaise / currentLimitPaise) * 100), 100) 
     : 0;
 
-  const filteredVaults = milestones.filter(v => {
+  const filteredVaults = goals.filter(v => {
     if (activeVaultTab === 'ALL') return true;
     if (activeVaultTab === 'ACTIVE') return v.status === 'active';
     if (activeVaultTab === 'COMPLETED') return v.status === 'completed';
@@ -118,7 +134,7 @@ export default function Goals() {
       {/* 1. Sub-Header Protocol Breadcrumb & Main Header */}
       <div className="goals-proto-bar">
         <span className="proto-pulse-dot" />
-        <span>STRATEGIC CAPITAL ALLOCATION · PROTOCOL V4.8 · REAL-TIME MONGODB</span>
+        <span>STRATEGIC CAPITAL ALLOCATION · MONGODB DATABASE RECONCILED</span>
       </div>
 
       <div className="goals-header-wrap">
@@ -255,19 +271,10 @@ export default function Goals() {
               })
             )}
           </div>
-
-          <div className="microcaps-footer">
-            <span className="text-secondary font-bold">
-              Aggregated Allocation Cap: {formatRupees(currentLimitPaise)} INR
-            </span>
-            <span className="text-emerald font-bold cursor-pointer" onClick={() => setShowCapModal(true)}>
-              REBALANCE CAPS &gt;
-            </span>
-          </div>
         </div>
       </div>
 
-      {/* 3. Multi-Horizon Capital Vaults */}
+      {/* 3. Multi-Horizon Capital Vaults - 100% from MongoDB */}
       <div className="milestones-header">
         <div className="milestones-title-group">
           <div className="milestones-meta-pill">MULTI-HORIZON CAPITAL VAULTS</div>
@@ -290,22 +297,25 @@ export default function Goals() {
       <div className="milestones-grid-4">
         {filteredVaults.length === 0 ? (
           <div className="col-span-4 text-center py-10 bg-white rounded-xl border border-slate-200">
-            <p className="text-secondary text-sm font-bold">No active savings goals found.</p>
+            <p className="text-secondary text-sm font-bold">No savings goals found in your database.</p>
             <button onClick={() => setShowNewGoalModal(true)} className="btn-goals-primary mt-2">
               <Plus size={14} /> Initialize Your First Vault
             </button>
           </div>
         ) : (
           filteredVaults.map((vault) => {
-            const ratio = Math.min(100, Math.round((vault.currentRupees / vault.targetRupees) * 100));
-            const deficit = Math.max(0, vault.targetRupees - vault.currentRupees);
+            const savedRupees = Math.round((vault.savedPaise || 0) / 100);
+            const targetRupees = Math.round((vault.targetPaise || 0) / 100);
+            const ratio = targetRupees > 0 ? Math.min(100, Math.round((savedRupees / targetRupees) * 100)) : 100;
+            const deficit = Math.max(0, targetRupees - savedRupees);
+            const deadlineFormatted = vault.deadline ? new Date(vault.deadline).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Flexible Target';
 
             return (
-              <div key={vault.id} className="milestone-vault-card">
+              <div key={vault._id} className="milestone-vault-card">
                 <div>
                   <div className="milestone-top-meta">
-                    <span>{vault.priority}</span>
-                    <span>{vault.deadline}</span>
+                    <span>{vault.priority || 'SAVINGS VAULT'}</span>
+                    <span>{deadlineFormatted}</span>
                   </div>
 
                   <div className="milestone-header">
@@ -313,17 +323,19 @@ export default function Goals() {
                       <Target size={15} />
                     </div>
                     <div>
-                      <h4 className="milestone-title-text">{vault.title}</h4>
-                      <div className="milestone-days-left">{vault.daysLeft}</div>
+                      <h4 className="milestone-title-text">{vault.name}</h4>
+                      <div className="milestone-days-left">
+                        {vault.status === 'completed' ? 'Fulfilled Goal' : 'Active Accumulation'}
+                      </div>
                     </div>
                   </div>
 
                   <div className="milestone-financial-row">
                     <span className="milestone-current-val">
-                      ₹{vault.currentRupees.toLocaleString('en-IN')}
+                      ₹{savedRupees.toLocaleString('en-IN')}
                     </span>
                     <span className="milestone-target-val">
-                      Target ₹{vault.targetRupees.toLocaleString('en-IN')}
+                      Target ₹{targetRupees.toLocaleString('en-IN')}
                     </span>
                   </div>
 
@@ -342,18 +354,16 @@ export default function Goals() {
                 <div>
                   <div className="milestone-action-row">
                     <button 
-                      onClick={() => handleDepositToVault(vault.id, 1000)}
+                      onClick={() => handleDepositToVault(vault._id, 1000)}
                       className="btn-milestone-deposit"
+                      disabled={vault.status === 'completed'}
                     >
-                      + Deposit ₹1,000
+                      {vault.status === 'completed' ? 'Fulfilled' : '+ Deposit ₹1,000'}
                     </button>
                     <button 
-                      onClick={() => {
-                        const updated = milestones.filter(m => m.id !== vault.id);
-                        setMilestones(updated);
-                        localStorage.setItem('pennywise_savings_vaults', JSON.stringify(updated));
-                      }}
+                      onClick={() => handleDeleteGoal(vault._id)}
                       className="btn-milestone-more text-rose-500"
+                      title="Remove Goal Vault"
                     >
                       ✕
                     </button>
@@ -401,38 +411,21 @@ export default function Goals() {
               <h3 className="font-extrabold text-sm m-0">Arm New Savings Goal</h3>
               <button onClick={() => setShowNewGoalModal(false)} className="modal-close-btn">✕</button>
             </div>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const form = e.target;
-              const title = form.goalTitle.value;
-              const target = Number(form.goalTarget.value);
-              const newGoal = {
-                id: `goal-${Date.now()}`,
-                priority: 'CUSTOM GOAL',
-                deadline: 'Target Goal',
-                daysLeft: 'Active Goal',
-                title,
-                currentRupees: 0,
-                targetRupees: target,
-                ratePace: 'Auto-pilot active',
-                tag: 'NEW VAULT',
-                status: 'active'
-              };
-              const updated = [...milestones, newGoal];
-              setMilestones(updated);
-              localStorage.setItem('pennywise_savings_vaults', JSON.stringify(updated));
-              setShowNewGoalModal(false);
-            }}>
+            <form onSubmit={handleCreateNewGoal}>
               <div className="mb-3">
                 <label className="block text-secondary font-bold text-xs mb-1">Goal Designation</label>
-                <input name="goalTitle" required placeholder="e.g. Electric Vehicle Downpayment" className="form-input text-xs" />
+                <input name="goalTitle" required placeholder="e.g. Laptop Replacement Fund" className="form-input text-xs" />
               </div>
               <div className="mb-3">
                 <label className="block text-secondary font-bold text-xs mb-1">Target Capital (INR)</label>
                 <input name="goalTarget" type="number" required placeholder="50000" className="form-input text-xs" />
               </div>
-              <button type="submit" className="modal-stitch-submit">
-                Initialize Milestone Vault
+              <div className="mb-3">
+                <label className="block text-secondary font-bold text-xs mb-1">Target Deadline</label>
+                <input name="goalDate" type="date" className="form-input text-xs" />
+              </div>
+              <button type="submit" disabled={creatingGoal} className="modal-stitch-submit">
+                {creatingGoal ? 'Saving to Database...' : 'Initialize Milestone Vault'}
               </button>
             </form>
           </div>

@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 const accountSchema = new mongoose.Schema({
   ownerId: {
@@ -15,7 +15,7 @@ const accountSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['cash', 'bank', 'savings', 'wallet', 'other'],
+    enum: ['cash', 'bank', 'savings', 'wallet', 'credit', 'loan', 'other'],
     default: 'cash'
   },
   balancePaise: {

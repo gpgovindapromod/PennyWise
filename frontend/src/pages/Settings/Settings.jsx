@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import API from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { 
   User, 
@@ -9,11 +10,13 @@ import {
   Lock, 
   DownloadCloud,
   LogOut,
-  Pencil
+  Pencil,
+  UploadCloud
 } from 'lucide-react';
 
 export default function Settings() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
+  const fileInputRef = useRef(null);
   
   // Real user state initialized directly from auth profile
   const [fullName, setFullName] = useState(user?.name || 'Authorized Member');
@@ -23,6 +26,8 @@ export default function Settings() {
   const [anonymousDiag, setAnonymousDiag] = useState(false);
   const [biometricsEnabled, setBiometricsEnabled] = useState(true);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(user?.avatar || '');
+  const [savingAvatar, setSavingAvatar] = useState(false);
 
   // Dynamic Account Age in days since user.createdAt
   const createdDate = user?.createdAt ? new Date(user.createdAt) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
@@ -31,10 +36,50 @@ export default function Settings() {
   const userUID = user?._id ? `UID: ${user._id.toString().toUpperCase().slice(-8)}` : 'UID: SECURE-NODE';
   const deviceOS = navigator.userAgent.includes('Mac') ? 'macOS Client' : navigator.userAgent.includes('Android') ? 'Android Mobile' : navigator.userAgent.includes('iPhone') ? 'iOS Mobile' : 'Windows PC';
 
-  const handleSaveChanges = (e) => {
+  // Handle uploading and persisting image file as Data URL directly to MongoDB User
+  const handleAvatarFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload a valid image file (JPG, PNG, WebP).');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image file is too large. Please select an image under 2MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64Data = reader.result;
+      setAvatarPreview(base64Data);
+      setSavingAvatar(true);
+      try {
+        const res = await API.put('/auth/profile', { avatar: base64Data });
+        if (res.data?.data) {
+          updateUser({ avatar: base64Data });
+        }
+      } catch (err) {
+        alert(err.response?.data?.message || 'Failed to save avatar image');
+      } finally {
+        setSavingAvatar(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveChanges = async (e) => {
     e.preventDefault();
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+    try {
+      await API.put('/auth/profile', { name: fullName });
+      updateUser({ name: fullName });
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update profile');
+    }
   };
 
   return (
@@ -61,11 +106,34 @@ export default function Settings() {
       {/* 2. White Profile Header Hero Card */}
       <div className="stitch-profile-hero">
         <div className="stitch-profile-left">
+          {/* Avatar Upload Container */}
           <div className="stitch-avatar-wrap">
-            <div className="w-14 h-14 rounded-full bg-slate-900 text-emerald-400 font-extrabold text-2xl flex items-center justify-center font-heading border-2 border-emerald-500">
-              {fullName.charAt(0).toUpperCase()}
-            </div>
-            <div className="stitch-avatar-edit-badge" title="Change Avatar">
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              accept="image/*" 
+              onChange={handleAvatarFileSelect}
+              style={{ display: 'none' }}
+            />
+
+            {avatarPreview ? (
+              <img 
+                src={avatarPreview} 
+                alt={fullName} 
+                className="stitch-avatar-img"
+                onError={() => setAvatarPreview('')}
+              />
+            ) : (
+              <div className="stitch-avatar-fallback">
+                {fullName.charAt(0).toUpperCase()}
+              </div>
+            )}
+
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="stitch-avatar-edit-badge" 
+              title={savingAvatar ? "Saving..." : "Upload Profile Photo"}
+            >
               <Pencil size={10} />
             </div>
           </div>

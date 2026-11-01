@@ -2,6 +2,7 @@ const Transaction = require('../models/Transaction');
 const Account = require('../models/Account');
 const MonthlyBudget = require('../models/MonthlyBudget');
 const AcademicFee = require('../models/AcademicFee');
+const Goal = require('../models/Goal');
 
 const getDashboardSummary = async (req, res, next) => {
   try {
@@ -15,12 +16,15 @@ const getDashboardSummary = async (req, res, next) => {
     const startOfMonth = new Date(year, monthIndex, 1);
     const endOfMonth = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
 
-    const [accounts, monthlyTransactions, budgetDoc, recentTransactions, academicFees] = await Promise.all([
+    const dateFilter = { $gte: startOfMonth, $lte: endOfMonth };
+
+    const [accounts, monthlyTransactions, budgetDoc, recentTransactions, academicFees, primaryGoal] = await Promise.all([
       Account.find({ ownerId }).lean(),
-      Transaction.find({ ownerId, date: dateFilter }).lean(),
+      Transaction.find({ ownerId, date: dateFilter, isDeleted: { $ne: true } }).lean(),
       MonthlyBudget.findOne({ ownerId, monthKey: currentMonthKey }).lean(),
-      Transaction.find({ ownerId }).sort({ date: -1, createdAt: -1 }).limit(6).lean(),
-      AcademicFee.find({ ownerId }).lean()
+      Transaction.find({ ownerId, isDeleted: { $ne: true } }).sort({ date: -1, createdAt: -1 }).limit(6).lean(),
+      AcademicFee.find({ ownerId }).lean(),
+      Goal.findOne({ ownerId, status: 'active' }).sort({ createdAt: -1 }).lean()
     ]);
 
     const currentBalancePaise = accounts.reduce((acc, a) => acc + (a.balancePaise || 0), 0);
@@ -114,7 +118,8 @@ const getDashboardSummary = async (req, res, next) => {
           totalObligationsPaise,
           totalFeePaidPaise,
           totalPendingFeesPaise
-        }
+        },
+        primaryGoal: primaryGoal || null
       }
     });
   } catch (error) {

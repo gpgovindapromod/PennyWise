@@ -1,6 +1,7 @@
 const AcademicFee = require('../models/AcademicFee');
 const Transaction = require('../models/Transaction');
 const Account = require('../models/Account');
+const TransactionService = require('../services/transactionService');
 
 const getAcademicSummary = async (req, res, next) => {
   try {
@@ -13,7 +14,8 @@ const getAcademicSummary = async (req, res, next) => {
 
     const academicTxs = await Transaction.find({
       ownerId,
-      categoryId: 'academic'
+      categoryId: 'academic',
+      isDeleted: { $ne: true }
     }).sort({ date: -1 });
 
     let spendingThisMonthPaise = 0;
@@ -122,56 +124,20 @@ const recordFeePayment = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Valid payment amount in paise is required' });
     }
 
-    let targetAccount = await Account.findOne({ ownerId, isDefault: true }) || await Account.findOne({ ownerId });
-    if (accountId) {
-      const specifiedAccount = await Account.findOne({ _id: accountId, ownerId });
-      if (specifiedAccount) targetAccount = specifiedAccount;
-    }
-
-    if (!targetAccount) {
-      targetAccount = await Account.create({
-        ownerId,
-        name: 'Cash in Hand',
-        type: 'cash',
-        balancePaise: 0,
-        isDefault: true
-      });
-    }
-
-    const pDate = paidDate ? new Date(paidDate) : new Date();
-
-    const transaction = await Transaction.create({
+    const result = await TransactionService.recordAcademicFeePayment({
       ownerId,
-      accountId: targetAccount._id,
-      type: 'expense',
+      feeId: id,
       amountPaise: parsedAmount,
-      categoryId: 'academic',
-      categoryLabel: 'Academic Expenses',
-      subcategory: fee.feeType === 'tuition' ? 'College fees' : (fee.title || 'College fees'),
-      date: pDate,
-      note: note ? 'Fee payment: ' + fee.title + '. ' + note.trim() : 'Fee payment: ' + fee.title,
-      academicFeeId: fee._id
+      accountId,
+      paymentMethod: 'upi',
+      note: note ? `Fee payment: ${fee.title}. ${note.trim()}` : `Fee payment: ${fee.title}`
     });
-
-    targetAccount.balancePaise -= transaction.amountPaise;
-    await targetAccount.save();
-
-    fee.installments.push({
-      amountPaise: transaction.amountPaise,
-      paidDate: transaction.date,
-      transactionId: transaction._id,
-      receiptNumber: receiptNumber ? receiptNumber.trim() : '',
-      note: note ? note.trim() : ''
-    });
-
-    fee.updateStatus();
-    await fee.save();
 
     res.status(201).json({
       success: true,
       data: {
-        fee,
-        transaction
+        fee: result.fee,
+        transaction: result.transaction
       }
     });
   } catch (error) {

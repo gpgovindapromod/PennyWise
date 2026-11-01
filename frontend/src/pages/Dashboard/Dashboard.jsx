@@ -29,35 +29,29 @@ export default function Dashboard({ onOpenAddExpense }) {
   const [activeTab, setActiveTab] = useState('ALL');
   const [searchFilter, setSearchFilter] = useState('');
 
-  // Primary Savings Goal State
-  const [savingsTarget, setSavingsTarget] = useState({
-    title: 'Emergency Buffer Vault',
-    subtitle: 'LIQUIDITY CONTINGENCY RESERVE',
-    targetRupees: 25000,
-    currentRupees: 0,
-    targetDate: '28 Dec 2026'
-  });
+  // Primary Savings Goal State from DB
+  const [savingsTarget, setSavingsTarget] = useState(null);
 
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [depositAmount, setDepositAmount] = useState('1000');
 
   const fetchSummary = async () => {
     try {
-      // Clear legacy mock caches so fresh MongoDB figures render immediately
-      localStorage.removeItem('pennywise_dashboard_cache');
-      
       const res = await API.get('/dashboard/summary');
       setData(res.data.data);
 
-      // Load saved user goal from localStorage if customized, or initialize cleanly
-      const savedGoal = localStorage.getItem('pennywise_primary_goal');
-      if (savedGoal) {
-        try {
-          const parsed = JSON.parse(savedGoal);
-          if (parsed && parsed.title && parsed.title !== 'Next Trip to Goa') {
-            setSavingsTarget(parsed);
-          }
-        } catch (e) {}
+      if (res.data.data?.primaryGoal) {
+        const g = res.data.data.primaryGoal;
+        setSavingsTarget({
+          _id: g._id,
+          title: g.name,
+          subtitle: g.priority || 'LIQUIDITY VAULT',
+          targetRupees: Math.round(g.targetPaise / 100),
+          currentRupees: Math.round(g.savedPaise / 100),
+          targetDate: g.deadline ? new Date(g.deadline).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Flexible'
+        });
+      } else {
+        setSavingsTarget(null);
       }
     } catch (err) {
       console.error(err);
@@ -70,25 +64,18 @@ export default function Dashboard({ onOpenAddExpense }) {
     fetchSummary();
   }, []);
 
-  const handleDepositToGoal = (amount) => {
+  const handleDepositToGoal = async (amount) => {
     const amt = Number(amount) || 1000;
-    const updated = {
-      ...savingsTarget,
-      currentRupees: Math.min(savingsTarget.targetRupees, savingsTarget.currentRupees + amt)
-    };
-    setSavingsTarget(updated);
-    localStorage.setItem('pennywise_primary_goal', JSON.stringify(updated));
-    setShowGoalModal(false);
-
-    // Commit transaction to MongoDB
-    API.post('/transactions', {
-      type: 'expense',
-      amountPaise: amt * 100,
-      categoryId: 'academic',
-      categoryLabel: 'Goal Deposit',
-      subcategory: savingsTarget.title,
-      note: 'Direct Goal Deposit from Dashboard'
-    }).then(() => fetchSummary()).catch(() => {});
+    if (!savingsTarget?._id) return;
+    try {
+      await API.post(`/goals/${savingsTarget._id}/deposit`, {
+        amountPaise: amt * 100
+      });
+      setShowGoalModal(false);
+      await fetchSummary();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to deposit to goal');
+    }
   };
 
   const {
@@ -349,57 +336,64 @@ export default function Dashboard({ onOpenAddExpense }) {
           </div>
         </div>
 
-        {/* Card B: Dedicated Savings Target Goal */}
+        {/* Card B: Dedicated Savings Target Goal (100% MongoDB) */}
         <div className="goal-card-surface">
-          <div className="goal-header-row">
-            <div>
-              <div className="goal-title-wrap">
-                <Target size={15} color="#047857" />
-                <span className="goal-title-heading">{savingsTarget.title}</span>
+          {savingsTarget ? (
+            <>
+              <div className="goal-header-row">
+                <div>
+                  <div className="goal-title-wrap">
+                    <Target size={15} color="#047857" />
+                    <span className="goal-title-heading">{savingsTarget.title}</span>
+                  </div>
+                  <div className="goal-subtitle-tag">
+                    {savingsTarget.subtitle}
+                  </div>
+                </div>
+
+                <div className="goal-ring-badge">
+                  {goalPercent}%
+                </div>
               </div>
-              <div className="goal-subtitle-tag">
-                {savingsTarget.subtitle}
+
+              <div className="goal-val-row mt-4 mb-1">
+                <span className="goal-val-primary">
+                  ₹{savingsTarget.currentRupees.toLocaleString('en-IN')}.00
+                </span>
+                <span className="text-secondary text-xs">
+                  Target: ₹{savingsTarget.targetRupees.toLocaleString('en-IN')}.00
+                </span>
               </div>
+
+              <div className="text-secondary text-xs mb-4">
+                ₹{Math.max(0, savingsTarget.targetRupees - savingsTarget.currentRupees).toLocaleString('en-IN')} remaining · Est. completion {savingsTarget.targetDate}
+              </div>
+
+              <div className="flex gap-2">
+                <Link
+                  to="/goals"
+                  className="btn btn-secondary goal-btn-adjust"
+                >
+                  Manage Vault
+                </Link>
+                <button
+                  onClick={() => handleDepositToGoal(1000)}
+                  className="goal-btn-deposit"
+                >
+                  + Deposit ₹1,000
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-6">
+              <Target size={30} className="mx-auto text-emerald-600 mb-2" />
+              <div className="font-extrabold text-xs text-dark mb-1">No Active Savings Goal</div>
+              <p className="text-muted text-xs mb-3">Arm a multi-horizon savings vault to track your reserve targets.</p>
+              <Link to="/goals" className="btn-goals-primary mx-auto text-xs py-1.5 px-3">
+                + Create Savings Goal
+              </Link>
             </div>
-
-            <div className="goal-ring-badge">
-              {goalPercent}%
-            </div>
-          </div>
-
-          <div className="goal-val-row mt-4 mb-1">
-            <span className="goal-val-primary">
-              ₹{savingsTarget.currentRupees.toLocaleString('en-IN')}.00
-            </span>
-            <span className="text-secondary text-xs">
-              Target: ₹{savingsTarget.targetRupees.toLocaleString('en-IN')}.00
-            </span>
-          </div>
-
-          <div className="text-secondary text-xs mb-4">
-            ₹{Math.max(0, savingsTarget.targetRupees - savingsTarget.currentRupees).toLocaleString('en-IN')} remaining · Est. completion {savingsTarget.targetDate}
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => {
-                const newTitle = prompt('Goal Title:', savingsTarget.title) || savingsTarget.title;
-                const newTarget = Number(prompt('Target Amount (INR):', savingsTarget.targetRupees)) || savingsTarget.targetRupees;
-                const updated = { ...savingsTarget, title: newTitle, targetRupees: newTarget };
-                setSavingsTarget(updated);
-                localStorage.setItem('pennywise_primary_goal', JSON.stringify(updated));
-              }}
-              className="btn btn-secondary goal-btn-adjust"
-            >
-              Adjust Target
-            </button>
-            <button
-              onClick={() => handleDepositToGoal(1000)}
-              className="goal-btn-deposit"
-            >
-              + Deposit ₹1,000
-            </button>
-          </div>
+          )}
         </div>
       </div>
 

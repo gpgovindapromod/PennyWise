@@ -16,7 +16,8 @@ const getReportSummary = async (req, res, next) => {
 
       const txs = await Transaction.find({
         ownerId,
-        date: { $gte: start, $lte: end }
+        date: { $gte: start, $lte: end },
+        isDeleted: { $ne: true }
       });
 
       let incomePaise = 0;
@@ -62,7 +63,8 @@ const getReportSummary = async (req, res, next) => {
 
     const expenseQuery = {
       ownerId,
-      type: 'expense'
+      type: 'expense',
+      isDeleted: { $ne: true }
     };
 
     if (startDate || endDate) {

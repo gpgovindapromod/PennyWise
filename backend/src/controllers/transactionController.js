@@ -1,6 +1,7 @@
 const Transaction = require('../models/Transaction');
 const Account = require('../models/Account');
 const AcademicFee = require('../models/AcademicFee');
+const TransactionService = require('../services/transactionService');
 
 const getTransactions = async (req, res, next) => {
   try {
@@ -17,7 +18,7 @@ const getTransactions = async (req, res, next) => {
       limit = 20
     } = req.query;
 
-    const query = { ownerId };
+    const query = { ownerId, isDeleted: { $ne: true } };
 
     if (category && category !== 'all') {
       query.categoryId = category;
@@ -56,7 +57,7 @@ const getTransactions = async (req, res, next) => {
       .skip(skip)
       .limit(limitNum)
       .populate('accountId', 'name type')
-      .lean(); // Return plain JS objects for 3-5x faster serialization
+      .lean();
 
     res.json({
       success: true,
@@ -91,7 +92,9 @@ const createTransaction = async (req, res, next) => {
       academicFeeId
     } = req.body;
 
+    const idempotencyKey = req.headers['idempotency-key'] || req.body.idempotencyKey;
     const parsedAmount = parseInt(amountPaise, 10);
+
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
       return res.status(400).json({ success: false, message: 'Please provide a valid amount in paise greater than zero' });
     }
@@ -100,52 +103,41 @@ const createTransaction = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Category and specific item are required' });
     }
 
-    let targetAccount;
-    if (accountId) {
-      targetAccount = await Account.findOne({ _id: accountId, ownerId });
-    } else {
-      targetAccount = await Account.findOne({ ownerId, isDefault: true }) || await Account.findOne({ ownerId });
-    }
-
-    if (!targetAccount) {
-      targetAccount = await Account.create({
-        ownerId,
-        name: 'Cash in Hand',
-        type: 'cash',
-        balancePaise: 0,
-        isDefault: true
-      });
+    let targetAccountId = accountId;
+    if (!targetAccountId) {
+      let defaultAcc = await Account.findOne({ ownerId, isDefault: true }) || await Account.findOne({ ownerId });
+      if (!defaultAcc) {
+        defaultAcc = await Account.create({
+          ownerId,
+          name: 'Cash in Hand',
+          type: 'cash',
+          balancePaise: 0,
+          isDefault: true
+        });
+      }
+      targetAccountId = defaultAcc._id;
     }
 
     const txDate = date ? new Date(date) : new Date();
-    if (isNaN(txDate.getTime())) {
-      return res.status(400).json({ success: false, message: 'Invalid date provided' });
-    }
 
-    const validPaymentMethods = ['upi', 'cash', 'card'];
-    const chosenPaymentMethod = validPaymentMethods.includes(paymentMethod) ? paymentMethod : 'upi';
+    const { transaction } = await TransactionService.createTransaction(
+      {
+        ownerId,
+        accountId: targetAccountId,
+        type,
+        amountPaise: parsedAmount,
+        categoryId,
+        categoryLabel: categoryLabel || categoryId,
+        subcategory: subcategory.trim(),
+        date: txDate,
+        note: note ? note.trim() : '',
+        paymentMethod,
+        academicFeeId: academicFeeId || null
+      },
+      { idempotencyKey }
+    );
 
-    const transaction = await Transaction.create({
-      ownerId,
-      accountId: targetAccount._id,
-      type,
-      amountPaise: parsedAmount,
-      categoryId,
-      categoryLabel: categoryLabel || categoryId,
-      subcategory: subcategory.trim(),
-      date: txDate,
-      note: note ? note.trim() : '',
-      paymentMethod: chosenPaymentMethod,
-      academicFeeId: academicFeeId || null
-    });
-
-    if (transaction.type === 'income' || transaction.type === 'refund') {
-      targetAccount.balancePaise += transaction.amountPaise;
-    } else if (transaction.type === 'expense') {
-      targetAccount.balancePaise -= transaction.amountPaise;
-    }
-    await targetAccount.save();
-
+    // If linked to an academic fee installment, reconcile fee status
     if (academicFeeId) {
       const fee = await AcademicFee.findOne({ _id: academicFeeId, ownerId });
       if (fee) {
@@ -173,49 +165,26 @@ const updateTransaction = async (req, res, next) => {
   try {
     const ownerId = req.user._id;
     const { id } = req.params;
-    const { amountPaise, categoryId, categoryLabel, subcategory, date, note } = req.body;
+    const { amountPaise, categoryId, categoryLabel, subcategory, date, note, paymentMethod } = req.body;
 
-    const transaction = await Transaction.findOne({ _id: id, ownerId });
-    if (!transaction) {
-      return res.status(404).json({ success: false, message: 'Transaction not found or unauthorized' });
-    }
-
-    const account = await Account.findOne({ _id: transaction.accountId, ownerId });
-    if (account) {
-      if (transaction.type === 'income' || transaction.type === 'refund') {
-        account.balancePaise -= transaction.amountPaise;
-      } else if (transaction.type === 'expense') {
-        account.balancePaise += transaction.amountPaise;
-      }
-    }
-
+    const updates = {};
     if (amountPaise !== undefined) {
       const parsed = parseInt(amountPaise, 10);
       if (isNaN(parsed) || parsed <= 0) {
         return res.status(400).json({ success: false, message: 'Amount must be greater than zero' });
       }
-      transaction.amountPaise = parsed;
+      updates.amountPaise = parsed;
     }
-    if (categoryId) transaction.categoryId = categoryId;
-    if (categoryLabel) transaction.categoryLabel = categoryLabel;
-    if (subcategory) transaction.subcategory = subcategory.trim();
-    if (date) {
-      const parsedDate = new Date(date);
-      if (!isNaN(parsedDate.getTime())) transaction.date = parsedDate;
-    }
-    if (note !== undefined) transaction.note = note.trim();
+    if (categoryId) updates.categoryId = categoryId;
+    if (categoryLabel) updates.categoryLabel = categoryLabel;
+    if (subcategory) updates.subcategory = subcategory.trim();
+    if (date) updates.date = new Date(date);
+    if (note !== undefined) updates.note = note.trim();
+    if (paymentMethod) updates.paymentMethod = paymentMethod;
 
-    await transaction.save();
+    const transaction = await TransactionService.updateTransaction(id, ownerId, updates);
 
-    if (account) {
-      if (transaction.type === 'income' || transaction.type === 'refund') {
-        account.balancePaise += transaction.amountPaise;
-      } else if (transaction.type === 'expense') {
-        account.balancePaise -= transaction.amountPaise;
-      }
-      await account.save();
-    }
-
+    // Sync academic fee installment if linked
     if (transaction.academicFeeId) {
       const fee = await AcademicFee.findOne({ _id: transaction.academicFeeId, ownerId });
       if (fee) {
@@ -244,23 +213,12 @@ const deleteTransaction = async (req, res, next) => {
     const ownerId = req.user._id;
     const { id } = req.params;
 
-    const transaction = await Transaction.findOne({ _id: id, ownerId });
-    if (!transaction) {
-      return res.status(404).json({ success: false, message: 'Transaction not found or unauthorized' });
-    }
+    const result = await TransactionService.softDeleteTransaction(id, ownerId);
 
-    const account = await Account.findOne({ _id: transaction.accountId, ownerId });
-    if (account) {
-      if (transaction.type === 'income' || transaction.type === 'refund') {
-        account.balancePaise -= transaction.amountPaise;
-      } else if (transaction.type === 'expense') {
-        account.balancePaise += transaction.amountPaise;
-      }
-      await account.save();
-    }
-
-    if (transaction.academicFeeId) {
-      const fee = await AcademicFee.findOne({ _id: transaction.academicFeeId, ownerId });
+    // Reconcile academic fee if linked
+    const tx = await Transaction.findById(id);
+    if (tx?.academicFeeId) {
+      const fee = await AcademicFee.findOne({ _id: tx.academicFeeId, ownerId });
       if (fee) {
         fee.installments = fee.installments.filter(
           inst => !inst.transactionId || inst.transactionId.toString() !== id
@@ -270,11 +228,10 @@ const deleteTransaction = async (req, res, next) => {
       }
     }
 
-    await Transaction.deleteOne({ _id: id, ownerId });
-
     res.json({
       success: true,
-      message: 'Transaction deleted successfully'
+      message: 'Transaction soft-deleted and account balance reversed successfully',
+      data: result
     });
   } catch (error) {
     next(error);

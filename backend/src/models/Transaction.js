@@ -14,7 +14,7 @@ const transactionSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['income', 'expense', 'transfer', 'refund'],
+    enum: ['income', 'expense', 'transfer', 'transfer_out', 'transfer_in', 'refund'],
     required: true
   },
   amountPaise: {
@@ -61,6 +61,28 @@ const transactionSchema = new mongoose.Schema({
     ref: 'AcademicFee',
     default: null
   },
+  // Transfer correlation ID for two-leg account/vault transfers
+  transferId: {
+    type: mongoose.Schema.Types.ObjectId,
+    default: null,
+    index: true
+  },
+  // Idempotency key supplied by client to prevent duplicate submissions
+  idempotencyKey: {
+    type: String,
+    default: null,
+    index: true
+  },
+  // Soft delete flag to preserve ledger audit trail & balance reconciliations
+  isDeleted: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  deletedAt: {
+    type: Date,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -68,5 +90,6 @@ const transactionSchema = new mongoose.Schema({
 });
 
 transactionSchema.index({ ownerId: 1, date: -1 });
+transactionSchema.index({ ownerId: 1, idempotencyKey: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('Transaction', transactionSchema);

@@ -298,6 +298,7 @@ const login = async (req, res) => {
         mustChangePassword: Boolean(user.mustChangePassword),
         status: user.status || 'active',
         college: user.college,
+        avatar: user.avatar || '',
         currency: user.currency,
         token: generateToken(user._id)
       }
@@ -353,6 +354,7 @@ const register = async (req, res) => {
         name: user.name,
         email: user.email,
         college: user.college,
+        avatar: user.avatar || '',
         currency: user.currency,
         token: generateToken(user._id)
       }

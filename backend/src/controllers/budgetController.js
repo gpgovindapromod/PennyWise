@@ -24,7 +24,8 @@ const getBudget = async (req, res, next) => {
     const monthlyTransactions = await Transaction.find({
       ownerId,
       date: { $gte: startOfMonth, $lte: endOfMonth },
-      type: { $in: ['expense', 'refund'] }
+      type: { $in: ['expense', 'refund'] },
+      isDeleted: { $ne: true }
     });
 
     let spentPaise = 0;

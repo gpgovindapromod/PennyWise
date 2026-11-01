@@ -62,12 +62,25 @@ export default function Navbar({ onOpenAddExpense }) {
           </button>
 
           {/* User Profile Avatar */}
-          <Link to="/settings">
-            <img 
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=80" 
-              alt="Profile" 
-              className="stitch-nav-avatar"
-            />
+          <Link to="/settings" title="Account Settings & Profile">
+            {user?.avatar ? (
+              <img 
+                src={user.avatar} 
+                alt={user?.name || "Profile"} 
+                className="stitch-nav-avatar"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+            ) : null}
+            <div 
+              className="stitch-nav-avatar-initials"
+              style={{ display: user?.avatar ? 'none' : 'flex' }}
+            >
+              {(user?.name || 'U').charAt(0).toUpperCase()}
+            </div>
           </Link>
 
           <button
