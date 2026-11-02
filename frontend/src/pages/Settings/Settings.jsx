@@ -335,17 +335,17 @@ export default function Settings() {
 
       {/* 4. Install Desktop App Strip */}
       <div className="stitch-install-banner">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700">
-            <Laptop size={16} />
+        <div className="stitch-install-banner-left">
+          <div className="stitch-sec-icon-wrap">
+            <Laptop size={16} color="#047857" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="font-bold text-dark text-xs">Install Desktop App</span>
               <span className="stitch-tier-badge">OFFLINE READY</span>
             </div>
-            <div className="text-muted text-xs">
-              Get instantaneous launch times and system tray synchronization via the PWA client.
+            <div className="text-muted text-xs mt-0.5">
+              Instantaneous launch times and system tray synchronization via the PWA client.
             </div>
           </div>
         </div>
@@ -355,29 +355,21 @@ export default function Settings() {
         </button>
       </div>
 
-      {/* 5. Cryptography Attestation Bar */}
-      <div className="flex justify-between items-center text-xs text-muted mb-4 px-2">
-        <div className="flex items-center gap-2">
-          <ShieldCheck size={13} color="#047857" />
-          <span>MongoDB Atlas Cluster • SSL Encrypted</span>
-        </div>
-      </div>
-
-      {/* 6. Session & Account Actions */}
+      {/* 5. Session & Account Actions */}
       <div className="stitch-session-bar">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700">
-            <User size={15} />
+        <div className="stitch-session-bar-left">
+          <div className="stitch-sec-icon-wrap">
+            <User size={15} color="#047857" />
           </div>
           <div>
             <div className="font-bold text-dark text-xs">Session & Account Actions</div>
-            <div className="text-muted text-xs">
+            <div className="text-muted text-xs mt-0.5">
               Sign out of your active workspace or reset locally cached ledger data.
             </div>
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="stitch-session-actions-btns">
           <button 
             onClick={() => {
               if (window.confirm('Reset local cache data?')) {
@@ -395,13 +387,20 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Footer Attestation */}
-      <div className="stitch-attestation-bar">
-        <span>© 2026 PENNYWISE WEALTH STUDIO. NORDIC PRECISION FINANCIAL SYSTEMS.</span>
-        <div className="flex gap-3">
-          <span>Treasury Protocol</span>
-          <span>Security & Attestation</span>
-          <span>API Architecture</span>
+      {/* 6. Security Attestation & Footer */}
+      <div className="stitch-footer-container">
+        <div className="stitch-attestation-status">
+          <ShieldCheck size={14} color="#047857" />
+          <span>MongoDB Atlas Cluster · SSL 256-bit Encrypted</span>
+        </div>
+
+        <div className="stitch-attestation-bar">
+          <span>© 2026 PENNYWISE WEALTH STUDIO. NORDIC PRECISION FINANCIAL SYSTEMS.</span>
+          <div className="stitch-footer-links">
+            <span>Treasury Protocol</span>
+            <span>Security & Attestation</span>
+            <span>API Architecture</span>
+          </div>
         </div>
       </div>
     </div>

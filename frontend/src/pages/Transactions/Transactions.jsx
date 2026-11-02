@@ -115,7 +115,7 @@ export default function Transactions({ onOpenAddExpense }) {
         <div>
           <h1 className="ledger-main-heading">Transaction History & Financial Ledger</h1>
           <p className="ledger-sub-caption">
-            Nordic multi-asset clearance ledger with zero-latency reconciliation and telemetry audit tracking.
+            Comprehensive multi-asset clearance ledger with zero-latency reconciliation and telemetry audit tracking.
           </p>
         </div>
 

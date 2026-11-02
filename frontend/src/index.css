@@ -7091,8 +7091,15 @@ h3,
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   box-shadow: 0 2px 6px rgba(17, 18, 21, 0.02);
+}
+
+.stitch-install-banner-left,
+.stitch-session-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 /* Bottom Session & Account Actions */
@@ -7106,9 +7113,55 @@ h3,
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
+  margin-bottom: 24px;
   box-shadow: 0 2px 6px rgba(17, 18, 21, 0.02);
 }
 
+.stitch-session-actions-btns {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Footer Container & Security Status */
+.stitch-footer-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.stitch-attestation-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #047857;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  width: fit-content;
+}
+
+.stitch-footer-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.stitch-footer-links span {
+  font-size: 10px;
+  color: #64748B;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.stitch-footer-links span:hover {
+  color: #047857;
+}
 
 /* Mobile Responsiveness & Container Spacing for Dock */
 @media (max-width: 768px) {
@@ -7151,5 +7204,26 @@ h3,
 
   .stitch-install-banner, .stitch-session-bar {
     padding: 14px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .stitch-session-actions-btns {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .stitch-attestation-status {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  .stitch-attestation-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 }
