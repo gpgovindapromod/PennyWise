@@ -1865,23 +1865,25 @@ h3,
 
 .clearance-table-head {
   display: grid;
-  grid-template-columns: 2fr 1fr 1.2fr 1fr 1fr;
-  padding: 8px 10px;
+  grid-template-columns: 2.2fr 1.2fr 1fr 1.2fr;
+  padding: 10px 12px;
   border-bottom: 1px solid #EEF0F4;
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 800;
   color: #8E92A0;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
+  gap: 8px;
 }
 
 .clearance-table-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1.2fr 1fr 1fr;
-  padding: 12px 10px;
+  grid-template-columns: 2.2fr 1.2fr 1fr 1.2fr;
+  padding: 12px;
   border-bottom: 1px solid #F1F5F9;
   align-items: center;
   font-size: 12px;
+  gap: 8px;
 }
 
 .clearance-icon-income {
@@ -7226,4 +7228,209 @@ h3,
     align-items: flex-start;
     gap: 8px;
   }
+}
+
+
+@media (max-width: 640px) {
+  .clearance-table-card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .clearance-table-head,
+  .clearance-table-row {
+    min-width: 480px;
+  }
+}
+
+
+/* ==========================================================================
+   PennyWise Real-Time Notification System Styles
+   ========================================================================== */
+.stitch-notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #EF4444;
+  color: #FFFFFF;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 9999px;
+  border: 1.5px solid #FFFFFF;
+  min-width: 14px;
+  text-align: center;
+}
+
+.stitch-notification-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  max-width: 90vw;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: notifFadeIn 0.15s ease-out;
+}
+
+@keyframes notifFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stitch-notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background: #F8FAFC;
+  border-bottom: 1px solid #EEF2F6;
+}
+
+.stitch-notification-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.01em;
+}
+
+.stitch-notification-pill-count {
+  font-size: 10px;
+  font-weight: 700;
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.stitch-notification-readall-btn {
+  background: transparent;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  color: #2563EB;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.stitch-notification-readall-btn:hover {
+  text-decoration: underline;
+}
+
+.stitch-notification-list {
+  max-height: 360px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.stitch-notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #F1F5F9;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s ease;
+  position: relative;
+}
+.stitch-notification-item:hover {
+  background: #F8FAFC;
+}
+
+.stitch-notification-item-unread {
+  background: #FAFCFF;
+}
+
+.stitch-notification-item-read {
+  opacity: 0.72;
+}
+
+.stitch-notification-item-icon {
+  margin-top: 2px;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: #F1F5F9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stitch-notification-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.stitch-notification-item-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0F172A;
+  margin-bottom: 2px;
+}
+
+.stitch-notification-item-msg {
+  font-size: 11px;
+  color: #64748B;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.stitch-notification-item-time {
+  font-size: 10px;
+  color: #94A3B8;
+  margin-top: 4px;
+}
+
+.stitch-notification-item-dismiss {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stitch-notification-item-dismiss:hover {
+  color: #0F172A;
+  background: #E2E8F0;
+}
+
+.stitch-notification-empty {
+  padding: 28px 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.stitch-notification-empty-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F172A;
+  margin-bottom: 2px;
+}
+
+.stitch-notification-empty-desc {
+  font-size: 11.5px;
+  color: #64748B;
+  max-width: 220px;
+  line-height: 1.4;
 }

@@ -1,14 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   Bell, 
-  LogOut 
+  LogOut,
+  AlertTriangle,
+  Calendar,
+  CheckCircle2,
+  TrendingUp,
+  ShieldCheck,
+  X
 } from 'lucide-react';
+import api from '../services/api';
 
 export default function Navbar({ onOpenAddExpense }) {
   const { user, logout } = useAuth();
   const location = useLocation();
+
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const dropdownRef = useRef(null);
 
   const navItems = [
     { path: '/', label: 'Dashboard' },
@@ -18,6 +31,84 @@ export default function Navbar({ onOpenAddExpense }) {
     { path: '/academics', label: 'Academics' },
     { path: '/settings', label: 'Settings' }
   ];
+
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get('/notifications');
+      if (res.data?.success && res.data?.data) {
+        setNotifications(res.data.data.notifications || []);
+        setUnreadCount(res.data.data.unreadCount || 0);
+      }
+    } catch (err) {
+      // Fallback gracefully without breaking navbar
+      console.warn('Notification fetch warning:', err.message);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 60000); // 1-minute refresh
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    }
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifications]);
+
+  const handleMarkAllRead = async () => {
+    try {
+      setLoading(true);
+      await api.put('/notifications/read-all');
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setUnreadCount(0);
+    } catch (err) {
+      console.error('Failed to mark all as read', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMarkOneRead = async (id, e) => {
+    e.stopPropagation();
+    try {
+      if (!id.startsWith('fee-alert') && !id.startsWith('budget-alert')) {
+        await api.put(`/notifications/${id}/read`);
+      }
+      setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error('Failed to mark notification as read', err);
+    }
+  };
+
+  const getAlertIcon = (type) => {
+    switch (type) {
+      case 'fee':
+        return <Calendar size={14} className="text-amber-500" />;
+      case 'budget':
+        return <AlertTriangle size={14} className="text-rose-500" />;
+      case 'goal':
+        return <TrendingUp size={14} className="text-emerald-500" />;
+      case 'security':
+        return <ShieldCheck size={14} className="text-indigo-500" />;
+      default:
+        return <CheckCircle2 size={14} className="text-emerald-500" />;
+    }
+  };
 
   return (
     <header className="stitch-navbar-header">
@@ -54,12 +145,83 @@ export default function Navbar({ onOpenAddExpense }) {
 
           <span className="stitch-nav-inr-tag desktop-only">INR ₹</span>
 
-          <button 
-            title="Notifications" 
-            className="btn-milestone-more"
-          >
-            <Bell size={14} color="#64748B" />
-          </button>
+          {/* Notifications Trigger */}
+          <div className="relative" ref={dropdownRef}>
+            <button 
+              title="Notifications" 
+              className="btn-milestone-more relative"
+              onClick={() => setShowNotifications(prev => !prev)}
+            >
+              <Bell size={14} color="#64748B" />
+              {unreadCount > 0 && (
+                <span className="stitch-notification-badge">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Notification Dropdown Popover */}
+            {showNotifications && (
+              <div className="stitch-notification-popover">
+                <div className="stitch-notification-header">
+                  <div className="flex items-center gap-2">
+                    <span className="stitch-notification-title">Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="stitch-notification-pill-count">{unreadCount} new</span>
+                    )}
+                  </div>
+                  {unreadCount > 0 && (
+                    <button 
+                      onClick={handleMarkAllRead} 
+                      disabled={loading}
+                      className="stitch-notification-readall-btn"
+                    >
+                      Mark all as read
+                    </button>
+                  )}
+                </div>
+
+                <div className="stitch-notification-list">
+                  {notifications.length === 0 ? (
+                    <div className="stitch-notification-empty">
+                      <CheckCircle2 size={24} className="text-emerald-500 mb-2 opacity-80" />
+                      <div className="stitch-notification-empty-title">All caught up!</div>
+                      <div className="stitch-notification-empty-desc">No active financial alerts or pending obligations.</div>
+                    </div>
+                  ) : (
+                    notifications.map((n) => (
+                      <Link
+                        key={n._id}
+                        to={n.link || '#'}
+                        onClick={() => setShowNotifications(false)}
+                        className={`stitch-notification-item ${n.read ? 'stitch-notification-item-read' : 'stitch-notification-item-unread'}`}
+                      >
+                        <div className="stitch-notification-item-icon">
+                          {getAlertIcon(n.type)}
+                        </div>
+                        <div className="stitch-notification-item-content">
+                          <div className="stitch-notification-item-title">{n.title}</div>
+                          <div className="stitch-notification-item-msg">{n.message}</div>
+                          <div className="stitch-notification-item-time">
+                            {new Date(n.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                          </div>
+                        </div>
+                        {!n.read && (
+                          <button
+                            title="Mark as read"
+                            className="stitch-notification-item-dismiss"
+                            onClick={(e) => handleMarkOneRead(n._id, e)}
+                          >
+                            <X size={12} />
+                          </button>
+                        )}
+                      </Link>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* User Profile Avatar */}
           <Link to="/settings" title="Account Settings & Profile">

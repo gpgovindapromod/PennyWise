@@ -104,6 +104,7 @@ app.use('/api/academics', require('./routes/academicRoutes'));
 app.use('/api/goals', require('./routes/goalRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
 app.use('/api/travel', require('./routes/travelRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 
 // 404 handler
 app.use((req, res, next) => {
