@@ -253,57 +253,81 @@ export default function Settings() {
         <div className="stitch-settings-card">
           <div className="stitch-card-section-head">
             <h3 className="stitch-section-heading">
-              <ShieldCheck size={13} color="#047857" /> Security & Authentication
+              <ShieldCheck size={14} color="#047857" /> Security & Authentication
             </h3>
-            <span className="text-emerald text-xs font-extrabold uppercase tracking-wider">PROTECTED</span>
+            <span className="text-emerald text-xs font-extrabold uppercase tracking-wider">● ENCLAVE ACTIVE</span>
           </div>
 
-          {/* Account Password */}
-          <div className="flex justify-between items-center p-3 rounded-lg bg-slate-50 border border-slate-200 mb-4">
-            <div>
-              <div className="font-bold text-dark text-xs">Account Password</div>
-              <div className="text-muted text-xs">•••••••••••••••• · Active Password</div>
-            </div>
-            <button className="btn-goals-outline text-xs py-1 px-3">
-              Change Password
-            </button>
-          </div>
-
-          {/* Biometrics & Passkeys */}
-          <div className="flex justify-between items-center p-3 rounded-lg bg-slate-50 border border-slate-200 mb-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-dark text-xs">Biometrics & Passkeys</span>
-                <span className="stitch-tier-badge">Active</span>
-              </div>
-              <div className="text-muted text-xs mt-1">
-                Use Touch ID, Windows Hello, or hardware key for one-tap access.
-              </div>
-            </div>
-            <input 
-              type="checkbox" 
-              checked={biometricsEnabled} 
-              onChange={() => setBiometricsEnabled(!biometricsEnabled)}
-              className="w-4 h-4 accent-emerald-600"
-            />
-          </div>
-
-          {/* Active Devices & Sessions */}
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="font-bold text-dark text-xs">Current Session & Node</span>
-            </div>
-
-            <div className="flex justify-between items-center text-xs p-2 rounded bg-slate-50 border border-slate-200 mb-2">
-              <div className="flex items-center gap-2">
-                <Laptop size={14} color="#047857" />
+          <div className="stitch-security-stack">
+            {/* 1. Account Password Card */}
+            <div className="stitch-sec-item">
+              <div className="stitch-sec-item-left">
+                <div className="stitch-sec-icon-wrap">
+                  <Lock size={15} color="#047857" />
+                </div>
                 <div>
-                  <span className="font-bold text-dark">{deviceOS}</span>
-                  <span className="stitch-tier-badge ml-2">This Device</span>
-                  <div className="text-muted text-xs">Encrypted HTTPS Session</div>
+                  <div className="font-bold text-dark text-xs">Account Password</div>
+                  <div className="text-muted text-xs">•••••••••••••••• · Encrypted bcrypt hash</div>
                 </div>
               </div>
-              <span className="text-emerald font-bold">Active now</span>
+              <button 
+                onClick={() => {
+                  const newPass = prompt('Enter new password (min 6 characters):');
+                  if (newPass && newPass.length >= 6) {
+                    API.put('/auth/change-password', { newPassword: newPass })
+                      .then(() => alert('Password updated successfully!'))
+                      .catch(err => alert(err.response?.data?.message || 'Failed to change password'));
+                  }
+                }}
+                className="btn-goals-outline text-xs py-1.5 px-3"
+              >
+                Change Password
+              </button>
+            </div>
+
+            {/* 2. Biometrics & Passkeys Card */}
+            <div className="stitch-sec-item">
+              <div className="stitch-sec-item-left">
+                <div className="stitch-sec-icon-wrap">
+                  <ShieldCheck size={15} color="#047857" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-dark text-xs">Biometrics & Fast Auth</span>
+                    <span className="stitch-tier-badge">ENABLED</span>
+                  </div>
+                  <div className="text-muted text-xs mt-0.5">
+                    Biometric session verification on supported devices
+                  </div>
+                </div>
+              </div>
+              <input 
+                type="checkbox" 
+                checked={biometricsEnabled} 
+                onChange={() => setBiometricsEnabled(!biometricsEnabled)}
+                className="w-4 h-4 accent-emerald-600 cursor-pointer"
+              />
+            </div>
+
+            {/* 3. Current Session Node Card */}
+            <div className="stitch-sec-item">
+              <div className="stitch-sec-item-left">
+                <div className="stitch-sec-icon-wrap">
+                  <Laptop size={15} color="#047857" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-dark text-xs">{deviceOS}</span>
+                    <span className="stitch-tier-badge">THIS NODE</span>
+                  </div>
+                  <div className="text-muted text-xs mt-0.5">
+                    TLS 1.3 · MongoDB Atlas Cloud Tunnel
+                  </div>
+                </div>
+              </div>
+              <div className="text-emerald font-extrabold text-xs flex items-center gap-1">
+                <span className="proto-pulse-dot" /> Connected
+              </div>
             </div>
           </div>
         </div>
