@@ -325,47 +325,49 @@ export default function Academics({ onOpenAddExpense }) {
             </Link>
           </div>
 
-          <div className="clearance-table-head">
-            <span>Description</span>
-            <span>Category</span>
-            <span>Amount</span>
-            <span className="text-right">Date</span>
-          </div>
-
-          {recentAcademicTransactions.length === 0 ? (
-            <div className="text-center py-8 text-muted text-xs">
-              No recent study transactions recorded. Click '+ Record Study Cost' above to add one.
+          <div className="clearance-table-wrapper">
+            <div className="clearance-table-head">
+              <span>Description</span>
+              <span>Category</span>
+              <span>Amount</span>
+              <span className="text-right">Date</span>
             </div>
-          ) : (
-            recentAcademicTransactions.map((tx) => (
-              <div key={tx._id} className="clearance-table-row">
-                <div className="flex items-center gap-2">
-                  <div className="clearance-icon-expense">
-                    <BookOpen size={13} />
-                  </div>
-                  <div>
-                    <div className="font-bold text-dark text-xs">{tx.note || tx.subcategory || 'Study Outlay'}</div>
-                    <div className="text-muted text-xs">{tx.subcategory || 'Academics'}</div>
-                  </div>
-                </div>
 
-                <div>
-                  <span className="clearance-category-expense">{tx.categoryLabel || 'Academic'}</span>
-                </div>
-
-                <div className="font-extrabold text-dark text-xs">
-                  {formatRupees(tx.amountPaise)}
-                </div>
-
-                <div className="text-right text-xs">
-                  <div className="text-dark font-medium">{tx.paymentMethod || 'UPI'}</div>
-                  <div className="text-muted text-xs">
-                    {new Date(tx.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                  </div>
-                </div>
+            {recentAcademicTransactions.length === 0 ? (
+              <div className="text-center py-8 text-muted text-xs">
+                No recent study transactions recorded. Click '+ Record Study Cost' above to add one.
               </div>
-            ))
-          )}
+            ) : (
+              recentAcademicTransactions.map((tx) => (
+                <div key={tx._id} className="clearance-table-row">
+                  <div className="flex items-center gap-2">
+                    <div className="clearance-icon-expense">
+                      <BookOpen size={13} />
+                    </div>
+                    <div>
+                      <div className="font-bold text-dark text-xs">{tx.note || tx.subcategory || 'Study Outlay'}</div>
+                      <div className="text-muted text-xs">{tx.subcategory || 'Academics'}</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="clearance-category-expense">{tx.categoryLabel || 'Academic'}</span>
+                  </div>
+
+                  <div className="font-extrabold text-dark text-xs">
+                    {formatRupees(tx.amountPaise)}
+                  </div>
+
+                  <div className="text-right text-xs">
+                    <div className="text-dark font-medium">{tx.paymentMethod || 'UPI'}</div>
+                    <div className="text-muted text-xs">
+                      {new Date(tx.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
 
           <div className="clearance-footer-bar">
             <span>Showing {recentAcademicTransactions.length} recent database disbursements</span>

@@ -95,6 +95,18 @@ const getDashboardSummary = async (req, res, next) => {
     }, 0);
     const totalPendingFeesPaise = Math.max(0, totalObligationsPaise - totalFeePaidPaise);
 
+    // Build daily expense points for current month's velocity curve
+    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+    const dailyExpenses = new Array(daysInMonth).fill(0);
+    monthlyTransactions.forEach((tx) => {
+      if (tx.type === 'expense' && tx.date) {
+        const d = new Date(tx.date).getDate();
+        if (d >= 1 && d <= daysInMonth) {
+          dailyExpenses[d - 1] += (tx.amountPaise || 0);
+        }
+      }
+    });
+
     res.json({
       success: true,
       data: {
@@ -114,6 +126,7 @@ const getDashboardSummary = async (req, res, next) => {
         },
         categoryTotals,
         recentTransactions,
+        dailyExpenses,
         feeOverview: {
           totalObligationsPaise,
           totalFeePaidPaise,

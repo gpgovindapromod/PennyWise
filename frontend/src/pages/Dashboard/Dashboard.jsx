@@ -83,7 +83,8 @@ export default function Dashboard({ onOpenAddExpense }) {
     incomeThisMonthPaise = 0,
     expensesThisMonthPaise = 0,
     budget = {},
-    recentTransactions = []
+    recentTransactions = [],
+    dailyExpenses = []
   } = data || {};
 
   const safeBudgetLimit = budget?.limitPaise || 800000;
@@ -99,8 +100,29 @@ export default function Dashboard({ onOpenAddExpense }) {
   const daysLeft = Math.max(1, lastDay - now.getDate() + 1);
   const dailySafeAllowancePaise = Math.round(budgetRemaining / daysLeft);
 
-  // Real-time daily average outlay based strictly on database disbursements
-  const currentDayOfMonth = Math.max(1, now.getDate());
+  // Dynamically generate SVG path strictly reflecting current month's actual expenses
+  const generateMonthlyExpenseCurve = () => {
+    if (!dailyExpenses || dailyExpenses.length === 0 || expensesThisMonthPaise === 0) {
+      // Zero expenses: Flat baseline at y = 34
+      return { path: 'M 0 34 L 150 34', lastPoint: { x: 150, y: 34 }, hasExpenses: false };
+    }
+
+    const maxExp = Math.max(...dailyExpenses, 1);
+    const stepX = 150 / Math.max(1, dailyExpenses.length - 1);
+    
+    // Map expenses to SVG coordinates (y: 6 to 34, where high expense is near y: 6)
+    const points = dailyExpenses.map((val, idx) => {
+      const x = Math.round(idx * stepX);
+      const y = Math.round(34 - (val / maxExp) * 26);
+      return { x, y };
+    });
+
+    const d = points.reduce((acc, pt, i) => (i === 0 ? `M ${pt.x} ${pt.y}` : `${acc} L ${pt.x} ${pt.y}`), '');
+    const lastPoint = points[points.length - 1] || { x: 150, y: 34 };
+    return { path: d, lastPoint, hasExpenses: true };
+  };
+
+  const expenseCurve = generateMonthlyExpenseCurve();
   const actualDailyAvgPaise = Math.round(expensesThisMonthPaise / currentDayOfMonth);
 
   // Compute Today's actual spend from recent transactions
@@ -196,17 +218,23 @@ export default function Dashboard({ onOpenAddExpense }) {
 
           <div className="horizon-velocity-wrap">
             <div className="horizon-velocity-title">
-              30-DAY VELOCITY CURVE
+              MONTH EXPENSES TRAJECTORY
             </div>
             <svg width="150" height="38" viewBox="0 0 150 38" fill="none" className="overflow-visible">
               <path 
-                d="M 0 32 C 30 30, 45 35, 75 22 C 105 10, 120 18, 150 4" 
-                stroke="#10B981" 
+                d={expenseCurve.path}
+                stroke={expenseCurve.hasExpenses ? '#F43F5E' : '#64748B'} 
                 strokeWidth="2.5" 
                 strokeLinecap="round" 
+                strokeLinejoin="round"
               />
-              <circle cx="150" cy="4" r="3.5" fill="#34D399" />
+              {expenseCurve.hasExpenses && (
+                <circle cx={expenseCurve.lastPoint.x} cy={expenseCurve.lastPoint.y} r="3.5" fill="#FB7185" />
+              )}
             </svg>
+            <div className="text-right text-xs text-muted mt-0.5">
+              {expensesThisMonthPaise === 0 ? '₹0 outlays this month' : `${formatRupees(expensesThisMonthPaise)} expended`}
+            </div>
           </div>
         </div>
 
