@@ -109,10 +109,9 @@ export default function Dashboard({ onOpenAddExpense }) {
     .filter(t => t.date && t.date.startsWith(todayStr) && t.type === 'expense')
     .reduce((sum, t) => sum + t.amountPaise, 0);
 
-  const goalPercent = Math.min(
-    100, 
-    Math.round((savingsTarget.currentRupees / savingsTarget.targetRupees) * 100)
-  );
+  const goalPercent = (savingsTarget && savingsTarget.targetRupees > 0)
+    ? Math.min(100, Math.round((savingsTarget.currentRupees / savingsTarget.targetRupees) * 100))
+    : 0;
 
   const todayDateStr = now.toLocaleDateString('en-US', { 
     weekday: 'long', 
