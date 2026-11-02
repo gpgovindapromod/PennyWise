@@ -89,11 +89,14 @@ class TransactionService {
       // 3. Balance Adjustment with atomic check
       // Uses isOutflow to differentiate debits vs credits
       const isDeduction = isOutflow(type);
+      const isTransferOut = type === 'transfer_out';
       const isCreditType = ['credit', 'loan'].includes(account.type || account.accountType);
 
       if (isDeduction) {
         const query = { _id: accountId, ownerId };
-        if (!isCreditType) {
+
+        // For internal transfer_out (e.g. into a goal vault), require available liquid balance
+        if (isTransferOut && !isCreditType) {
           query.balancePaise = { $gte: amountPaise };
         }
 
@@ -104,7 +107,7 @@ class TransactionService {
         );
 
         if (updateResult.matchedCount === 0) {
-          throw new AppError('Insufficient balance to execute this disbursement', 422);
+          throw new AppError('Insufficient balance to execute this vault transfer', 422);
         }
       } else {
         // Income, refund, or transfer_in leg
@@ -187,17 +190,7 @@ class TransactionService {
         throw new NotFoundError('Associated account not found');
       }
 
-      const query = { _id: tx.accountId, ownerId };
-      const isCreditType = ['credit', 'loan'].includes(account.type || account.accountType);
-
-      if (reverseDelta < 0 && !isCreditType) {
-        query.balancePaise = { $gte: Math.abs(reverseDelta) };
-      }
-
-      const updateRes = await Account.updateOne(query, { $inc: { balancePaise: reverseDelta } }, sessionOpt);
-      if (updateRes.matchedCount === 0 && reverseDelta < 0) {
-        throw new AppError('Cannot delete income transaction: insufficient account balance to reverse', 422);
-      }
+      await Account.updateOne({ _id: tx.accountId, ownerId }, { $inc: { balancePaise: reverseDelta } }, sessionOpt);
 
       return { success: true, reversedPaise: reverseDelta, transactionId: tx._id };
     });
@@ -235,16 +228,7 @@ class TransactionService {
           ? (tx.amountPaise - newAmountPaise) 
           : (newAmountPaise - tx.amountPaise);
 
-        const query = { _id: tx.accountId, ownerId };
-        const isCreditType = ['credit', 'loan'].includes(account.type || account.accountType);
-
-        if (accountAdjustment < 0 && !isCreditType) {
-          query.balancePaise = { $gte: Math.abs(accountAdjustment) };
-        }
-        const res = await Account.updateOne(query, { $inc: { balancePaise: accountAdjustment } }, sessionOpt);
-        if (res.matchedCount === 0 && accountAdjustment < 0) {
-          throw new AppError('Insufficient balance to increase disbursement amount', 422);
-        }
+        await Account.updateOne({ _id: tx.accountId, ownerId }, { $inc: { balancePaise: accountAdjustment } }, sessionOpt);
         tx.amountPaise = newAmountPaise;
       }
 
@@ -289,12 +273,21 @@ class TransactionService {
         throw new ValidationError('Payment exceeds remaining fee');
       }
 
-      // Verify account
+      // Verify account or create default Cash in Hand account if none exists
       let targetAccountId = accountId;
       if (!targetAccountId) {
-        const defaultAcc = await Account.findOne({ ownerId, isDefault: true }, null, sessionOpt) 
+        let defaultAcc = await Account.findOne({ ownerId, isDefault: true }, null, sessionOpt) 
           || await Account.findOne({ ownerId }, null, sessionOpt);
-        if (!defaultAcc) throw new NotFoundError('No payment account configured for user');
+        if (!defaultAcc) {
+          const [newAcc] = await Account.create([{
+            ownerId,
+            name: 'Cash in Hand',
+            type: 'cash',
+            balancePaise: 0,
+            isDefault: true
+          }], sessionOpt);
+          defaultAcc = newAcc;
+        }
         targetAccountId = defaultAcc._id;
       }
 

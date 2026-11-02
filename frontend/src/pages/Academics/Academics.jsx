@@ -391,10 +391,13 @@ export default function Academics({ onOpenAddExpense }) {
                 <label className="block text-secondary font-bold text-xs mb-1">Fee Type</label>
                 <select name="feeType" className="form-input text-xs">
                   <option value="semester">Semester Fee</option>
-                  <option value="exam">Examination Fee</option>
+                  <option value="tuition">Tuition Fee</option>
+                  <option value="examination">Examination Fee</option>
                   <option value="lab">Lab & Equipment Fee</option>
                   <option value="hostel">Hostel & Living Fee</option>
-                  <option value="books">Courseware & Books</option>
+                  <option value="admission">Admission Fee</option>
+                  <option value="library">Library Fee</option>
+                  <option value="other">Courseware & Other</option>
                 </select>
               </div>
               <div className="mb-3">
