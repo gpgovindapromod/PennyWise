@@ -16,6 +16,43 @@ const Settings = lazy(() => import('./pages/Settings/Settings'));
 const Login = lazy(() => import('./pages/Auth/Login'));
 const Register = lazy(() => import('./pages/Auth/Register'));
 
+class GlobalErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error('App Uncaught Error:', error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-50 text-slate-800">
+          <div className="bg-white border border-slate-200 rounded-xl p-6 max-w-md w-full shadow-sm text-center">
+            <h2 className="text-lg font-black text-rose-600 mb-2">Display Re-sync Required</h2>
+            <p className="text-xs text-slate-500 mb-4">
+              A temporary interface exception occurred. Click below to reload your verified financial session.
+            </p>
+            <button
+              onClick={() => {
+                this.setState({ hasError: false });
+                window.location.reload();
+              }}
+              className="w-full py-2 px-4 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-slate-800 transition"
+            >
+              Refresh Workspace
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function ProtectedLayout({ children, onOpenAddExpense }) {
   const { user, loading } = useAuth();
   const location = useLocation();
@@ -158,8 +195,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <GlobalErrorBoundary>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </GlobalErrorBoundary>
   );
 }

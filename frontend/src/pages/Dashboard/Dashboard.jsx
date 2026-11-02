@@ -123,6 +123,7 @@ export default function Dashboard({ onOpenAddExpense }) {
   };
 
   const expenseCurve = generateMonthlyExpenseCurve();
+  const currentDayOfMonth = Math.max(1, now.getDate());
   const actualDailyAvgPaise = Math.round(expensesThisMonthPaise / currentDayOfMonth);
 
   // Compute Today's actual spend from recent transactions
