@@ -83,7 +83,12 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
         date: date ? new Date(date).toISOString() : new Date().toISOString()
       };
 
-      const res = await API.post('/transactions', payload);
+      let res;
+      if (editingTransaction && editingTransaction._id) {
+        res = await API.patch(`/transactions/${editingTransaction._id}`, payload);
+      } else {
+        res = await API.post('/transactions', payload);
+      }
       notifySuccess(res.data.data);
       onClose();
     } catch (err) {
@@ -113,7 +118,9 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
         </div>
 
         <div className="stitch-modal-title-row">
-          <h2 className="stitch-modal-title">Log New Entry</h2>
+          <h2 className="stitch-modal-title">
+            {editingTransaction ? 'Edit Transaction' : 'Log New Entry'}
+          </h2>
         </div>
 
         {/* Expense / Income / Deposit to Goal Selector */}
@@ -238,7 +245,7 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
             onClick={handleSubmit}
             className="btn-stitch-record"
           >
-            <Check size={14} /> {isSubmitting ? 'Recording...' : 'Record Transaction'}
+            <Check size={14} /> {isSubmitting ? (editingTransaction ? 'Updating...' : 'Recording...') : (editingTransaction ? 'Update Transaction' : 'Record Transaction')}
           </button>
         </div>
       </div>

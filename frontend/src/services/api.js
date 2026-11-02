@@ -19,11 +19,7 @@ const inFlightRequests = new Map();
 
 // Helper to determine if a GET endpoint is safe for short-lived caching
 const isCacheable = (url) => {
-  return (
-    url.includes('/categories') ||
-    url.includes('/dashboard/summary') ||
-    url.includes('/travel/trips')
-  );
+  return url.includes('/categories');
 };
 
 // Invalidate cache on mutations
@@ -88,14 +84,8 @@ API.interceptors.response.use(
 
     // Clear related cache on mutations (POST, PUT, PATCH, DELETE)
     if (['post', 'put', 'patch', 'delete'].includes(config?.method)) {
-      if (config.url.includes('/transactions')) {
-        invalidateApiCache('/transactions');
-        invalidateApiCache('/dashboard/summary');
-      } else if (config.url.includes('/travel')) {
-        invalidateApiCache('/travel');
-      } else {
-        requestCache.clear();
-      }
+      requestCache.clear();
+      inFlightRequests.clear();
     }
 
     return response;
