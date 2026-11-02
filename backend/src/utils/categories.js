@@ -23,6 +23,7 @@ const CATEGORIES = [
       'Juice',
       'Soft drinks',
       'Hostel Canteen',
+      'Groceries',
       'Other Food'
     ]
   },
@@ -32,6 +33,10 @@ const CATEGORIES = [
     icon: 'GraduationCap',
     subcategories: [
       'College fees',
+      'Tuition fees',
+      'Semester fees',
+      'Examination fees',
+      'Stationery',
       'Photocopy & printing',
       'Textbooks',
       'Second-hand books',
@@ -92,7 +97,8 @@ const CATEGORIES = [
       'Wi-Fi / Internet',
       'Electricity bill',
       'Mess bill',
-      'Room rent'
+      'Room rent',
+      'Software & Subscriptions'
     ]
   },
   {

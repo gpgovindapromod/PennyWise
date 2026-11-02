@@ -37,24 +37,35 @@ export default function Transactions({ onOpenAddExpense }) {
       const res = await API.get('/transactions', {
         params: { limit: 100, page }
       });
-      if (res.data?.data?.transactions) {
-        const txs = res.data.data.transactions;
+      if (res.data?.data) {
+        const txs = res.data.data.transactions || [];
         setTransactions(txs);
 
-        // Derive real-time telemetry metrics directly from database
-        let inflow = 0;
-        let outflow = 0;
-        txs.forEach(t => {
-          if (t.type === 'income' || t.type === 'transfer_in') inflow += t.amountPaise;
-          else if (t.type === 'expense' || t.type === 'transfer_out' || t.type === 'vault') outflow += t.amountPaise;
-        });
+        if (res.data.data.summary) {
+          // Use server-provided aggregate summary across the entire filtered dataset
+          setSummary({
+            settledCount: res.data.data.summary.settledCount ?? res.data.data.pagination?.total ?? txs.length,
+            pendingCount: res.data.data.summary.pendingCount ?? 0,
+            totalOutflowPaise: res.data.data.summary.totalOutflowPaise ?? 0,
+            totalInflowPaise: res.data.data.summary.totalInflowPaise ?? 0
+          });
+        } else {
+          // Graceful fallback if summary is not present
+          let inflow = 0;
+          let outflow = 0;
+          txs.forEach(t => {
+            if (t.type === 'income' || t.type === 'transfer_in') inflow += t.amountPaise;
+            else if (t.type === 'expense' || t.type === 'transfer_out' || t.type === 'vault') outflow += t.amountPaise;
+            else if (t.type === 'refund') outflow -= t.amountPaise;
+          });
 
-        setSummary({
-          settledCount: txs.length,
-          pendingCount: 0,
-          totalOutflowPaise: outflow,
-          totalInflowPaise: inflow
-        });
+          setSummary({
+            settledCount: res.data.data.pagination?.total ?? txs.length,
+            pendingCount: 0,
+            totalOutflowPaise: Math.max(0, outflow),
+            totalInflowPaise: inflow
+          });
+        }
       }
     } catch (err) {
       console.error(err);

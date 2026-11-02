@@ -134,6 +134,7 @@ const verifyRegisterOtp = async (req, res) => {
       name: 'Cash in Hand',
       type: 'cash',
       balancePaise: 0,
+      openingBalancePaise: 0,
       isDefault: true
     });
 
@@ -344,6 +345,7 @@ const register = async (req, res) => {
       name: 'Cash in Hand',
       type: 'cash',
       balancePaise: 0,
+      openingBalancePaise: 0,
       isDefault: true
     });
 

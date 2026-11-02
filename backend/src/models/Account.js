@@ -23,6 +23,10 @@ const accountSchema = new mongoose.Schema({
     required: true,
     default: 0
   },
+  openingBalancePaise: {
+    type: Number,
+    required: false
+  },
   isDefault: {
     type: Boolean,
     default: false

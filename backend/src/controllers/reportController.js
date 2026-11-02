@@ -1,22 +1,31 @@
 const Transaction = require('../models/Transaction');
+const { getCurrentISTDate, getISTMonthRange } = require('../utils/dateUtils');
+const { isAcademicFee } = require('../utils/feeClassifier');
 
 const getReportSummary = async (req, res, next) => {
   try {
     const ownerId = req.user._id;
     const { startDate, endDate } = req.query;
-    const now = new Date();
+    const { year: currentYear, month: currentMonth } = getCurrentISTDate();
 
     const monthlyTrend = [];
     for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const start = new Date(d.getFullYear(), d.getMonth(), 1);
-      const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
-      const monthLabel = d.toLocaleString('en-US', { month: 'short' });
-      const monthKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      // Offset by i months in IST
+      let targetYear = currentYear;
+      let targetMonth = currentMonth - i;
+      while (targetMonth < 1) {
+        targetMonth += 12;
+        targetYear -= 1;
+      }
+      const targetMonthKey = `${targetYear}-${String(targetMonth).padStart(2, '0')}`;
+      const { startOfMonth, startOfNextMonth, monthKey } = getISTMonthRange(targetMonthKey);
+
+      // Month short label (e.g. 'Nov', 'Oct')
+      const monthLabel = new Date(Date.UTC(targetYear, targetMonth - 1, 15)).toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
 
       const txs = await Transaction.find({
         ownerId,
-        date: { $gte: start, $lte: end },
+        date: { $gte: startOfMonth, $lt: startOfNextMonth },
         isDeleted: { $ne: true }
       });
 
@@ -24,13 +33,8 @@ const getReportSummary = async (req, res, next) => {
       let expensePaise = 0;
       let institutionalFeePaise = 0;
 
-      const feeSubcategories = ['college fees', 'tuition fees', 'semester fees', 'exam fees', 'examination fees', 'hostel fees', 'admission fees'];
-
       txs.forEach(t => {
-        const isFee = Boolean(
-          t.academicFeeId || 
-          (t.categoryId === 'academic' && feeSubcategories.includes(t.subcategory?.toLowerCase().trim()))
-        );
+        const isFee = isAcademicFee(t);
 
         if (t.type === 'income') {
           incomePaise += t.amountPaise;
@@ -59,8 +63,6 @@ const getReportSummary = async (req, res, next) => {
     }
 
     // Dynamic Filter for Breakdown queries
-    const feeSubcategories = ['college fees', 'tuition fees', 'semester fees', 'exam fees', 'examination fees', 'hostel fees', 'admission fees'];
-
     const expenseQuery = {
       ownerId,
       type: 'expense',
@@ -85,10 +87,7 @@ const getReportSummary = async (req, res, next) => {
     let totalExamAndSemesterFeesPaise = 0;
 
     allExpenses.forEach(t => {
-      const isFee = Boolean(
-        t.academicFeeId || 
-        (t.categoryId === 'academic' && feeSubcategories.includes(t.subcategory?.toLowerCase().trim()))
-      );
+      const isFee = isAcademicFee(t);
 
       if (isFee) {
         totalExamAndSemesterFeesPaise += t.amountPaise;

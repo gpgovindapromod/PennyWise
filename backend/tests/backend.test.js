@@ -153,8 +153,147 @@ async function runTests() {
   await AcademicFee.deleteMany({ ownerId: { $in: [userA._id, userB._id] } });
   await MonthlyBudget.deleteMany({ ownerId: { $in: [userA._id, userB._id] } });
 
+  // =========================================================================
+  // TEST 7: Account Balance Reconciliation Diagnostic Comprehensive Suite
+  // =========================================================================
+  const { getDashboardSummary } = require('../src/controllers/dashboardController');
+
+  const recUser1 = await User.create({
+    name: 'Reconciliation User 1',
+    email: 'rec1@test.pennywise',
+    password: 'password123',
+    college: 'CET'
+  });
+  const recUser2 = await User.create({
+    name: 'Reconciliation User 2',
+    email: 'rec2@test.pennywise',
+    password: 'password123',
+    college: 'MEC'
+  });
+
+  // 1. New account with zero opening balance
+  const accZero = await Account.create({
+    ownerId: recUser1._id,
+    name: 'New Zero Account',
+    type: 'cash',
+    balancePaise: 0,
+    openingBalancePaise: 0
+  });
+
+  // 2. New account with non-zero opening balance
+  const accNonZero = await Account.create({
+    ownerId: recUser1._id,
+    name: 'New Non-Zero Account',
+    type: 'bank',
+    balancePaise: 50000,
+    openingBalancePaise: 50000
+  });
+
+  // 3. Legacy account without openingBalancePaise (undefined baseline)
+  const accLegacy = await Account.create({
+    ownerId: recUser1._id,
+    name: 'Legacy Account Without Baseline',
+    type: 'wallet',
+    balancePaise: 25000
+  });
+
+  // 4. Correct account with verified opening balance, income, expense, transfers, refunds, deleted
+  const accActive = await Account.create({
+    ownerId: recUser1._id,
+    name: 'Active Verified Account',
+    type: 'bank',
+    balancePaise: 21000,
+    openingBalancePaise: 10000
+  });
+
+  await Transaction.create([
+    { ownerId: recUser1._id, accountId: accActive._id, type: 'income', amountPaise: 15000, categoryId: 'freelance', categoryLabel: 'Freelance', subcategory: 'Coding' },
+    { ownerId: recUser1._id, accountId: accActive._id, type: 'expense', amountPaise: 3000, categoryId: 'food-drinks', categoryLabel: 'Food', subcategory: 'Snacks' },
+    { ownerId: recUser1._id, accountId: accActive._id, type: 'transfer_out', amountPaise: 2000, categoryId: 'vault', categoryLabel: 'Savings Vault', subcategory: 'Goal Contribution' },
+    { ownerId: recUser1._id, accountId: accActive._id, type: 'refund', amountPaise: 1000, categoryId: 'shopping', categoryLabel: 'Shopping', subcategory: 'Books' },
+    { ownerId: recUser1._id, accountId: accActive._id, type: 'expense', amountPaise: 99999, categoryId: 'other', categoryLabel: 'Other', subcategory: 'Deleted Tx', isDeleted: true },
+  ]);
+
+  // 5. Account with incorrect stored balance (genuine mismatch)
+  const accMismatch = await Account.create({
+    ownerId: recUser1._id,
+    name: 'Corrupt Stored Balance Account',
+    type: 'cash',
+    balancePaise: 99000,
+    openingBalancePaise: 10000
+  });
+
+  await Transaction.create([
+    { ownerId: recUser1._id, accountId: accMismatch._id, type: 'income', amountPaise: 5000, categoryId: 'allowance', categoryLabel: 'Allowance', subcategory: 'Allowance' }
+  ]);
+
+  // 6. User 2 account for ownership isolation check
+  const accIsolated = await Account.create({
+    ownerId: recUser2._id,
+    name: 'User 2 Secret Account',
+    type: 'bank',
+    balancePaise: 88888,
+    openingBalancePaise: 88888
+  });
+
+  // Invoke getDashboardSummary for User 1
+  let user1Dashboard = null;
+  await getDashboardSummary(
+    { user: { _id: recUser1._id }, query: {} },
+    { json: (res) => { user1Dashboard = res.data; } },
+    (err) => { throw err; }
+  );
+
+  const diagAccounts = user1Dashboard.reconciliation.accounts;
+
+  // Assertions
+  const checkZero = diagAccounts.find(a => a.accountName === 'New Zero Account');
+  if (!checkZero || checkZero.status !== 'matched' || checkZero.differencePaise !== 0) {
+    throw new Error('Test 7.1 Failed: New zero account not matched');
+  }
+
+  const checkNonZero = diagAccounts.find(a => a.accountName === 'New Non-Zero Account');
+  if (!checkNonZero || checkNonZero.status !== 'matched' || checkNonZero.differencePaise !== 0 || checkNonZero.openingBalancePaise !== 50000) {
+    throw new Error('Test 7.2 Failed: New non-zero account not matched');
+  }
+
+  const checkLegacy = diagAccounts.find(a => a.accountName === 'Legacy Account Without Baseline');
+  if (!checkLegacy || checkLegacy.status !== 'baseline_unavailable' || checkLegacy.differencePaise !== null || checkLegacy.openingBalancePaise !== null) {
+    throw new Error('Test 7.3 Failed: Legacy account without baseline not marked baseline_unavailable');
+  }
+
+  const checkActive = diagAccounts.find(a => a.accountName === 'Active Verified Account');
+  if (!checkActive || checkActive.status !== 'matched' || checkActive.differencePaise !== 0 || checkActive.calculatedLedgerBalancePaise !== 21000) {
+    throw new Error('Test 7.4 Failed: Active account with complex transactions not matched');
+  }
+
+  const checkMismatch = diagAccounts.find(a => a.accountName === 'Corrupt Stored Balance Account');
+  if (!checkMismatch || checkMismatch.status !== 'mismatch' || checkMismatch.differencePaise !== 84000) {
+    throw new Error('Test 7.5 Failed: Mismatched account not flagged with difference of 84000');
+  }
+
+  const checkIsolation = diagAccounts.find(a => a.accountName === 'User 2 Secret Account');
+  if (checkIsolation !== undefined) {
+    throw new Error('Test 7.6 Failed: Cross-user account leakage detected in diagnostic');
+  }
+
+  // Zero-Mutation Check
+  const postZero = await Account.findById(accZero._id);
+  const postLegacy = await Account.findById(accLegacy._id);
+  const postMismatch = await Account.findById(accMismatch._id);
+  if (postZero.balancePaise !== 0 || postLegacy.balancePaise !== 25000 || postMismatch.balancePaise !== 99000) {
+    throw new Error('Test 7.7 Failed: Stored account balance was mutated during reconciliation');
+  }
+
+  console.log('[PASS] Test 7: Read-only account balance reconciliation diagnostic (10 focus conditions verified)');
+
+  // Clean up
+  await User.deleteMany({ email: /@test\.pennywise$/ });
+  await Account.deleteMany({ ownerId: { $in: [recUser1._id, recUser2._id] } });
+  await Transaction.deleteMany({ ownerId: { $in: [recUser1._id, recUser2._id] } });
+
   await mongoose.disconnect();
-  console.log('=== ALL 6 BACKEND TESTS PASSED SUCCESSFULLY ===');
+  console.log('=== ALL 7 BACKEND TESTS PASSED SUCCESSFULLY ===');
 }
 
 runTests().catch(err => {

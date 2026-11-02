@@ -2,6 +2,7 @@ const Transaction = require('../models/Transaction');
 const Account = require('../models/Account');
 const AcademicFee = require('../models/AcademicFee');
 const TransactionService = require('../services/transactionService');
+const mongoose = require('mongoose');
 
 const getTransactions = async (req, res, next) => {
   try {
@@ -10,6 +11,7 @@ const getTransactions = async (req, res, next) => {
       search,
       category,
       type,
+      accountId,
       startDate,
       endDate,
       sortBy = 'date',
@@ -26,6 +28,10 @@ const getTransactions = async (req, res, next) => {
 
     if (type && type !== 'all') {
       query.type = type;
+    }
+
+    if (accountId && accountId !== 'all') {
+      query.accountId = accountId;
     }
 
     if (startDate || endDate) {
@@ -51,13 +57,57 @@ const getTransactions = async (req, res, next) => {
     const limitNum = Math.max(1, parseInt(limit, 10) || 20);
     const skip = (pageNum - 1) * limitNum;
 
-    const totalCount = await Transaction.countDocuments(query);
-    const transactions = await Transaction.find(query)
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(limitNum)
-      .populate('accountId', 'name type')
-      .lean();
+    // Run pagination query and dataset aggregation concurrently using the exact same filters
+    const [totalCount, transactions, aggregateResult] = await Promise.all([
+      Transaction.countDocuments(query),
+      Transaction.find(query)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limitNum)
+        .populate('accountId', 'name type')
+        .lean(),
+      Transaction.aggregate([
+        { $match: query },
+        {
+          $group: {
+            _id: '$type',
+            totalPaise: { $sum: '$amountPaise' },
+            count: { $sum: 1 }
+          }
+        }
+      ])
+    ]);
+
+    let totalInflowPaise = 0;
+    let totalOutflowPaise = 0;
+    let totalIncomePaise = 0;
+    let totalExpensePaise = 0;
+    let totalTransfersPaise = 0;
+    let totalRefundsPaise = 0;
+
+    aggregateResult.forEach((g) => {
+      const typeKey = g._id;
+      const amt = g.totalPaise || 0;
+
+      if (typeKey === 'income') {
+        totalIncomePaise += amt;
+        totalInflowPaise += amt;
+      } else if (typeKey === 'transfer_in') {
+        totalInflowPaise += amt;
+      } else if (typeKey === 'expense') {
+        totalExpensePaise += amt;
+        totalOutflowPaise += amt;
+      } else if (typeKey === 'transfer_out' || typeKey === 'vault') {
+        totalOutflowPaise += amt;
+      } else if (typeKey === 'transfer') {
+        totalTransfersPaise += amt;
+      } else if (typeKey === 'refund') {
+        totalRefundsPaise += amt;
+        totalOutflowPaise -= amt;
+      }
+    });
+
+    if (totalOutflowPaise < 0) totalOutflowPaise = 0;
 
     res.json({
       success: true,
@@ -68,6 +118,16 @@ const getTransactions = async (req, res, next) => {
           page: pageNum,
           pages: Math.ceil(totalCount / limitNum) || 1,
           limit: limitNum
+        },
+        summary: {
+          settledCount: totalCount,
+          pendingCount: 0,
+          totalInflowPaise,
+          totalOutflowPaise,
+          totalIncomePaise,
+          totalExpensePaise,
+          totalTransfersPaise,
+          totalRefundsPaise
         }
       }
     });
@@ -112,6 +172,7 @@ const createTransaction = async (req, res, next) => {
           name: 'Cash in Hand',
           type: 'cash',
           balancePaise: 0,
+          openingBalancePaise: 0,
           isDefault: true
         });
       }

@@ -1,42 +1,36 @@
 const MonthlyBudget = require('../models/MonthlyBudget');
 const Transaction = require('../models/Transaction');
+const { getISTMonthRange } = require('../utils/dateUtils');
+const { isAcademicFee } = require('../utils/feeClassifier');
 
 const getBudget = async (req, res, next) => {
   try {
     const ownerId = req.user._id;
     const { month } = req.params;
 
-    let budget = await MonthlyBudget.findOne({ ownerId, monthKey: month });
+    const { startOfMonth, startOfNextMonth, monthKey: currentMonthKey } = getISTMonthRange(month);
+
+    let budget = await MonthlyBudget.findOne({ ownerId, monthKey: currentMonthKey });
     if (!budget) {
       budget = {
-        monthKey: month,
+        monthKey: currentMonthKey,
         limitPaise: 0,
         categoryLimits: []
       };
     }
 
-    const [yearStr, monthStr] = month.split('-');
-    const year = parseInt(yearStr, 10);
-    const monthIndex = parseInt(monthStr, 10) - 1;
-    const startOfMonth = new Date(year, monthIndex, 1);
-    const endOfMonth = new Date(year, monthIndex + 1, 0, 23, 59, 59, 999);
-
     const monthlyTransactions = await Transaction.find({
       ownerId,
-      date: { $gte: startOfMonth, $lte: endOfMonth },
+      date: { $gte: startOfMonth, $lt: startOfNextMonth },
       type: { $in: ['expense', 'refund'] },
       isDeleted: { $ne: true }
     });
 
     let spentPaise = 0;
     const categorySpentMap = {};
-    const feeSubcategories = ['college fees', 'tuition fees', 'semester fees', 'exam fees', 'examination fees', 'hostel fees', 'admission fees'];
 
     monthlyTransactions.forEach(tx => {
-      const isFee = Boolean(
-        tx.academicFeeId || 
-        (tx.categoryId === 'academic' && feeSubcategories.includes(tx.subcategory?.toLowerCase().trim()))
-      );
+      const isFee = isAcademicFee(tx);
 
       // Institutional semester/exam fees must not exhaust or breach monthly operational budget
       if (isFee) return;

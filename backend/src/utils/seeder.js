@@ -17,6 +17,7 @@ const seedDemoData = async (userId) => {
       name: 'Cash in Hand',
       type: 'cash',
       balancePaise: 1245000, // ₹12,450.00
+      openingBalancePaise: 1245000,
       isDefault: true
     });
   } else {

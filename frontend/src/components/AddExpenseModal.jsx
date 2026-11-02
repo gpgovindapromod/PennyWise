@@ -14,16 +14,73 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 
+// Helpers for robust IST date handling
+function getTodayIST() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date());
+  const year = parts.find(p => p.type === 'year')?.value;
+  const month = parts.find(p => p.type === 'month')?.value;
+  const day = parts.find(p => p.type === 'day')?.value;
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateForInput(dateVal) {
+  if (!dateVal) return getTodayIST();
+  const d = new Date(dateVal);
+  if (isNaN(d.getTime())) return getTodayIST();
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(d);
+  const year = parts.find(p => p.type === 'year')?.value;
+  const month = parts.find(p => p.type === 'month')?.value;
+  const day = parts.find(p => p.type === 'day')?.value;
+  return `${year}-${month}-${day}`;
+}
+
+function toISTIsoString(dateStr) {
+  if (!dateStr || typeof dateStr !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    return new Date().toISOString();
+  }
+  // Peg to 12:00:00 IST (+05:30) to firmly anchor calendar day invariant across UTC
+  const d = new Date(`${dateStr}T12:00:00.000+05:30`);
+  if (isNaN(d.getTime())) {
+    return new Date().toISOString();
+  }
+  return d.toISOString();
+}
+
 export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuccess, defaultAcademicFee = null, editingTransaction = null }) {
   const notifySuccess = onSuccess || onExpenseAdded || (() => {});
   const [type, setType] = useState('expense');
   const [amount, setAmount] = useState('');
   const [sector, setSector] = useState('Dining & Coffee');
+  const [subcategory, setSubcategory] = useState('');
   const [route, setRoute] = useState('UPI FastPay');
   const [merchantMemo, setMerchantMemo] = useState('');
-  const [date, setDate] = useState(() => new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }));
+  const [date, setDate] = useState(getTodayIST);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  // Predefined meaningful subcategories per sector
+  const sectorSubcategories = {
+    'Dining & Coffee': ['Coffee & Snacks', 'Meals & Dining', 'Hostel Canteen', 'Other Food'],
+    'Academics': ['Stationery', 'College fees', 'Tuition fees', 'Semester fees', 'Examination fees', 'Textbooks & Records', 'Other study costs'],
+    'Transit & Metro': ['Bus ticket / pass', 'Metro', 'Train ticket', 'Cab / Uber / Ola', 'Petrol / Fuel', 'Other travel'],
+    'Tech & SaaS': ['Software & Subscriptions', 'Cloud & Hosting', 'Developer Tools', 'Domain & Services'],
+    'Groceries': ['Groceries', 'Supermarket', 'Fruits & Vegetables', 'Household Provisions'],
+    'Utilities': ['Electricity bill', 'Mobile recharge', 'Wi-Fi / Internet', 'Room rent', 'Mess bill'],
+    'Wellness': ['Medicines', 'Doctor appointment', 'Personal Care / Grooming', 'Health & Fitness'],
+    'Buffer Misc': ['Miscellaneous expense', 'Emergency Buffer', 'General Outlay']
+  };
+
+  const currentSubcategories = sectorSubcategories[sector] || ['General'];
 
   useEffect(() => {
     if (isOpen) {
@@ -31,15 +88,32 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
       if (editingTransaction) {
         setType(editingTransaction.type || 'expense');
         setAmount((editingTransaction.amountPaise / 100).toString());
-        setMerchantMemo(editingTransaction.subcategory || editingTransaction.note || '');
+        setMerchantMemo(editingTransaction.note || '');
+        setSubcategory(editingTransaction.subcategory || '');
+        setDate(formatDateForInput(editingTransaction.date));
+        if (editingTransaction.categoryId === 'academic') {
+          setSector('Academics');
+        } else if (editingTransaction.categoryId === 'travel' || editingTransaction.categoryId === 'fuel') {
+          setSector('Transit & Metro');
+        } else if (editingTransaction.categoryId === 'bills-utilities') {
+          setSector(editingTransaction.categoryLabel === 'Tech & SaaS' ? 'Tech & SaaS' : 'Utilities');
+        } else if (editingTransaction.categoryId === 'food-drinks') {
+          setSector(editingTransaction.categoryLabel === 'Groceries' ? 'Groceries' : 'Dining & Coffee');
+        } else if (editingTransaction.categoryLabel) {
+          setSector(editingTransaction.categoryLabel);
+        }
       } else if (defaultAcademicFee) {
         setType('expense');
         setSector('Academics');
+        setSubcategory('College fees');
         setMerchantMemo('Installment for: ' + defaultAcademicFee.title);
         setAmount((defaultAcademicFee.totalAmountPaise / 100).toString());
+        setDate(getTodayIST());
       } else {
         setAmount('');
         setMerchantMemo('');
+        setSubcategory('');
+        setDate(getTodayIST());
       }
     }
   }, [isOpen, defaultAcademicFee, editingTransaction]);
@@ -66,6 +140,14 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
       const isVaultTransfer = type === 'vault';
       const actualType = isVaultTransfer ? 'transfer_out' : type;
 
+      // Determine meaningful subcategory fallback if not explicitly chosen
+      const defaultSub = isVaultTransfer 
+        ? 'Goal Contribution' 
+        : sector === 'Tech & SaaS' 
+          ? 'Software & Subscriptions' 
+          : (currentSubcategories[0] || sector);
+      const finalSubcategory = subcategory || (editingTransaction?.subcategory) || defaultSub;
+
       const payload = {
         type: actualType,
         amountPaise: rupeesToPaise(amount),
@@ -73,14 +155,14 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
           sector === 'Dining & Coffee' ? 'food-drinks' :
           sector === 'Academics' ? 'academic' :
           sector === 'Transit & Metro' ? 'travel' :
-          sector === 'Tech & SaaS' ? 'academic' :
+          sector === 'Tech & SaaS' ? 'bills-utilities' :
           sector === 'Groceries' ? 'food-drinks' : 'bills-utilities'
         ),
         categoryLabel: isVaultTransfer ? 'Savings Vault' : sector,
-        subcategory: merchantMemo || (isVaultTransfer ? 'Goal Contribution' : sector),
-        note: merchantMemo || (isVaultTransfer ? 'Contribution to savings vault' : ''),
+        subcategory: finalSubcategory,
+        note: merchantMemo ? merchantMemo.trim() : (isVaultTransfer ? 'Contribution to savings vault' : ''),
         paymentMethod: paymentMethodMap[route] || 'upi',
-        date: date ? new Date(date).toISOString() : new Date().toISOString()
+        date: toISTIsoString(date)
       };
 
       let res;
@@ -187,7 +269,11 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
             <button
               key={sec.label}
               type="button"
-              onClick={() => setSector(sec.label)}
+              onClick={() => {
+                setSector(sec.label);
+                const nextSubs = sectorSubcategories[sec.label] || ['General'];
+                setSubcategory(nextSubs[0]);
+              }}
               className={sector === sec.label ? 'stitch-sector-btn stitch-sector-btn-active' : 'stitch-sector-btn'}
             >
               <div className="flex items-center gap-1">
@@ -197,6 +283,26 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
               <span className="stitch-sector-sub">{sec.sub}</span>
             </button>
           ))}
+        </div>
+
+        {/* Subcategory Pills Strip */}
+        <div className="stitch-taxonomy-header">
+          <span>SUBCATEGORY BUCKET</span>
+        </div>
+        <div className="stitch-routes-strip">
+          {currentSubcategories.map((sub) => {
+            const isSelected = (subcategory || currentSubcategories[0]) === sub;
+            return (
+              <button
+                key={sub}
+                type="button"
+                onClick={() => setSubcategory(sub)}
+                className={isSelected ? 'stitch-route-pill stitch-route-active' : 'stitch-route-pill'}
+              >
+                {sub}
+              </button>
+            );
+          })}
         </div>
 
         {/* Origin Route */}
@@ -226,9 +332,11 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
             className="stitch-memo-field"
           />
           <input 
-            type="text" 
+            type="date" 
             value={date}
             onChange={(e) => setDate(e.target.value)}
+            max="2099-12-31"
+            min="2000-01-01"
             className="stitch-memo-field text-center font-bold text-dark"
           />
         </div>

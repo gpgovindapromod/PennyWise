@@ -3,6 +3,7 @@ const Transaction = require('../models/Transaction');
 const Account = require('../models/Account');
 const AcademicFee = require('../models/AcademicFee');
 const { AppError, NotFoundError, ValidationError, ConflictError } = require('../errors/AppError');
+const { getISTMonthRange } = require('../utils/dateUtils');
 
 // Directional outflow classification
 const OUTFLOW = new Set(['expense', 'transfer_out', 'transfer']);
@@ -22,9 +23,11 @@ async function withTransactionSession(work) {
     });
     return result;
   } catch (err) {
-    const isStandaloneErr = err.message && (
-      err.message.includes('replica set') ||
-      err.message.includes('Transaction numbers are only allowed on a replica set member')
+    const errMsg = (err.message || '') + ' ' + (err.errorResponse?.errmsg || '') + ' ' + (err.originalError?.message || '');
+    const isStandaloneErr = (
+      errMsg.includes('replica set') ||
+      errMsg.includes('Transaction numbers are only allowed on a replica set member') ||
+      errMsg.includes('does not support retryable writes')
     );
 
     if (isStandaloneErr) {
@@ -284,6 +287,7 @@ class TransactionService {
             name: 'Cash in Hand',
             type: 'cash',
             balancePaise: 0,
+            openingBalancePaise: 0,
             isDefault: true
           }], sessionOpt);
           defaultAcc = newAcc;
@@ -331,20 +335,14 @@ class TransactionService {
       throw new ValidationError('Bad monthKey format. Expected YYYY-MM');
     }
 
-    const [yearStr, monthStr] = monthKey.split('-');
-    const year = parseInt(yearStr, 10);
-    const month = parseInt(monthStr, 10) - 1; // 0-indexed
-
-    const IST = 330 * 60 * 1000;
-    const startOfMonth = new Date(Date.UTC(year, month, 1) - IST);
-    const endOfMonth = new Date(Date.UTC(year, month + 1, 1) - IST);
+    const { startOfMonth, startOfNextMonth } = getISTMonthRange(monthKey);
 
     const result = await Transaction.aggregate([
       {
         $match: {
           ownerId: new mongoose.Types.ObjectId(ownerId),
           isDeleted: { $ne: true },
-          date: { $gte: startOfMonth, $lt: endOfMonth }
+          date: { $gte: startOfMonth, $lt: startOfNextMonth }
         }
       },
       {
