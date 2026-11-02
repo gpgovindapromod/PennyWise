@@ -192,8 +192,14 @@ const deleteFeeObligation = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Fee obligation not found or unauthorized' });
     }
 
-    // Also remove any linkage on child transactions or clean up
-    await Transaction.updateMany({ academicFeeId: fee._id }, { $set: { academicFeeId: null } });
+    // Prevent silent orphaning of paid installments
+    if (fee.installments && fee.installments.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: 'Cannot delete fee obligation with settled installments. Please remove linked installment disbursements first to maintain ledger reconciliation.'
+      });
+    }
+
     await fee.deleteOne();
 
     res.json({

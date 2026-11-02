@@ -70,7 +70,7 @@ const transactionSchema = new mongoose.Schema({
   // Idempotency key supplied by client to prevent duplicate submissions
   idempotencyKey: {
     type: String,
-    default: null,
+    sparse: true,
     index: true
   },
   // Soft delete flag to preserve ledger audit trail & balance reconciliations
@@ -90,6 +90,12 @@ const transactionSchema = new mongoose.Schema({
 });
 
 transactionSchema.index({ ownerId: 1, date: -1 });
-transactionSchema.index({ ownerId: 1, idempotencyKey: 1 }, { unique: true, sparse: true });
+transactionSchema.index(
+  { ownerId: 1, idempotencyKey: 1 },
+  { 
+    unique: true, 
+    partialFilterExpression: { idempotencyKey: { $type: 'string' } } 
+  }
+);
 
 module.exports = mongoose.model('Transaction', transactionSchema);

@@ -45,8 +45,8 @@ export default function Transactions({ onOpenAddExpense }) {
         let inflow = 0;
         let outflow = 0;
         txs.forEach(t => {
-          if (t.type === 'income') inflow += t.amountPaise;
-          else if (t.type === 'expense' || t.type === 'vault') outflow += t.amountPaise;
+          if (t.type === 'income' || t.type === 'transfer_in') inflow += t.amountPaise;
+          else if (t.type === 'expense' || t.type === 'transfer_out' || t.type === 'vault') outflow += t.amountPaise;
         });
 
         setSummary({
@@ -78,7 +78,7 @@ export default function Transactions({ onOpenAddExpense }) {
     if (activeTab === 'ALL') return true;
     if (activeTab === 'DINING') return tx.categoryId === 'food-drinks';
     if (activeTab === 'TRANSIT') return tx.categoryId === 'travel' || tx.categoryId === 'fuel';
-    if (activeTab === 'GOAL') return tx.type === 'vault';
+    if (activeTab === 'GOAL') return tx.categoryId === 'vault' || tx.type === 'vault';
     if (activeTab === 'SUBSCRIPTIONS') return tx.categoryId === 'bills-utilities';
     if (activeTab === 'HOUSEHOLD') return tx.categoryId === 'household';
     if (activeTab === 'REVENUE') return tx.type === 'income';
@@ -201,7 +201,7 @@ export default function Transactions({ onOpenAddExpense }) {
             { id: 'ALL', label: 'All', count: transactions.length },
             { id: 'DINING', label: 'Dining & Food', count: transactions.filter(t => t.categoryId === 'food-drinks').length },
             { id: 'TRANSIT', label: 'Transit & Fuel', count: transactions.filter(t => t.categoryId === 'travel' || t.categoryId === 'fuel').length },
-            { id: 'GOAL', label: 'Goals Deposit', count: transactions.filter(t => t.type === 'vault').length },
+            { id: 'GOAL', label: 'Goals Deposit', count: transactions.filter(t => t.categoryId === 'vault' || t.type === 'vault').length },
             { id: 'SUBSCRIPTIONS', label: 'Subscriptions & Tech', count: transactions.filter(t => t.categoryId === 'bills-utilities').length },
             { id: 'HOUSEHOLD', label: 'Household & Bills', count: transactions.filter(t => t.categoryId === 'household').length },
             { id: 'REVENUE', label: 'Revenue & Freelance', count: transactions.filter(t => t.type === 'income').length }

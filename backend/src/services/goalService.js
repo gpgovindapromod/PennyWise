@@ -92,12 +92,38 @@ class GoalService {
   }
 
   /**
-   * Delete a goal
+   * Delete a goal and atomically return any saved funds back to the default account
    */
   static async deleteGoal(ownerId, goalId) {
-    const goal = await Goal.findOneAndDelete({ _id: goalId, ownerId });
+    const goal = await Goal.findOne({ _id: goalId, ownerId });
     if (!goal) throw new NotFoundError('Goal vault not found');
-    return { success: true, message: 'Goal removed successfully' };
+
+    // If goal had accumulated savings, return them back to the user's account
+    if (goal.savedPaise > 0) {
+      const defaultAcc = await Account.findOne({ ownerId, isDefault: true })
+        || await Account.findOne({ ownerId });
+
+      if (defaultAcc) {
+        await TransactionService.createTransaction({
+          ownerId,
+          accountId: defaultAcc._id,
+          type: 'transfer_in',
+          amountPaise: goal.savedPaise,
+          categoryId: 'vault',
+          categoryLabel: 'Savings Vault',
+          subcategory: `Refund: ${goal.name}`,
+          note: `Refund of saved balance upon closing ${goal.name}`
+        });
+      }
+    }
+
+    await Goal.deleteOne({ _id: goalId, ownerId });
+    return { 
+      success: true, 
+      message: goal.savedPaise > 0 
+        ? `Goal removed and ₹${(goal.savedPaise / 100).toLocaleString('en-IN')} refunded to your account`
+        : 'Goal removed successfully' 
+    };
   }
 }
 

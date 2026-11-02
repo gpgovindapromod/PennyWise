@@ -120,6 +120,24 @@ const createTransaction = async (req, res, next) => {
 
     const txDate = date ? new Date(date) : new Date();
 
+    // If linked to an academic fee installment, route through atomic recordAcademicFeePayment to enforce overpayment checks & balance guards
+    if (academicFeeId) {
+      const result = await TransactionService.recordAcademicFeePayment({
+        ownerId,
+        feeId: academicFeeId,
+        amountPaise: parsedAmount,
+        accountId: targetAccountId,
+        paymentMethod,
+        note: note ? note.trim() : ''
+      });
+
+      return res.status(201).json({
+        success: true,
+        data: result.transaction,
+        fee: result.fee
+      });
+    }
+
     const { transaction } = await TransactionService.createTransaction(
       {
         ownerId,
@@ -132,25 +150,10 @@ const createTransaction = async (req, res, next) => {
         date: txDate,
         note: note ? note.trim() : '',
         paymentMethod,
-        academicFeeId: academicFeeId || null
+        academicFeeId: null
       },
       { idempotencyKey }
     );
-
-    // If linked to an academic fee installment, reconcile fee status
-    if (academicFeeId) {
-      const fee = await AcademicFee.findOne({ _id: academicFeeId, ownerId });
-      if (fee) {
-        fee.installments.push({
-          amountPaise: transaction.amountPaise,
-          paidDate: transaction.date,
-          transactionId: transaction._id,
-          note: transaction.note
-        });
-        fee.updateStatus();
-        await fee.save();
-      }
-    }
 
     res.status(201).json({
       success: true,

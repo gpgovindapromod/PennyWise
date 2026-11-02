@@ -122,6 +122,11 @@ export default function Goals() {
     ? Math.min(Math.round((currentSpentPaise / currentLimitPaise) * 100), 100) 
     : 0;
 
+  // Real-time days remaining in current calendar month
+  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const daysRemainingInMonth = Math.max(1, lastDayOfMonth - now.getDate() + 1);
+  const safeDailyVelocityPaise = Math.round(Math.max(0, currentLimitPaise - currentSpentPaise) / daysRemainingInMonth);
+
   const filteredVaults = goals.filter(v => {
     if (activeVaultTab === 'ALL') return true;
     if (activeVaultTab === 'ACTIVE') return v.status === 'active';
@@ -219,9 +224,9 @@ export default function Goals() {
             <div className="goals-metric-box">
               <div className="goals-metric-box-label">SAFE VELOCITY</div>
               <div className="goals-metric-box-val">
-                {formatRupees(Math.round(Math.max(0, currentLimitPaise - currentSpentPaise) / 25))}<span className="text-muted text-xs font-normal">/day</span>
+                {formatRupees(safeDailyVelocityPaise)}<span className="text-muted text-xs font-normal">/day</span>
               </div>
-              <div className="goals-metric-box-sub">Pacing Target</div>
+              <div className="goals-metric-box-sub">{daysRemainingInMonth} Days Remaining</div>
             </div>
           </div>
         </div>

@@ -132,11 +132,7 @@ export default function Register() {
         otp: otp.trim()
       });
       login(res.data.data);
-      if (res.data.data.role === 'travel_admin') {
-        navigate('/travel');
-      } else {
-        navigate('/');
-      }
+      navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Verification failed. Please check the code.');
     } finally {

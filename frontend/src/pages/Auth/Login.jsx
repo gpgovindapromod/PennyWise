@@ -45,11 +45,7 @@ export default function Login() {
     try {
       const res = await API.post('/auth/login', { email: email.trim(), password });
       login(res.data.data);
-      if (res.data.data.role === 'travel_admin') {
-        navigate('/travel');
-      } else {
-        navigate('/');
-      }
+      navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid email or password');
     } finally {

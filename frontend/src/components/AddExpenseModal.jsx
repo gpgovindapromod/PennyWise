@@ -55,19 +55,32 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
 
     setIsSubmitting(true);
     try {
+      // Map payment method correctly to backend enum: 'upi' | 'cash' | 'card'
+      const paymentMethodMap = {
+        'UPI FastPay': 'upi',
+        'Cash Reserve': 'cash',
+        'HDFC Platinum': 'card',
+        'Bank Wire': 'upi'
+      };
+
+      const isVaultTransfer = type === 'vault';
+      const actualType = isVaultTransfer ? 'transfer_out' : type;
+
       const payload = {
-        type,
+        type: actualType,
         amountPaise: rupeesToPaise(amount),
-        categoryId: sector === 'Dining & Coffee' ? 'food-drinks' :
-                    sector === 'Academics' ? 'academic' :
-                    sector === 'Transit & Metro' ? 'travel' :
-                    sector === 'Tech & SaaS' ? 'academic' :
-                    sector === 'Groceries' ? 'food-drinks' : 'bills-utilities',
-        categoryLabel: sector,
-        subcategory: merchantMemo || sector,
-        note: merchantMemo,
-        paymentMethod: route.toLowerCase(),
-        date: new Date().toISOString()
+        categoryId: isVaultTransfer ? 'vault' : (
+          sector === 'Dining & Coffee' ? 'food-drinks' :
+          sector === 'Academics' ? 'academic' :
+          sector === 'Transit & Metro' ? 'travel' :
+          sector === 'Tech & SaaS' ? 'academic' :
+          sector === 'Groceries' ? 'food-drinks' : 'bills-utilities'
+        ),
+        categoryLabel: isVaultTransfer ? 'Savings Vault' : sector,
+        subcategory: merchantMemo || (isVaultTransfer ? 'Goal Contribution' : sector),
+        note: merchantMemo || (isVaultTransfer ? 'Contribution to savings vault' : ''),
+        paymentMethod: paymentMethodMap[route] || 'upi',
+        date: date ? new Date(date).toISOString() : new Date().toISOString()
       };
 
       const res = await API.post('/transactions', payload);
