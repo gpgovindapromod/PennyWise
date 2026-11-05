@@ -345,7 +345,7 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
 
         <div className="stitch-modal-submit-row">
           <div className="text-muted text-xs">
-            Directly syncs to MongoDB Ledger
+            Instantly syncs to your personal ledger
           </div>
           <button 
             type="button"

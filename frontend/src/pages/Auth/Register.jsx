@@ -83,8 +83,9 @@ export default function Register() {
       });
       setStep('otp');
       setInfoMsg(res.data.message || `Verification code sent to ${email.trim()}`);
-      if (res.data.devOtp) {
-        setInfoMsg(`Code sent! (Dev Auto-fill: ${res.data.devOtp})`);
+      // In local dev with simulated email, devOtp can auto-fill for testing convenience
+      if (res.data.devOtp && import.meta.env.DEV) {
+        setInfoMsg(`Code sent to your inbox.`);
         setOtp(res.data.devOtp);
       }
     } catch (err) {
@@ -105,7 +106,7 @@ export default function Register() {
         password
       });
       setInfoMsg(res.data.message || `New code sent to ${email.trim()}`);
-      if (res.data.devOtp) {
+      if (res.data.devOtp && import.meta.env.DEV) {
         setOtp(res.data.devOtp);
       }
     } catch (err) {
@@ -396,7 +397,7 @@ export default function Register() {
 
           <div className="auth-security-badge">
             <ShieldCheck size={14} color="#047857" />
-            <span>Anti-NoSQL Injection Guard · 256-Bit SSL Secured</span>
+            <span>End-to-End Encrypted · 256-Bit SSL Protected</span>
           </div>
         </div>
       </div>

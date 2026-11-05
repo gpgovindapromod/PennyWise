@@ -137,10 +137,10 @@ export default function Navbar({ onOpenAddExpense }) {
         </div>
 
         <div className="stitch-nav-right">
-          {/* Live Sync Nov 2026 Pill */}
+          {/* Live Sync Active Month Pill */}
           <div className="stitch-nav-sync-pill desktop-only">
             <span className="proto-pulse-dot" />
-            <span>LIVE SYNC · NOV 2026</span>
+            <span>LIVE SYNC · {new Intl.DateTimeFormat('en-IN', { month: 'short', year: 'numeric' }).format(new Date()).toUpperCase()}</span>
           </div>
 
           <span className="stitch-nav-inr-tag desktop-only">INR ₹</span>

@@ -179,7 +179,7 @@ export default function Dashboard({ onOpenAddExpense }) {
             This Month
           </span>
           <span className="proto-filter-pill">
-            Q4 2026
+            Q{Math.floor(new Date().getMonth() / 3) + 1} {new Date().getFullYear()}
           </span>
           <span className="proto-filter-pill">
             Yearly
@@ -488,7 +488,7 @@ export default function Dashboard({ onOpenAddExpense }) {
               </h3>
             </div>
             <div className="clearance-subtitle-note">
-              Tabular multi-channel clearance protocol directly from MongoDB
+              Real-time transaction activity and financial balance movements
             </div>
           </div>
 

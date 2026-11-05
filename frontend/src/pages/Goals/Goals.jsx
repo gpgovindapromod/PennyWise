@@ -139,7 +139,7 @@ export default function Goals() {
       {/* 1. Sub-Header Protocol Breadcrumb & Main Header */}
       <div className="goals-proto-bar">
         <span className="proto-pulse-dot" />
-        <span>STRATEGIC CAPITAL ALLOCATION · MONGODB DATABASE RECONCILED</span>
+        <span>STRATEGIC CAPITAL ALLOCATION · REAL-TIME VAULT RECONCILED</span>
       </div>
 
       <div className="goals-header-wrap">

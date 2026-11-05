@@ -100,7 +100,7 @@ export default function Academics({ onOpenAddExpense }) {
     }
   };
 
-  // Dynamic Category Breakdown from real MongoDB subcategories
+  // Dynamic Category Breakdown from real subcategories
   const subcategoryEntries = Object.entries(subcategoryTotals || {});
 
   return (
@@ -108,7 +108,7 @@ export default function Academics({ onOpenAddExpense }) {
       {/* 1. Protocol Sub-Header & Breadcrumb */}
       <div className="academic-proto-bar">
         <span className="proto-pulse-dot" />
-        <span>ACADEMIC PORTFOLIO ALLOCATION · MONGODB DATABASE RECONCILED</span>
+        <span>ACADEMIC PORTFOLIO ALLOCATION · VERIFIED LEDGER RECONCILED</span>
         <span className="academic-semester-badge">Real-Time Ledger</span>
       </div>
 
@@ -282,9 +282,9 @@ export default function Academics({ onOpenAddExpense }) {
           <div className="flex justify-between items-center mb-4">
             <div>
               <h4 className="font-extrabold text-sm m-0 text-dark">Courseware Category Breakdown</h4>
-              <div className="text-muted text-xs">Dynamic aggregation from MongoDB study receipts</div>
+              <div className="text-muted text-xs">Dynamic aggregation from verified study receipts</div>
             </div>
-            <span className="text-muted text-xs font-bold">DATABASE RECONCILED</span>
+            <span className="text-muted text-xs font-bold">LEDGER RECONCILED</span>
           </div>
 
           {subcategoryEntries.length === 0 ? (
@@ -419,7 +419,7 @@ export default function Academics({ onOpenAddExpense }) {
                 <input name="obDate" type="date" required className="form-input text-xs" />
               </div>
               <button type="submit" disabled={submittingFee} className="modal-stitch-submit">
-                {submittingFee ? 'Saving to MongoDB...' : 'Initialize Obligation'}
+                {submittingFee ? 'Saving Obligation...' : 'Initialize Obligation'}
               </button>
             </form>
           </div>

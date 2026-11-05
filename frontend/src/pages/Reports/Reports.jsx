@@ -44,8 +44,8 @@ export default function Reports() {
       <div className="proto-status-bar">
         <div className="flex items-center gap-2">
           <span className="proto-pulse-dot" />
-          <span>MACRO LIQUIDITY TELEMETRY · ANALYTICS ENGINE V3.2</span>
-          <span className="academic-semester-badge">● Live MongoDB Engine</span>
+          <span>MACRO LIQUIDITY TELEMETRY · ANALYTICS SUITE</span>
+          <span className="academic-semester-badge">● Live Analytics Sync</span>
         </div>
 
         <div className="flex items-center gap-2">

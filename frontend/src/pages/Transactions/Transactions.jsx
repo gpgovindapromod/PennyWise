@@ -112,7 +112,7 @@ export default function Transactions({ onOpenAddExpense }) {
       <div className="ledger-proto-status">
         <div className="flex items-center gap-2">
           <span className="proto-pulse-dot" />
-          <span>LEDGER CLEARANCE PROTOCOL · REAL-TIME AUDIT · LIVE MONGODB SYNC</span>
+          <span>FINANCIAL LEDGER · REAL-TIME VERIFIED AUDIT SYNC</span>
         </div>
 
         <div className="ledger-records-badge">
@@ -195,7 +195,7 @@ export default function Transactions({ onOpenAddExpense }) {
               type="text" 
               value={search} 
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search merchant, memo, reference ID, or clearance protocol..." 
+              placeholder="Search merchant, category, note, or amount..." 
               className="ledger-search-input"
             />
           </div>

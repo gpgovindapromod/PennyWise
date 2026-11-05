@@ -321,7 +321,7 @@ export default function Settings() {
                     <span className="stitch-tier-badge">THIS NODE</span>
                   </div>
                   <div className="text-muted text-xs mt-0.5">
-                    TLS 1.3 · MongoDB Atlas Cloud Tunnel
+                    TLS 1.3 · Cloud Synchronized Session
                   </div>
                 </div>
               </div>
@@ -391,7 +391,7 @@ export default function Settings() {
       <div className="stitch-footer-container">
         <div className="stitch-attestation-status">
           <ShieldCheck size={14} color="#047857" />
-          <span>MongoDB Atlas Cluster · SSL 256-bit Encrypted</span>
+          <span>Cloud Verified Engine · SSL 256-Bit Encrypted</span>
         </div>
 
         <div className="stitch-attestation-bar">

@@ -69,8 +69,9 @@ export default function Login() {
       const res = await API.post('/auth/forgot-password', { email: email.trim() });
       setMode('reset');
       setInfoMsg(res.data.message || `Password reset code sent to ${email.trim()}`);
-      if (res.data.devOtp) {
-        setInfoMsg(`Code sent! (Dev Auto-fill: ${res.data.devOtp})`);
+      // In non-production environments with no SMTP configured, backend may include devOtp
+      if (res.data.devOtp && import.meta.env.DEV) {
+        setInfoMsg(`Code sent to your inbox.`);
         setOtp(res.data.devOtp);
       }
     } catch (err) {
@@ -400,7 +401,7 @@ export default function Login() {
 
           <div className="auth-security-badge">
             <ShieldCheck size={14} color="#047857" />
-            <span>End-to-end encrypted · Anti-Injection Protected</span>
+            <span>End-to-End Encrypted · 256-Bit SSL Protected</span>
           </div>
         </div>
       </div>
