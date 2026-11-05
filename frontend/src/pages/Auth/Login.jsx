@@ -55,12 +55,12 @@ export default function Login() {
 
   // Handle Forgot Password - Request 6-digit OTP
   const handleRequestResetOtp = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     setError('');
     setInfoMsg('');
 
     if (!email.trim()) {
-      setError('Please enter your registered email address.');
+      setError('Please enter your email to receive a password reset code.');
       return;
     }
 
@@ -74,13 +74,13 @@ export default function Login() {
         setOtp(res.data.devOtp);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send reset code');
+      setError(err.response?.data?.message || 'Failed to send password reset code');
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle Reset Password with OTP & new password
+  // Handle Password Reset Confirmation with OTP
   const handleConfirmReset = async (e) => {
     e.preventDefault();
     setError('');
@@ -91,7 +91,7 @@ export default function Login() {
     }
 
     if (!newPassword || newPassword.length < 6) {
-      setError('New password must be at least 6 characters.');
+      setError('Password must be at least 6 characters.');
       return;
     }
 
@@ -103,10 +103,10 @@ export default function Login() {
         newPassword
       });
       setMode('login');
-      setInfoMsg(res.data.message || 'Password reset successful! Please sign in.');
       setPassword('');
       setOtp('');
       setNewPassword('');
+      setInfoMsg(res.data.message || 'Password reset successful! Please log in with your new password.');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to reset password');
     } finally {
@@ -119,11 +119,14 @@ export default function Login() {
       <div className="auth-grid-overlay" />
       <div className="auth-container">
         {/* Brand header */}
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <div className="auth-brand-center">
           <div className="auth-header-badge">
             <Sparkles size={13} /> Student & Travel Financial Hub
           </div>
-          <h1 className="auth-logo-text">pennywise</h1>
+          <div className="auth-brand-badge-wrap">
+            <div className="auth-brand-logo-icon">P</div>
+            <h1 className="auth-logo-text" style={{ margin: 0 }}>PennyWise</h1>
+          </div>
           <p className="auth-subheading">Know your money. Plan your month.</p>
         </div>
 
@@ -132,12 +135,8 @@ export default function Login() {
           {mode === 'login' && (
             <>
               <div style={{ marginBottom: 20 }}>
-                <h2 style={{ fontSize: 22, color: '#FFFFFF', fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>
-                  Sign in
-                </h2>
-                <p style={{ fontSize: 13, color: '#94A3B8', marginTop: 4 }}>
-                  Access your secure financial workspace
-                </p>
+                <h2 className="auth-card-title">Sign in</h2>
+                <p className="auth-card-subtitle">Access your secure financial workspace</p>
               </div>
 
               {infoMsg && (
@@ -187,8 +186,7 @@ export default function Login() {
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="auth-input-field"
-                      style={{ paddingRight: 42 }}
+                      className="auth-input-field auth-password-input"
                       required
                     />
                     <button
@@ -222,20 +220,18 @@ export default function Login() {
 
           {mode === 'forgot' && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <div className="auth-header-bar">
                 <button
                   type="button"
                   onClick={() => { setMode('login'); setError(''); setInfoMsg(''); }}
-                  style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: 6, borderRadius: 8, display: 'flex', alignItems: 'center' }}
+                  className="auth-back-btn"
                   title="Back to login"
                 >
                   <ArrowLeft size={16} />
                 </button>
-                <h2 style={{ fontSize: 20, color: '#FFFFFF', margin: 0, fontWeight: 700 }}>
-                  Reset Password
-                </h2>
+                <h2 className="auth-card-title">Reset Password</h2>
               </div>
-              <p style={{ fontSize: 13, color: '#94A3B8', marginBottom: 20 }}>
+              <p className="auth-card-subtitle" style={{ marginBottom: 20 }}>
                 Enter your registered email address to receive a secure 6-digit OTP code.
               </p>
 
@@ -278,11 +274,11 @@ export default function Login() {
                   )}
                 </button>
 
-                <div style={{ textAlign: 'center', marginTop: 16 }}>
+                <div className="auth-switch-text" style={{ marginTop: 16 }}>
                   <button
                     type="button"
                     onClick={() => { setMode('login'); setError(''); }}
-                    style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: 12.5, cursor: 'pointer' }}
+                    className="auth-muted-link-btn"
                   >
                     Cancel and return to login
                   </button>
@@ -293,21 +289,19 @@ export default function Login() {
 
           {mode === 'reset' && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <div className="auth-header-bar">
                 <button
                   type="button"
                   onClick={() => { setMode('forgot'); setError(''); }}
-                  style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: 6, borderRadius: 8, display: 'flex', alignItems: 'center' }}
+                  className="auth-back-btn"
                   title="Back"
                 >
                   <ArrowLeft size={16} />
                 </button>
-                <h2 style={{ fontSize: 20, color: '#FFFFFF', margin: 0, fontWeight: 700 }}>
-                  Set New Password
-                </h2>
+                <h2 className="auth-card-title">Set New Password</h2>
               </div>
-              <p style={{ fontSize: 13, color: '#94A3B8', marginBottom: 20 }}>
-                Verification code sent to <strong style={{ color: '#F8FAFC' }}>{email}</strong>
+              <p className="auth-card-subtitle" style={{ marginBottom: 20 }}>
+                Verification code sent to <strong>{email}</strong>
               </p>
 
               {infoMsg && (
@@ -331,8 +325,7 @@ export default function Login() {
                     placeholder="123456"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                    className="auth-input-field"
-                    style={{ textAlign: 'center', fontSize: 22, letterSpacing: 8, fontWeight: 800, fontFamily: 'monospace', paddingLeft: 14 }}
+                    className="auth-input-field auth-otp-input"
                     required
                     autoFocus
                   />
@@ -347,8 +340,7 @@ export default function Login() {
                       placeholder="••••••••"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      className="auth-input-field"
-                      style={{ paddingRight: 42 }}
+                      className="auth-input-field auth-password-input"
                       required
                     />
                     <button
@@ -379,18 +371,18 @@ export default function Login() {
                   )}
                 </button>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, fontSize: 12.5 }}>
+                <div className="auth-sub-actions">
                   <button
                     type="button"
                     onClick={handleRequestResetOtp}
-                    style={{ background: 'none', border: 'none', color: '#FB7185', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}
+                    className="auth-action-link-btn"
                   >
                     <RefreshCw size={13} /> Resend Code
                   </button>
                   <button
                     type="button"
                     onClick={() => { setMode('login'); setError(''); }}
-                    style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
+                    className="auth-muted-link-btn"
                   >
                     Back to Login
                   </button>
@@ -399,7 +391,7 @@ export default function Login() {
             </>
           )}
 
-          <div style={{ textAlign: 'center', marginTop: 24, fontSize: 13, color: '#94A3B8' }}>
+          <div className="auth-switch-text">
             Don't have an account yet?{' '}
             <Link to="/register" className="auth-pill-link">
               Create an account
@@ -407,7 +399,7 @@ export default function Login() {
           </div>
 
           <div className="auth-security-badge">
-            <ShieldCheck size={14} color="#10B981" />
+            <ShieldCheck size={14} color="#047857" />
             <span>End-to-end encrypted · Anti-Injection Protected</span>
           </div>
         </div>

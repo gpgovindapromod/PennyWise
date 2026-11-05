@@ -46,8 +46,8 @@ export default function Register() {
 
     if (score <= 2) return { score: 1, label: 'Weak', color: '#EF4444' };
     if (score <= 3) return { score: 2, label: 'Fair', color: '#F59E0B' };
-    if (score === 4) return { score: 3, label: 'Good', color: '#3B82F6' };
-    return { score: 4, label: 'Strong', color: '#10B981' };
+    if (score === 4) return { score: 3, label: 'Good', color: '#0284C7' };
+    return { score: 4, label: 'Strong', color: '#047857' };
   };
 
   const strength = getPasswordStrength(password);
@@ -143,13 +143,16 @@ export default function Register() {
   return (
     <div className="auth-page-wrapper">
       <div className="auth-grid-overlay" />
-      <div className="auth-container" style={{ maxWidth: 480 }}>
+      <div className="auth-container" style={{ maxWidth: 460 }}>
         {/* Brand header */}
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <div className="auth-brand-center">
           <div className="auth-header-badge">
             <Sparkles size={13} /> Secure Verified Onboarding
           </div>
-          <h1 className="auth-logo-text">pennywise</h1>
+          <div className="auth-brand-badge-wrap">
+            <div className="auth-brand-logo-icon">P</div>
+            <h1 className="auth-logo-text" style={{ margin: 0 }}>PennyWise</h1>
+          </div>
           <p className="auth-subheading">Know your money. Plan your month.</p>
         </div>
 
@@ -158,10 +161,8 @@ export default function Register() {
           {step === 'details' ? (
             <>
               <div style={{ marginBottom: 20 }}>
-                <h2 style={{ fontSize: 22, color: '#FFFFFF', fontWeight: 700, margin: 0, letterSpacing: '-0.02em' }}>
-                  Create Account
-                </h2>
-                <p style={{ fontSize: 13, color: '#94A3B8', marginTop: 4 }}>
+                <h2 className="auth-card-title">Create Account</h2>
+                <p className="auth-card-subtitle">
                   Register your personal workspace with verified email security
                 </p>
               </div>
@@ -213,8 +214,7 @@ export default function Register() {
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="auth-input-field"
-                      style={{ paddingRight: 42 }}
+                      className="auth-input-field auth-password-input"
                       required
                     />
                     <button
@@ -230,20 +230,18 @@ export default function Register() {
 
                   {/* Dynamic Password Strength Indicator */}
                   {password.length > 0 && (
-                    <div style={{ marginTop: 8 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                        <span style={{ fontSize: 11, color: '#94A3B8' }}>Strength:</span>
+                    <div className="auth-strength-container">
+                      <div className="auth-strength-header">
+                        <span style={{ fontSize: 11, color: '#64748B' }}>Strength:</span>
                         <span style={{ fontSize: 11, fontWeight: 700, color: strength.color }}>{strength.label}</span>
                       </div>
-                      <div style={{ display: 'flex', gap: 4, height: 4 }}>
+                      <div className="auth-strength-bars">
                         {[1, 2, 3, 4].map((bar) => (
                           <div
                             key={bar}
+                            className="auth-strength-bar"
                             style={{
-                              flex: 1,
-                              borderRadius: 2,
-                              backgroundColor: bar <= strength.score ? strength.color : 'rgba(255, 255, 255, 0.1)',
-                              transition: 'background-color 0.25s ease'
+                              backgroundColor: bar <= strength.score ? strength.color : '#E5E7EB'
                             }}
                           />
                         ))}
@@ -257,7 +255,7 @@ export default function Register() {
                   <div className="auth-label">
                     <span>Confirm Password</span>
                     {confirmPassword.length > 0 && (
-                      <span style={{ fontSize: 11, fontWeight: 600, color: passwordsMatch ? '#10B981' : '#EF4444', display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: passwordsMatch ? '#047857' : '#DC2626', display: 'flex', alignItems: 'center', gap: 3 }}>
                         {passwordsMatch ? (
                           <>
                             <Check size={12} /> Passwords match
@@ -275,10 +273,9 @@ export default function Register() {
                       placeholder="••••••••"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="auth-input-field"
+                      className="auth-input-field auth-password-input"
                       style={{ 
-                        paddingRight: 42,
-                        borderColor: confirmPassword.length > 0 ? (passwordsMatch ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)') : undefined
+                        borderColor: confirmPassword.length > 0 ? (passwordsMatch ? '#047857' : '#EF4444') : undefined
                       }}
                       required
                     />
@@ -313,21 +310,19 @@ export default function Register() {
             </>
           ) : (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <div className="auth-header-bar">
                 <button
                   type="button"
                   onClick={() => { setStep('details'); setError(''); }}
-                  style={{ background: 'rgba(255,255,255,0.06)', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: 6, borderRadius: 8, display: 'flex', alignItems: 'center' }}
+                  className="auth-back-btn"
                   title="Back to details"
                 >
                   <ArrowLeft size={16} />
                 </button>
-                <h2 style={{ fontSize: 20, color: '#FFFFFF', margin: 0, fontWeight: 700 }}>
-                  Enter Verification Code
-                </h2>
+                <h2 className="auth-card-title">Enter Verification Code</h2>
               </div>
-              <p style={{ fontSize: 13, color: '#94A3B8', marginBottom: 20 }}>
-                A 6-digit code was sent to <strong style={{ color: '#F8FAFC' }}>{email}</strong>
+              <p className="auth-card-subtitle" style={{ marginBottom: 20 }}>
+                A 6-digit code was sent to <strong>{email}</strong>
               </p>
 
               {infoMsg && (
@@ -351,8 +346,7 @@ export default function Register() {
                     placeholder="123456"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                    className="auth-input-field"
-                    style={{ textAlign: 'center', fontSize: 22, letterSpacing: 8, fontWeight: 800, fontFamily: 'monospace', paddingLeft: 14 }}
+                    className="auth-input-field auth-otp-input"
                     required
                     autoFocus
                   />
@@ -372,19 +366,19 @@ export default function Register() {
                   )}
                 </button>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, fontSize: 12.5 }}>
+                <div className="auth-sub-actions">
                   <button
                     type="button"
                     onClick={handleResendOtp}
                     disabled={resending}
-                    style={{ background: 'none', border: 'none', color: '#FB7185', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}
+                    className="auth-action-link-btn"
                   >
                     <RefreshCw size={13} className={resending ? 'animate-spin' : ''} /> {resending ? 'Sending...' : 'Resend Code'}
                   </button>
                   <button
                     type="button"
                     onClick={() => { setStep('details'); setError(''); }}
-                    style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
+                    className="auth-muted-link-btn"
                   >
                     Change Email
                   </button>
@@ -393,7 +387,7 @@ export default function Register() {
             </>
           )}
 
-          <div style={{ textAlign: 'center', marginTop: 24, fontSize: 13, color: '#94A3B8' }}>
+          <div className="auth-switch-text">
             Already have an account?{' '}
             <Link to="/login" className="auth-pill-link">
               Sign in
@@ -401,7 +395,7 @@ export default function Register() {
           </div>
 
           <div className="auth-security-badge">
-            <ShieldCheck size={14} color="#10B981" />
+            <ShieldCheck size={14} color="#047857" />
             <span>Anti-NoSQL Injection Guard · 256-Bit SSL Secured</span>
           </div>
         </div>
