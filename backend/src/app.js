@@ -5,6 +5,8 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const config = require('./config/env');
 const { noSqlSanitizer } = require('./middleware/noSqlSanitizer');
+const logger = require('./utils/logger');
+const crypto = require('crypto');
 
 const app = express();
 
@@ -19,7 +21,19 @@ app.use(compression({
 
 // LAYER 1: Network & Perimeter Security
 app.use(helmet({
-  contentSecurityPolicy: false, // Managed per web asset domain
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", config.clientUrl, "https:"].filter(Boolean),
+      fontSrc: ["'self'", "https:", "data:"],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+      baseUri: ["'self'"]
+    }
+  },
   crossOriginEmbedderPolicy: false,
   hsts: {
     maxAge: 31536000,
@@ -73,12 +87,23 @@ app.use('/api/auth/', authLimiter);
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
-// Request logger for real-time visibility in terminal
+// Request correlation ID and structured observability logger
 app.use((req, res, next) => {
+  const correlationId = req.headers['x-correlation-id'] || crypto.randomUUID();
+  req.correlationId = correlationId;
+  res.setHeader('X-Correlation-Id', correlationId);
+
   const start = Date.now();
   res.on('finish', () => {
     const duration = Date.now() - start;
-    console.log(`[API ${req.method}] ${req.originalUrl} -> ${res.statusCode} (${duration}ms)`);
+    logger.info(`HTTP ${req.method} ${req.originalUrl}`, {
+      correlationId,
+      method: req.method,
+      url: req.originalUrl,
+      statusCode: res.statusCode,
+      durationMs: duration,
+      ip: req.ip
+    });
   });
   next();
 });
@@ -86,11 +111,31 @@ app.use((req, res, next) => {
 // LAYER 3 & 4: Defense Against NoSQL Injection
 app.use(noSqlSanitizer);
 
-// Health check
+// Health check (Liveness)
 app.get('/api/health', (req, res) => {
+  const mongoose = require('mongoose');
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
   res.json({
-    status: 'ok',
+    status: dbStatus === 'connected' ? 'ok' : 'degraded',
     service: 'pennywise-api',
+    db: dbStatus,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Readiness check (Kubernetes / ECS Container Readiness)
+app.get('/api/ready', (req, res) => {
+  const mongoose = require('mongoose');
+  if (mongoose.connection.readyState === 1) {
+    return res.status(200).json({
+      status: 'ready',
+      database: 'connected',
+      timestamp: new Date().toISOString()
+    });
+  }
+  return res.status(503).json({
+    status: 'unready',
+    database: 'disconnected',
     timestamp: new Date().toISOString()
   });
 });

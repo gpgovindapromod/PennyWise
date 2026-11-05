@@ -4,7 +4,7 @@ const archivedTransactionSchema = new mongoose.Schema({
   originalTransactionId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    index: true
+    unique: true
   },
   ownerId: {
     type: mongoose.Schema.Types.ObjectId,

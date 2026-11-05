@@ -78,12 +78,23 @@ class GoalService {
         { session }
       );
 
-      // Atomic update on Goal
-      goal.savedPaise += amountPaise;
-      goal.updateStatus();
-      await goal.save(sessionOpt);
+      // Atomic update on Goal using findOneAndUpdate to verify existence and avoid overwriting race
+      const updatedGoal = await Goal.findOneAndUpdate(
+        { _id: goalId, ownerId },
+        { $inc: { savedPaise: amountPaise } },
+        { ...sessionOpt, new: true }
+      );
+      if (!updatedGoal) {
+        // Goal was deleted concurrently by another request
+        // Rollback the transfer_out transaction on the account to conserve money
+        await TransactionService.softDeleteTransaction(tx._id, ownerId);
+        throw new NotFoundError('Goal vault was deleted concurrently');
+      }
 
-      return { goal, transaction: tx };
+      updatedGoal.updateStatus();
+      await updatedGoal.save(sessionOpt);
+
+      return { goal: updatedGoal, transaction: tx };
     });
   }
 
@@ -95,8 +106,10 @@ class GoalService {
     return await withTransactionSession(async (session) => {
       const sessionOpt = session ? { session } : {};
 
-      const goal = await Goal.findOne({ _id: goalId, ownerId }, null, sessionOpt);
-      if (!goal) throw new NotFoundError('Goal vault not found');
+      // Atomically find and mark goal as closing/deleting or remove it directly
+      // In standalone fallback without multi-doc sessions, findOneAndDelete atomically locks and returns the document
+      const goal = await Goal.findOneAndDelete({ _id: goalId, ownerId }, sessionOpt);
+      if (!goal) throw new NotFoundError('Goal vault not found or already deleted');
 
       // If goal had accumulated savings, return them back to the user's account atomically
       if (goal.savedPaise > 0) {
@@ -126,8 +139,6 @@ class GoalService {
           }
         );
       }
-
-      await Goal.deleteOne({ _id: goalId, ownerId }, sessionOpt);
 
       return { 
         success: true, 

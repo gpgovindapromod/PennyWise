@@ -54,8 +54,15 @@ async function runRetentionCleanup({ retentionDays = 90, ownerId = null } = {}) 
       retentionPolicyDays: retentionDays
     }));
 
-    // 2. Insert into ArchivedTransaction audit store
-    await ArchivedTransaction.insertMany(archiveDocs, sessionOpt);
+    // 2. Insert into ArchivedTransaction audit store with duplicate ignore (idempotent multi-instance protection)
+    try {
+      await ArchivedTransaction.insertMany(archiveDocs, { ...sessionOpt, ordered: false });
+    } catch (insertErr) {
+      // If code 11000 duplicate key occurs (concurrent worker already archived), ignore duplicate collision
+      if (insertErr.code !== 11000 && (!insertErr.writeErrors || !insertErr.writeErrors.some(e => e.code === 11000))) {
+        throw insertErr;
+      }
+    }
 
     // 3. Remove archived records from active Transaction collection
     const idsToDelete = eligibleTxs.map(t => t._id);

@@ -463,11 +463,27 @@ const updateProfile = async (req, res, next) => {
       // Validate avatar: either empty string, or safe HTTP(S) URL, or valid base64 data URI under 2MB
       if (avatarStr === '' || /^https?:\/\//i.test(avatarStr)) {
         user.avatar = avatarStr;
-      } else if (/^data:image\/(jpeg|jpg|png|webp|gif);base64,/i.test(avatarStr)) {
+      } else if (/^data:image\/(jpeg|jpg|png|webp);base64,/i.test(avatarStr)) {
         // Enforce max 2MB payload size (~2.8MB base64 characters)
         if (avatarStr.length > 2.8 * 1024 * 1024) {
           return res.status(400).json({ success: false, message: 'Avatar image must be smaller than 2MB' });
         }
+
+        // Verify magic bytes of the base64 payload to ensure real image data
+        try {
+          const rawBase64 = avatarStr.split(',')[1];
+          const buffer = Buffer.from(rawBase64.slice(0, 32), 'base64');
+          const isJpg = buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
+          const isPng = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47;
+          const isWebp = buffer.slice(0, 4).toString() === 'RIFF' && buffer.slice(8, 12).toString() === 'WEBP';
+          
+          if (!isJpg && !isPng && !isWebp) {
+            return res.status(400).json({ success: false, message: 'Avatar file contents do not match genuine image signatures (JPG, PNG, WebP only)' });
+          }
+        } catch (e) {
+          return res.status(400).json({ success: false, message: 'Invalid image data' });
+        }
+
         user.avatar = avatarStr;
       } else {
         return res.status(400).json({ success: false, message: 'Invalid avatar image format' });

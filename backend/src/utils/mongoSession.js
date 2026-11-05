@@ -25,7 +25,16 @@ async function withTransactionSession(work) {
     );
 
     if (isStandaloneErr) {
-      if (process.env.NODE_ENV === 'production') throw err;
+      if (process.env.NODE_ENV === 'production') {
+        const prodErr = new Error(
+          '[FATAL FINANCIAL SAFETY VIOLATION] MongoDB replica-set transaction is required in production mode. ' +
+          'Single-node standalone deployments cannot guarantee multi-document atomicity for financial operations. ' +
+          'Please connect to a MongoDB Atlas replica set with retryWrites=true&w=majority.'
+        );
+        prodErr.statusCode = 503;
+        prodErr.isOperational = false;
+        throw prodErr;
+      }
       return await work(null);
     }
     throw err;

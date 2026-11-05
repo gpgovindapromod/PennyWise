@@ -1,0 +1,125 @@
+name: PennyWise Production CI/CD & Financial Quality Gate
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-backend:
+    name: Backend Test Suites & Security Gates
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Backend Dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Run Core Backend Unit & Integration Tests (16 Suites)
+        working-directory: backend
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://127.0.0.1:27017/pennywise_test
+          JWT_SECRET: ci_test_secret_key_32_characters_minimum_entropy
+        run: npm test
+
+      - name: Run Phase 4 Production Certification & Stress Tests (5 Suites)
+        working-directory: backend
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://127.0.0.1:27017/pennywise_cert
+          JWT_SECRET: ci_test_secret_key_32_characters_minimum_entropy
+        run: node tests/phase4_cert.test.js
+
+      - name: Run Phase 5 Independent Production Audit & Concurrency Tests (6 Suites)
+        working-directory: backend
+        env:
+          NODE_ENV: test
+          TEST_MONGODB_URI: mongodb://127.0.0.1:27017/pennywise_phase5
+          JWT_SECRET: ci_test_secret_key_32_characters_minimum_entropy
+        run: node tests/phase5_audit.test.js
+
+      - name: Run Commercial Travel Module Regression Tests (7 Suites)
+        working-directory: backend
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://127.0.0.1:27017/pennywise_travel
+          JWT_SECRET: ci_test_secret_key_32_characters_minimum_entropy
+        run: node tests/travel.test.js
+
+      - name: Run Phase 7 Production Resilience & Magic Byte Tests (5 Suites)
+        working-directory: backend
+        env:
+          NODE_ENV: test
+          TEST_MONGODB_URI: mongodb://127.0.0.1:27017/pennywise_phase7
+          JWT_SECRET: ci_test_secret_key_32_characters_minimum_entropy
+        run: node tests/phase7_resilience.test.js
+
+      - name: Run Phase 8 Infrastructure & Startup Hardening Tests (5 Suites)
+        working-directory: backend
+        env:
+          NODE_ENV: test
+          TEST_MONGODB_URI: mongodb://127.0.0.1:27017/pennywise_phase8
+          JWT_SECRET: ci_test_secret_key_32_characters_minimum_entropy
+        run: node tests/phase8_deploy.test.js
+
+  verify-frontend:
+    name: Frontend Build & Asset Bundle Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Compile Production Frontend (Vite)
+        working-directory: frontend
+        env:
+          VITE_API_URL: https://api.pennywise.example.com
+        run: npm run build
+
+  production-gate:
+    name: Production Release Approval Gate
+    needs: [verify-backend, verify-frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+    steps:
+      - name: Release Approval Confirmation
+        run: |
+          echo "All 34 automated financial integrity, security, and build checks passed."
+          echo "Ready for production rollout. Deployment requires manual environment promotion approval."
+
