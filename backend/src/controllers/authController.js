@@ -7,9 +7,10 @@ const AcademicFee = require('../models/AcademicFee');
 const MonthlyBudget = require('../models/MonthlyBudget');
 const Otp = require('../models/Otp');
 const { sendOtpEmail, sendWelcomeEmail } = require('../utils/emailService');
+const config = require('../config/env');
 
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'pennywise_student_secret_key_2026_jwt_token', {
+  return jwt.sign({ id }, config.jwtSecret, {
     expiresIn: '30d'
   });
 };
@@ -71,23 +72,25 @@ const sendRegisterOtp = async (req, res) => {
     // Send email via Resend
     const emailResult = await sendOtpEmail(normalizedEmail, otpCode, 'registration');
 
+    const isProduction = config.isProduction;
+
     res.status(200).json({
       success: true,
       message: emailResult.deliveredToInbox
         ? `A 6-digit verification code was sent to ${normalizedEmail}`
-        : `Verification code generated! (Dev mode: ${otpCode})`,
-      provider: emailResult.provider,
-      devOtp: !emailResult.deliveredToInbox ? otpCode : undefined,
-      warning: emailResult.warning
+        : (isProduction ? 'A 6-digit verification code was sent.' : `Verification code generated! (Dev mode: ${otpCode})`),
+      provider: isProduction ? undefined : emailResult.provider,
+      devOtp: (!emailResult.deliveredToInbox && !isProduction) ? otpCode : undefined,
+      warning: isProduction ? undefined : emailResult.warning
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
 // @desc    Verify registration OTP and create user
 // @route   POST /api/auth/verify-register
-const verifyRegisterOtp = async (req, res) => {
+const verifyRegisterOtp = async (req, res, next) => {
   try {
     const { email, otp } = req.body;
 
@@ -99,16 +102,35 @@ const verifyRegisterOtp = async (req, res) => {
     const record = await Otp.findOne({
       email: normalizedEmail,
       purpose: 'registration',
-      expiresAt: { $gt: new Date() }
+      expiresAt: { $gt: new Date() },
+      isInvalidated: { $ne: true }
     });
 
     if (!record) {
-      return res.status(400).json({ success: false, message: 'Verification code is invalid or has expired. Please request a new one.' });
+      return res.status(400).json({ success: false, message: 'Verification code is invalid, locked, or has expired. Please request a new one.' });
+    }
+
+    // Check maximum attempts
+    if (record.attempts >= (record.maxAttempts || 5)) {
+      record.isInvalidated = true;
+      await record.save();
+      return res.status(429).json({ success: false, message: 'Too many incorrect attempts. This code has been invalidated for security. Please request a new code.' });
     }
 
     const isMatch = await bcrypt.compare(otp.trim(), record.otpHash);
     if (!isMatch) {
-      return res.status(400).json({ success: false, message: 'Incorrect 6-digit verification code' });
+      record.attempts = (record.attempts || 0) + 1;
+      if (record.attempts >= (record.maxAttempts || 5)) {
+        record.isInvalidated = true;
+      }
+      await record.save();
+      const remainingAttempts = Math.max(0, (record.maxAttempts || 5) - record.attempts);
+      return res.status(400).json({ 
+        success: false, 
+        message: remainingAttempts > 0 
+          ? `Incorrect verification code. ${remainingAttempts} attempt(s) remaining.`
+          : 'Too many incorrect attempts. Code has been invalidated.'
+      });
     }
 
     // Check if user was registered in the meantime
@@ -159,13 +181,13 @@ const verifyRegisterOtp = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
 // @desc    Initiate Password Reset by sending OTP to email
 // @route   POST /api/auth/forgot-password
-const forgotPassword = async (req, res) => {
+const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
 
@@ -201,24 +223,25 @@ const forgotPassword = async (req, res) => {
     });
 
     const emailResult = await sendOtpEmail(normalizedEmail, otpCode, 'password-reset');
+    const isProduction = config.isProduction;
 
     res.status(200).json({
       success: true,
       message: emailResult.deliveredToInbox
         ? `A 6-digit password reset code was sent to ${normalizedEmail}`
-        : `Reset code generated! (Dev mode: ${otpCode})`,
-      provider: emailResult.provider,
-      devOtp: !emailResult.deliveredToInbox ? otpCode : undefined,
-      warning: emailResult.warning
+        : (isProduction ? 'A 6-digit password reset code was sent.' : `Reset code generated! (Dev mode: ${otpCode})`),
+      provider: isProduction ? undefined : emailResult.provider,
+      devOtp: (!emailResult.deliveredToInbox && !isProduction) ? otpCode : undefined,
+      warning: isProduction ? undefined : emailResult.warning
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
 // @desc    Verify OTP and reset password
 // @route   POST /api/auth/reset-password
-const resetPassword = async (req, res) => {
+const resetPassword = async (req, res, next) => {
   try {
     const { email, otp, newPassword } = req.body;
 
@@ -234,16 +257,35 @@ const resetPassword = async (req, res) => {
     const record = await Otp.findOne({
       email: normalizedEmail,
       purpose: 'password-reset',
-      expiresAt: { $gt: new Date() }
+      expiresAt: { $gt: new Date() },
+      isInvalidated: { $ne: true }
     });
 
     if (!record) {
-      return res.status(400).json({ success: false, message: 'Verification code is invalid or has expired. Please request a new code.' });
+      return res.status(400).json({ success: false, message: 'Verification code is invalid, locked, or has expired. Please request a new code.' });
+    }
+
+    // Check maximum attempts
+    if (record.attempts >= (record.maxAttempts || 5)) {
+      record.isInvalidated = true;
+      await record.save();
+      return res.status(429).json({ success: false, message: 'Too many incorrect attempts. This code has been invalidated for security. Please request a new code.' });
     }
 
     const isMatch = await bcrypt.compare(otp.trim(), record.otpHash);
     if (!isMatch) {
-      return res.status(400).json({ success: false, message: 'Incorrect verification code' });
+      record.attempts = (record.attempts || 0) + 1;
+      if (record.attempts >= (record.maxAttempts || 5)) {
+        record.isInvalidated = true;
+      }
+      await record.save();
+      const remainingAttempts = Math.max(0, (record.maxAttempts || 5) - record.attempts);
+      return res.status(400).json({ 
+        success: false, 
+        message: remainingAttempts > 0 
+          ? `Incorrect verification code. ${remainingAttempts} attempt(s) remaining.`
+          : 'Too many incorrect attempts. Code has been invalidated.'
+      });
     }
 
     const user = await User.findOne({ email: normalizedEmail });
@@ -263,7 +305,7 @@ const resetPassword = async (req, res) => {
       message: 'Password reset successfully! You can now log in with your new password.'
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
@@ -305,13 +347,13 @@ const login = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
 // @desc    Legacy direct register (fallback for existing automated tests)
 // @route   POST /api/auth/register
-const register = async (req, res) => {
+const register = async (req, res, next) => {
   try {
     const { name, email, password, college } = req.body;
 
@@ -362,13 +404,13 @@ const register = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
 // @desc    Get current user profile
 // @route   GET /api/auth/me
-const getMe = async (req, res) => {
+const getMe = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
     const accounts = await Account.find({ ownerId: req.user._id });
@@ -380,7 +422,7 @@ const getMe = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
@@ -416,7 +458,21 @@ const updateProfile = async (req, res, next) => {
 
     if (name && typeof name === 'string') user.name = name.trim();
     if (typeof college === 'string') user.college = college.trim();
-    if (typeof req.body.avatar === 'string') user.avatar = req.body.avatar;
+    if (typeof req.body.avatar === 'string') {
+      const avatarStr = req.body.avatar.trim();
+      // Validate avatar: either empty string, or safe HTTP(S) URL, or valid base64 data URI under 2MB
+      if (avatarStr === '' || /^https?:\/\//i.test(avatarStr)) {
+        user.avatar = avatarStr;
+      } else if (/^data:image\/(jpeg|jpg|png|webp|gif);base64,/i.test(avatarStr)) {
+        // Enforce max 2MB payload size (~2.8MB base64 characters)
+        if (avatarStr.length > 2.8 * 1024 * 1024) {
+          return res.status(400).json({ success: false, message: 'Avatar image must be smaller than 2MB' });
+        }
+        user.avatar = avatarStr;
+      } else {
+        return res.status(400).json({ success: false, message: 'Invalid avatar image format' });
+      }
+    }
 
     await user.save();
 
@@ -474,6 +530,28 @@ const changePassword = async (req, res, next) => {
   }
 };
 
+const getProfileUploadUrl = async (req, res, next) => {
+  try {
+    const { contentType, fileSizeBytes } = req.body;
+    const { generatePresignedUploadUrl } = require('../utils/cloudStorageService');
+    const uploadData = await generatePresignedUploadUrl({
+      userId: req.user._id,
+      contentType,
+      fileSizeBytes
+    });
+
+    res.json({
+      success: true,
+      data: uploadData
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 module.exports = { 
   register, 
   sendRegisterOtp,
@@ -484,5 +562,6 @@ module.exports = {
   getMe, 
   updateProfile, 
   clearUserData,
-  changePassword
+  changePassword,
+  getProfileUploadUrl
 };

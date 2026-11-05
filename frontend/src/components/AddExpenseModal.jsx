@@ -82,6 +82,27 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
 
   const currentSubcategories = sectorSubcategories[sector] || ['General'];
 
+  const [accounts, setAccounts] = useState([]);
+  const [selectedAccountId, setSelectedAccountId] = useState('');
+
+  // Fetch active user accounts for selection
+  useEffect(() => {
+    if (isOpen) {
+      API.get('/accounts')
+        .then(res => {
+          if (res.data?.data?.accounts) {
+            const accs = res.data.data.accounts.filter(a => a.isActive !== false);
+            setAccounts(accs);
+            if (!selectedAccountId && accs.length > 0) {
+              const def = accs.find(a => a.isDefault) || accs[0];
+              setSelectedAccountId(def._id);
+            }
+          }
+        })
+        .catch(err => console.warn('Could not load accounts list:', err.message));
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     if (isOpen) {
       setError('');
@@ -162,7 +183,8 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
         subcategory: finalSubcategory,
         note: merchantMemo ? merchantMemo.trim() : (isVaultTransfer ? 'Contribution to savings vault' : ''),
         paymentMethod: paymentMethodMap[route] || 'upi',
-        date: toISTIsoString(date)
+        date: toISTIsoString(date),
+        ...(selectedAccountId && { accountId: selectedAccountId })
       };
 
       let res;
@@ -304,6 +326,27 @@ export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, onSuc
             );
           })}
         </div>
+
+        {/* Account Selector */}
+        {accounts.length > 0 && (
+          <>
+            <div className="stitch-taxonomy-header">
+              <span>TARGET ACCOUNT / WALLET</span>
+            </div>
+            <div className="stitch-routes-strip">
+              {accounts.map((acc) => (
+                <button
+                  key={acc._id}
+                  type="button"
+                  onClick={() => setSelectedAccountId(acc._id)}
+                  className={selectedAccountId === acc._id ? 'stitch-route-pill stitch-route-active' : 'stitch-route-pill'}
+                >
+                  {acc.name} (₹{(acc.balancePaise / 100).toFixed(0)})
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Origin Route */}
         <div className="stitch-taxonomy-header">

@@ -14,6 +14,8 @@ import {
   BookOpen, 
   Calendar, 
   Layers,
+  RotateCcw,
+  Trash2,
   FileSpreadsheet,
   FileText
 } from 'lucide-react';
@@ -23,6 +25,8 @@ export default function Transactions({ onOpenAddExpense }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('ALL');
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [restoringId, setRestoringId] = useState(null);
   const [page, setPage] = useState(1);
   const [summary, setSummary] = useState({
     settledCount: 0,
@@ -35,7 +39,7 @@ export default function Transactions({ onOpenAddExpense }) {
     setLoading(true);
     try {
       const res = await API.get('/transactions', {
-        params: { limit: 100, page }
+        params: { limit: 100, page, showDeleted: showDeleted ? 'true' : 'false' }
       });
       if (res.data?.data) {
         const txs = res.data.data.transactions || [];
@@ -74,9 +78,23 @@ export default function Transactions({ onOpenAddExpense }) {
     }
   };
 
+  const handleRestore = async (id) => {
+    if (!window.confirm('Restore this transaction and re-apply its balance to your account?')) return;
+    setRestoringId(id);
+    try {
+      await API.post(`/transactions/${id}/restore`);
+      alert('Transaction restored successfully!');
+      fetchTransactions();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to restore transaction');
+    } finally {
+      setRestoringId(null);
+    }
+  };
+
   useEffect(() => {
     fetchTransactions();
-  }, [page]);
+  }, [page, showDeleted]);
 
   // Filter real-time records by search and active category tab
   const filtered = transactions.filter((tx) => {
@@ -131,6 +149,13 @@ export default function Transactions({ onOpenAddExpense }) {
         </div>
 
         <div className="ledger-header-actions">
+          <button 
+            onClick={() => setShowDeleted(!showDeleted)}
+            className={showDeleted ? 'btn-goals-primary' : 'btn-goals-outline'}
+            style={{ fontSize: 12, padding: '7px 12px' }}
+          >
+            <RotateCcw size={13} /> {showDeleted ? 'Viewing Deleted (Trash)' : 'Recover Deleted'}
+          </button>
           <button className="btn-goals-outline">
             <Download size={13} /> Export CSV
           </button>
@@ -302,9 +327,21 @@ export default function Transactions({ onOpenAddExpense }) {
                             <div className={isIncome ? 'ledger-row-val-income' : isVault ? 'ledger-row-val-vault' : 'ledger-row-val-expense'}>
                               {isIncome ? '+' : '−'}{formatRupees(item.amountPaise)}
                             </div>
-                            <div className="ledger-row-status-tag status-settled">
-                              SETTLED
-                            </div>
+                            {item.isDeleted ? (
+                              <button
+                                onClick={() => handleRestore(item._id)}
+                                disabled={restoringId === item._id}
+                                className="btn-goals-outline text-emerald"
+                                style={{ fontSize: 11, padding: '3px 8px', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}
+                                title="Restore this transaction and re-apply balance"
+                              >
+                                <RotateCcw size={11} /> {restoringId === item._id ? 'Restoring...' : 'Restore'}
+                              </button>
+                            ) : (
+                              <div className="ledger-row-status-tag status-settled">
+                                SETTLED
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

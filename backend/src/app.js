@@ -61,12 +61,13 @@ app.use('/api/', apiLimiter);
 // Specific stricter brute-force limiter for Auth routes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 60,
+  max: 30, // 30 requests per 15 mins across auth endpoints
+  standardHeaders: true,
+  legacyHeaders: false,
   validate: { xForwardedForHeader: false },
   message: { success: false, message: 'Too many authentication attempts, please try again after 15 minutes.' }
 });
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/', authLimiter);
 
 // Request body parser with payload limits (5mb to accommodate avatar uploads)
 app.use(express.json({ limit: '5mb' }));
@@ -96,6 +97,7 @@ app.get('/api/health', (req, res) => {
 
 // Centralized Routes
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/accounts', require('./routes/accountRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/transactions', require('./routes/transactionRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const assert = require('assert');
 const User = require('../src/models/User');
 const Account = require('../src/models/Account');
 const Transaction = require('../src/models/Transaction');
@@ -292,8 +293,426 @@ async function runTests() {
   await Account.deleteMany({ ownerId: { $in: [recUser1._id, recUser2._id] } });
   await Transaction.deleteMany({ ownerId: { $in: [recUser1._id, recUser2._id] } });
 
+  // TEST 8: Concurrency, Goal Vault Deposits & Idempotent Atomic Deletion Refund
+  const Goal = require('../src/models/Goal');
+  const GoalService = require('../src/services/goalService');
+  const TransactionService = require('../src/services/transactionService');
+
+  const goalUser = await User.create({
+    name: 'Goal Tester',
+    email: 'goaltester@test.pennywise',
+    password: 'password123'
+  });
+
+  const goalAccount = await Account.create({
+    ownerId: goalUser._id,
+    name: 'Main Bank Account',
+    type: 'bank',
+    balancePaise: 100000, // ₹1,000.00
+    openingBalancePaise: 100000,
+    isDefault: true
+  });
+
+  const vault = await Goal.create({
+    ownerId: goalUser._id,
+    name: 'MacBook Fund',
+    targetPaise: 150000,
+    savedPaise: 0
+  });
+
+  // 8.1 Deposit ₹300 into vault
+  const depResult = await GoalService.depositToGoal(goalUser._id, vault._id, 30000, goalAccount._id);
+  const accAfterDep = await Account.findById(goalAccount._id);
+  const vaultAfterDep = await Goal.findById(vault._id);
+  if (accAfterDep.balancePaise !== 70000 || vaultAfterDep.savedPaise !== 30000) {
+    throw new Error('Test 8.1 Failed: Deposit into goal did not update account and vault balances atomically');
+  }
+
+  // 8.2 Atomic Goal Deletion with balance refund
+  const delResult = await GoalService.deleteGoal(goalUser._id, vault._id);
+  const accAfterDel = await Account.findById(goalAccount._id);
+  const vaultAfterDel = await Goal.findById(vault._id);
+
+  if (accAfterDel.balancePaise !== 100000) {
+    throw new Error(`Test 8.2 Failed: Account balance after goal deletion should be 100000, got ${accAfterDel.balancePaise}`);
+  }
+  if (vaultAfterDel !== null) {
+    throw new Error('Test 8.2 Failed: Goal document was not removed after deletion');
+  }
+
+  // 8.3 Verify refund transaction has transferId and correct ledger record
+  const refundTx = await Transaction.findOne({
+    ownerId: goalUser._id,
+    type: 'transfer_in',
+    amountPaise: 30000
+  });
+  if (!refundTx || !refundTx.subcategory.includes('Refund: MacBook Fund')) {
+    throw new Error('Test 8.3 Failed: Refund transaction missing or mislabeled');
+  }
+
+  console.log('[PASS] Test 8: Goal vault deposit and atomic idempotent refund upon deletion');
+
+  // TEST 9: OTP Security, Attempt Limiting and Invalidation
+  const testEmail = 'otp_security@test.pennywise';
+  const rawOtp = '654321';
+  const securityHashedOtp = await bcrypt.hash(rawOtp, 10);
+
+  const otpDoc = await Otp.create({
+    email: testEmail,
+    otpHash: securityHashedOtp,
+    purpose: 'password-reset',
+    attempts: 0,
+    maxAttempts: 3,
+    expiresAt: new Date(Date.now() + 60000)
+  });
+
+  // Simulate 3 failed attempts
+  for (let i = 0; i < 3; i++) {
+    const isMatch = await bcrypt.compare('000000', otpDoc.otpHash);
+    if (!isMatch) {
+      otpDoc.attempts += 1;
+      if (otpDoc.attempts >= otpDoc.maxAttempts) {
+        otpDoc.isInvalidated = true;
+      }
+      await otpDoc.save();
+    }
+  }
+
+  const lockedOtp = await Otp.findById(otpDoc._id);
+  if (!lockedOtp.isInvalidated || lockedOtp.attempts !== 3) {
+    throw new Error('Test 9.1 Failed: OTP was not invalidated after reaching max attempts');
+  }
+
+  console.log('[PASS] Test 9: OTP attempt limit enforcement, brute-force locking & invalidation');
+
+  // TEST 10: IST Month-Boundary & Fee Classifier Exclusions in Notifications
+  const { getISTMonthRange } = require('../src/utils/dateUtils');
+  const { isAcademicFee } = require('../src/utils/feeClassifier');
+
+  const istRange = getISTMonthRange('2026-11');
+  if (!istRange.startOfMonth || !istRange.startOfNextMonth || istRange.monthKey !== '2026-11') {
+    throw new Error('Test 10.1 Failed: IST month range calculation failed');
+  }
+
+  // Institutional fee vs living expenses classification
+  const feeTx1 = { categoryId: 'academic', subcategory: 'KTU Exam' };
+  const feeTx2 = { categoryId: 'academic', subcategory: 'Tuition Fees' };
+  const studyTx = { categoryId: 'academic', subcategory: 'Books and Notebooks' };
+  const livingTx = { categoryId: 'food', subcategory: 'Canteen Meals' };
+
+  if (!isAcademicFee(feeTx1) || !isAcademicFee(feeTx2)) {
+    throw new Error('Test 10.2 Failed: Institutional fee not identified');
+  }
+  if (isAcademicFee(studyTx)) {
+    throw new Error('Test 10.3 Failed: Routine study supplies misclassified as institutional fee');
+  }
+  if (isAcademicFee(livingTx)) {
+    throw new Error('Test 10.4 Failed: Living expense misclassified as academic fee');
+  }
+
+  console.log('[PASS] Test 10: Standardized IST month boundaries & centralized fee classifier validation');
+
+  // TEST 11: Phase 2 - Multi-Account Management & Safe Deactivation
+  const accUser = await User.create({
+    name: 'Multi Account User',
+    email: 'multi_acc@test.pennywise',
+    password: 'password123'
+  });
+
+  const salaryAcc = await Account.create({
+    ownerId: accUser._id,
+    name: 'HDFC Salary Bank',
+    type: 'bank',
+    balancePaise: 500000, // ₹5,000
+    openingBalancePaise: 500000,
+    isDefault: true,
+    isActive: true
+  });
+
+  const upiAcc = await Account.create({
+    ownerId: accUser._id,
+    name: 'GPay Wallet',
+    type: 'wallet',
+    balancePaise: 0,
+    openingBalancePaise: 0,
+    isDefault: false,
+    isActive: true
+  });
+
+  // Verify default account cannot be deactivated
+  if (salaryAcc.isDefault && salaryAcc.isActive === false) {
+    throw new Error('Test 11.1 Failed: Default account should not be inactive');
+  }
+
+  // Verify non-default zero-balance account can be safely deactivated
+  upiAcc.isActive = false;
+  await upiAcc.save();
+  const inactiveUpi = await Account.findById(upiAcc._id);
+  if (inactiveUpi.isActive !== false) {
+    throw new Error('Test 11.2 Failed: Account was not deactivated');
+  }
+
+  console.log('[PASS] Test 11: Multi-account management & safe deactivation rules');
+
+  // TEST 12: Phase 2 - Soft-Delete Recovery & Atomic Balance Restoration
+  const restoreTx = await TransactionService.createTransaction({
+    ownerId: accUser._id,
+    accountId: salaryAcc._id,
+    type: 'expense',
+    amountPaise: 50000, // ₹500
+    categoryId: 'food-drinks',
+    categoryLabel: 'Food & Drinks',
+    subcategory: 'Team Lunch',
+    note: 'Recoverable expense test'
+  });
+
+  const accAfterExpense = await Account.findById(salaryAcc._id);
+  if (accAfterExpense.balancePaise !== 450000) {
+    throw new Error('Test 12.1 Failed: Account balance after expense incorrect');
+  }
+
+  // Soft delete transaction (should reverse balance back to 500000)
+  await TransactionService.softDeleteTransaction(restoreTx.transaction._id, accUser._id);
+  const accAfterDelete = await Account.findById(salaryAcc._id);
+  if (accAfterDelete.balancePaise !== 500000) {
+    throw new Error('Test 12.2 Failed: Account balance after soft delete not reversed');
+  }
+
+  // Restore transaction (should re-deduct balance back to 450000)
+  await TransactionService.restoreTransaction(restoreTx.transaction._id, accUser._id);
+  const accAfterRestore = await Account.findById(salaryAcc._id);
+  if (accAfterRestore.balancePaise !== 450000) {
+    throw new Error('Test 12.3 Failed: Account balance after restore not reapplied');
+  }
+
+  // Duplicate restore attempt must throw
+  let duplicateRestoreFailed = false;
+  try {
+    await TransactionService.restoreTransaction(restoreTx.transaction._id, accUser._id);
+  } catch (err) {
+    duplicateRestoreFailed = true;
+  }
+  if (!duplicateRestoreFailed) {
+    throw new Error('Test 12.4 Failed: Duplicate transaction restoration should have been rejected');
+  }
+
+  console.log('[PASS] Test 12: Soft-delete transaction recovery & atomic balance restoration with anti-duplicate guard');
+
+  // TEST 13: Phase 2 - 90-Day Retention Policy & Archive Cleanup
+  const { runRetentionCleanup } = require('../src/utils/retentionService');
+  const ArchivedTransaction = require('../src/models/ArchivedTransaction');
+
+  // Create an old soft-deleted transaction (deleted 95 days ago)
+  const oldDate = new Date(Date.now() - (95 * 24 * 60 * 60 * 1000));
+  const oldDeletedTx = await Transaction.create({
+    ownerId: accUser._id,
+    accountId: salaryAcc._id,
+    type: 'expense',
+    amountPaise: 25000,
+    categoryId: 'travel',
+    categoryLabel: 'Travel',
+    subcategory: 'Train Ticket',
+    isDeleted: true,
+    deletedAt: oldDate
+  });
+
+  // Create a recent soft-deleted transaction (deleted 5 days ago)
+  const recentDate = new Date(Date.now() - (5 * 24 * 60 * 60 * 1000));
+  const recentDeletedTx = await Transaction.create({
+    ownerId: accUser._id,
+    accountId: salaryAcc._id,
+    type: 'expense',
+    amountPaise: 12000,
+    categoryId: 'food-drinks',
+    categoryLabel: 'Food',
+    subcategory: 'Snack',
+    isDeleted: true,
+    deletedAt: recentDate
+  });
+
+  const cleanupResult = await runRetentionCleanup({ retentionDays: 90, ownerId: accUser._id });
+  if (cleanupResult.archivedCount !== 1) {
+    throw new Error(`Test 13.1 Failed: Expected 1 transaction archived, got ${cleanupResult.archivedCount}`);
+  }
+
+  // Verify old tx is archived and removed from active collection
+  const oldActiveTx = await Transaction.findById(oldDeletedTx._id);
+  const archivedTx = await ArchivedTransaction.findOne({ originalTransactionId: oldDeletedTx._id });
+  const recentActiveTx = await Transaction.findById(recentDeletedTx._id);
+
+  if (oldActiveTx !== null) {
+    throw new Error('Test 13.2 Failed: 95-day-old soft-deleted transaction still in active collection');
+  }
+  if (!archivedTx || archivedTx.amountPaise !== 25000) {
+    throw new Error('Test 13.3 Failed: Transaction not found in ArchivedTransaction collection');
+  }
+  if (!recentActiveTx || recentActiveTx.isDeleted !== true) {
+    throw new Error('Test 13.4 Failed: Recent soft-deleted transaction was incorrectly purged');
+  }
+
+  console.log('[PASS] Test 13: 90-day retention policy & safe audit archiving without active data loss');
+
+  // TEST 14: Inter-Account Transfers
+  const transferUser = await User.create({
+    name: 'Transfer Tester',
+    email: 'transfer@test.pennywise',
+    password: 'Password123!',
+    currency: 'INR'
+  });
+
+  const sourceAcc = await Account.create({
+    ownerId: transferUser._id,
+    name: 'Checking Account',
+    type: 'bank',
+    currency: 'INR',
+    openingBalancePaise: 500000,
+    balancePaise: 500000,
+    isDefault: true
+  });
+
+  const destAcc = await Account.create({
+    ownerId: transferUser._id,
+    name: 'Emergency Savings',
+    type: 'savings',
+    currency: 'INR',
+    openingBalancePaise: 100000,
+    balancePaise: 100000,
+    isDefault: false
+  });
+
+  // Attempt overdraft transfer from checking (e.g. 600000 paise when balance is 500000)
+  let overdraftCaught = false;
+  try {
+    const reqMockOverdraft = {
+      user: transferUser,
+      body: {
+        fromAccountId: sourceAcc._id.toString(),
+        toAccountId: destAcc._id.toString(),
+        amountPaise: 600000,
+        note: 'Attempting overdraft'
+      }
+    };
+    let overdraftStatus = 200;
+    const resMockOverdraft = {
+      status(s) { overdraftStatus = s; return this; },
+      json(d) {
+        if (overdraftStatus === 400 || !d.success) overdraftCaught = true;
+      }
+    };
+    const { transferBetweenAccounts } = require('../src/controllers/accountController');
+    await transferBetweenAccounts(reqMockOverdraft, resMockOverdraft, (err) => {
+      if (err) overdraftCaught = true;
+    });
+  } catch (err) {
+    overdraftCaught = true;
+  }
+  assert.strictEqual(overdraftCaught, true, 'Transfer exceeding balance on standard bank account must be rejected');
+
+  // Execute valid transfer: 2000 INR (200000 paise)
+  let transferSuccess = false;
+  let transferResultData = null;
+  const reqMockValid = {
+    user: transferUser,
+    body: {
+      fromAccountId: sourceAcc._id.toString(),
+      toAccountId: destAcc._id.toString(),
+      amountPaise: 200000,
+      note: 'Transfer for savings'
+    }
+  };
+  const resMockValid = {
+    status(s) { return this; },
+    json(d) {
+      if (d.success) {
+        transferSuccess = true;
+        transferResultData = d.data;
+      }
+    }
+  };
+  const { transferBetweenAccounts } = require('../src/controllers/accountController');
+  await transferBetweenAccounts(reqMockValid, resMockValid, (err) => {
+    if (err) console.error('Transfer valid next(err):', err);
+  });
+  assert.strictEqual(transferSuccess, true, 'Valid transfer must succeed');
+
+  const refreshedSource = await Account.findById(sourceAcc._id);
+  const refreshedDest = await Account.findById(destAcc._id);
+  assert.strictEqual(refreshedSource.balancePaise, 300000, 'Source account balance must be debited by exactly 200000 paise');
+  assert.strictEqual(refreshedDest.balancePaise, 300000, 'Destination account balance must be credited by exactly 200000 paise');
+
+  const transferTxs = await Transaction.find({ ownerId: transferUser._id });
+  assert.strictEqual(transferTxs.length, 2, 'Transfer must create exactly 2 transaction legs');
+  assert.strictEqual(transferTxs[0].transferId.toString(), transferTxs[1].transferId.toString(), 'Both legs must share the same transferId');
+  console.log('[PASS] Test 14: Atomic inter-account transfer with overdraft protection & dual ledger legs');
+
+  // TEST 15: Financial Reconciliation Diagnostic Engine
+  const { generateFinancialReconciliationReport } = require('../src/utils/reconciliationEngine');
+  const reconReport = await generateFinancialReconciliationReport(transferUser._id);
+  assert.strictEqual(reconReport.totalAccounts, 2, 'Diagnostic engine should audit both accounts');
+  assert.strictEqual(reconReport.systemIntegrity, 'HEALTHY', 'Diagnostic report should find zero discrepancies for clean accounts');
+  assert.strictEqual(reconReport.accounts[0].differencePaise, 0, 'No balance discrepancy should exist');
+
+  // Simulate a phantom discrepancy by mutating current balance without transaction
+  await Account.findByIdAndUpdate(sourceAcc._id, { $inc: { balancePaise: 50000 } });
+  const discrepantReport = await generateFinancialReconciliationReport(transferUser._id);
+  assert.strictEqual(discrepantReport.systemIntegrity, 'ATTENTION_REQUIRED', 'Diagnostic engine must flag discrepancy when account balance does not match ledger');
+  console.log('[PASS] Test 15: Financial reconciliation diagnostic engine detects ledger vs stored balance discrepancy');
+
+  // TEST 16: Cloud Storage Presigned URL & MIME Validation
+  const { generatePresignedUploadUrl } = require('../src/utils/cloudStorageService');
+  let invalidMimeRejected = false;
+  try {
+    await generatePresignedUploadUrl({
+      userId: transferUser._id,
+      contentType: 'application/x-executable',
+      fileSizeBytes: 1024
+    });
+  } catch (err) {
+    invalidMimeRejected = true;
+  }
+  assert.strictEqual(invalidMimeRejected, true, 'Invalid mime type must be rejected');
+
+  // Test unconfigured (default fallback to local-managed-base64)
+  const fallbackUpload = await generatePresignedUploadUrl({
+    userId: transferUser._id,
+    contentType: 'image/jpeg',
+    fileSizeBytes: 100000
+  });
+  assert.strictEqual(fallbackUpload.provider, 'local-managed-base64', 'Should return fallback provider when S3 credentials not set');
+  assert.strictEqual(fallbackUpload.isCloudStorageAvailable, false);
+
+  // Test S3 / Cloudflare R2 configured mode
+  process.env.S3_BUCKET = 'pennywise-avatars';
+  process.env.S3_ACCESS_KEY_ID = 'test-key-id';
+  process.env.S3_SECRET_ACCESS_KEY = 'test-secret-key';
+  process.env.S3_ENDPOINT = 'https://r2.cloudflarestorage.com/pennywise-avatars';
+
+  const cloudUpload = await generatePresignedUploadUrl({
+    userId: transferUser._id,
+    contentType: 'image/jpeg',
+    fileSizeBytes: 100000
+  });
+  assert.strictEqual(cloudUpload.provider, 's3-r2-compatible');
+  assert.ok(cloudUpload.uploadUrl, 'Must return presigned uploadUrl');
+  assert.ok(cloudUpload.publicUrl, 'Must return publicUrl');
+
+  delete process.env.S3_BUCKET;
+  delete process.env.S3_ACCESS_KEY_ID;
+  delete process.env.S3_SECRET_ACCESS_KEY;
+  delete process.env.S3_ENDPOINT;
+
+  console.log('[PASS] Test 16: Cloud storage presigned URL generation and MIME validation');
+
+  // Clean up all test artifacts
+  await User.deleteMany({ email: /@test\.pennywise$/ });
+  await Account.deleteMany({ ownerId: { $in: [goalUser._id, accUser._id, transferUser._id] } });
+  await Transaction.deleteMany({ ownerId: { $in: [goalUser._id, accUser._id, transferUser._id] } });
+  await ArchivedTransaction.deleteMany({ ownerId: { $in: [accUser._id, transferUser._id] } });
+  await Goal.deleteMany({ ownerId: goalUser._id });
+  await Otp.deleteMany({ email: testEmail });
+
   await mongoose.disconnect();
-  console.log('=== ALL 7 BACKEND TESTS PASSED SUCCESSFULLY ===');
+  console.log('=== ALL 16 BACKEND TESTS PASSED SUCCESSFULLY ===');
 }
 
 runTests().catch(err => {

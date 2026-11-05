@@ -10,7 +10,8 @@ const {
   getMe, 
   updateProfile, 
   clearUserData,
-  changePassword 
+  changePassword,
+  getProfileUploadUrl
 } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 
@@ -25,6 +26,7 @@ router.post('/login', login);
 // Protected routes
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);
+router.post('/profile/upload-url', protect, getProfileUploadUrl);
 router.put('/change-password', protect, changePassword);
 router.post('/reset-data', protect, clearUserData);
 

@@ -2,26 +2,28 @@ const Notification = require('../models/Notification');
 const AcademicFee = require('../models/AcademicFee');
 const MonthlyBudget = require('../models/MonthlyBudget');
 const Transaction = require('../models/Transaction');
+const { getISTMonthRange, getCurrentISTDate } = require('../utils/dateUtils');
+const { isAcademicFee } = require('../utils/feeClassifier');
 
 // @desc Get live notifications (with dynamic financial trigger evaluation)
 const getNotifications = async (req, res, next) => {
   try {
     const ownerId = req.user._id;
 
-    // Evaluate live dynamic alerts for upcoming fees and budget thresholds
+    // Evaluate live dynamic alerts for upcoming fees and budget thresholds under IST calendar
+    const { startOfMonth, startOfNextMonth, monthKey: currentMonthKey } = getISTMonthRange();
     const now = new Date();
-    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
     const [fees, budget, transactions, userNotifications] = await Promise.all([
       AcademicFee.find({ ownerId, status: { $ne: 'paid' } }),
       MonthlyBudget.findOne({ ownerId, monthKey: currentMonthKey }),
       Transaction.find({ 
         ownerId, 
-        type: 'expense', 
+        type: { $in: ['expense', 'refund'] }, 
         isDeleted: { $ne: true },
         date: { 
-          $gte: new Date(now.getFullYear(), now.getMonth(), 1),
-          $lte: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
+          $gte: startOfMonth,
+          $lt: startOfNextMonth
         }
       }),
       Notification.find({ ownerId }).sort({ createdAt: -1 }).limit(15)
@@ -50,8 +52,16 @@ const getNotifications = async (req, res, next) => {
     });
 
     // 2. Budget burn rate warnings (> 80% ceiling)
+    // Institutional semester/exam fees are excluded, and refunds offset spending
     if (budget && budget.limitPaise > 0) {
-      const totalSpentPaise = transactions.reduce((sum, t) => sum + t.amountPaise, 0);
+      let totalSpentPaise = 0;
+      transactions.forEach(t => {
+        if (isAcademicFee(t)) return;
+        const factor = t.type === 'refund' ? -1 : 1;
+        totalSpentPaise += (t.amountPaise * factor);
+      });
+      if (totalSpentPaise < 0) totalSpentPaise = 0;
+
       const burnPct = Math.round((totalSpentPaise / budget.limitPaise) * 100);
       if (burnPct >= 80) {
         liveAlerts.push({

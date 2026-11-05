@@ -4,6 +4,7 @@ const Account = require('../models/Account');
 const Transaction = require('../models/Transaction');
 const TransactionService = require('./transactionService');
 const { AppError, NotFoundError, ValidationError, ConflictError } = require('../errors/AppError');
+const { withTransactionSession } = require('../utils/mongoSession');
 
 class GoalService {
   /**
@@ -45,85 +46,96 @@ class GoalService {
       throw new ValidationError('Deposit amount must be a positive integer in paise');
     }
 
-    const session = await mongoose.startSession();
-    try {
-      let result;
-      await session.withTransaction(async () => {
-        const goal = await Goal.findOne({ _id: goalId, ownerId }).session(session);
-        if (!goal) throw new NotFoundError('Goal vault not found');
+    return await withTransactionSession(async (session) => {
+      const sessionOpt = session ? { session } : {};
 
-        let targetAccId = accountId;
-        if (!targetAccId) {
-          const defaultAcc = await Account.findOne({ ownerId, isDefault: true }).session(session)
-            || await Account.findOne({ ownerId }).session(session);
-          if (!defaultAcc) throw new NotFoundError('No payment account found');
-          targetAccId = defaultAcc._id;
-        }
+      const goal = await Goal.findOne({ _id: goalId, ownerId }, null, sessionOpt);
+      if (!goal) throw new NotFoundError('Goal vault not found');
 
-        const transferId = new mongoose.Types.ObjectId();
+      let targetAccId = accountId;
+      if (!targetAccId) {
+        const defaultAcc = await Account.findOne({ ownerId, isDefault: true }, null, sessionOpt)
+          || await Account.findOne({ ownerId }, null, sessionOpt);
+        if (!defaultAcc) throw new NotFoundError('No payment account found');
+        targetAccId = defaultAcc._id;
+      }
 
-        // Create transfer_out transaction leg on Account
-        const { transaction: tx } = await TransactionService.createTransaction(
-          {
-            ownerId,
-            accountId: targetAccId,
-            type: 'transfer_out',
-            amountPaise,
-            categoryId: 'vault',
-            categoryLabel: 'Savings Vault',
-            subcategory: goal.name,
-            note: `Contribution to ${goal.name}`,
-            transferId
-          },
-          { session }
-        );
+      const transferId = new mongoose.Types.ObjectId();
 
-        // Atomic update on Goal
-        goal.savedPaise += amountPaise;
-        goal.updateStatus();
-        await goal.save({ session });
+      // Create transfer_out transaction leg on Account
+      const { transaction: tx } = await TransactionService.createTransaction(
+        {
+          ownerId,
+          accountId: targetAccId,
+          type: 'transfer_out',
+          amountPaise,
+          categoryId: 'vault',
+          categoryLabel: 'Savings Vault',
+          subcategory: goal.name,
+          note: `Contribution to ${goal.name}`,
+          transferId
+        },
+        { session }
+      );
 
-        result = { goal, transaction: tx };
-      });
-      return result;
-    } finally {
-      await session.endSession();
-    }
+      // Atomic update on Goal
+      goal.savedPaise += amountPaise;
+      goal.updateStatus();
+      await goal.save(sessionOpt);
+
+      return { goal, transaction: tx };
+    });
   }
 
   /**
-   * Delete a goal and atomically return any saved funds back to the default account
+   * Delete a goal and atomically return any saved funds back to the default account.
+   * Completely wrapped in withTransactionSession with idempotency protection.
    */
   static async deleteGoal(ownerId, goalId) {
-    const goal = await Goal.findOne({ _id: goalId, ownerId });
-    if (!goal) throw new NotFoundError('Goal vault not found');
+    return await withTransactionSession(async (session) => {
+      const sessionOpt = session ? { session } : {};
 
-    // If goal had accumulated savings, return them back to the user's account
-    if (goal.savedPaise > 0) {
-      const defaultAcc = await Account.findOne({ ownerId, isDefault: true })
-        || await Account.findOne({ ownerId });
+      const goal = await Goal.findOne({ _id: goalId, ownerId }, null, sessionOpt);
+      if (!goal) throw new NotFoundError('Goal vault not found');
 
-      if (defaultAcc) {
-        await TransactionService.createTransaction({
-          ownerId,
-          accountId: defaultAcc._id,
-          type: 'transfer_in',
-          amountPaise: goal.savedPaise,
-          categoryId: 'vault',
-          categoryLabel: 'Savings Vault',
-          subcategory: `Refund: ${goal.name}`,
-          note: `Refund of saved balance upon closing ${goal.name}`
-        });
+      // If goal had accumulated savings, return them back to the user's account atomically
+      if (goal.savedPaise > 0) {
+        const defaultAcc = await Account.findOne({ ownerId, isDefault: true }, null, sessionOpt)
+          || await Account.findOne({ ownerId }, null, sessionOpt);
+
+        if (!defaultAcc) {
+          throw new NotFoundError('No target account found to refund saved goal funds');
+        }
+
+        const refundKey = `goal-refund-${goalId}-${goal.savedPaise}`;
+
+        await TransactionService.createTransaction(
+          {
+            ownerId,
+            accountId: defaultAcc._id,
+            type: 'transfer_in',
+            amountPaise: goal.savedPaise,
+            categoryId: 'vault',
+            categoryLabel: 'Savings Vault',
+            subcategory: `Refund: ${goal.name}`,
+            note: `Refund of saved balance upon closing ${goal.name}`
+          },
+          { 
+            idempotencyKey: refundKey,
+            session 
+          }
+        );
       }
-    }
 
-    await Goal.deleteOne({ _id: goalId, ownerId });
-    return { 
-      success: true, 
-      message: goal.savedPaise > 0 
-        ? `Goal removed and ₹${(goal.savedPaise / 100).toLocaleString('en-IN')} refunded to your account`
-        : 'Goal removed successfully' 
-    };
+      await Goal.deleteOne({ _id: goalId, ownerId }, sessionOpt);
+
+      return { 
+        success: true, 
+        message: goal.savedPaise > 0 
+          ? `Goal removed and ₹${(goal.savedPaise / 100).toLocaleString('en-IN')} refunded to your account`
+          : 'Goal removed successfully' 
+      };
+    });
   }
 }
 

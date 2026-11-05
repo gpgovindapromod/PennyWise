@@ -17,10 +17,16 @@ const getTransactions = async (req, res, next) => {
       sortBy = 'date',
       sortOrder = 'desc',
       page = 1,
-      limit = 20
+      limit = 20,
+      showDeleted
     } = req.query;
 
-    const query = { ownerId, isDeleted: { $ne: true } };
+    const query = { ownerId };
+    if (showDeleted === 'true') {
+      query.isDeleted = true;
+    } else {
+      query.isDeleted = { $ne: true };
+    }
 
     if (category && category !== 'all') {
       query.categoryId = category;
@@ -302,9 +308,48 @@ const deleteTransaction = async (req, res, next) => {
   }
 };
 
+const restoreTransaction = async (req, res, next) => {
+  try {
+    const ownerId = req.user._id;
+    const { id } = req.params;
+
+    const result = await TransactionService.restoreTransaction(id, ownerId);
+
+    // Reconcile academic fee if linked
+    const tx = await Transaction.findById(id);
+    if (tx?.academicFeeId) {
+      const fee = await AcademicFee.findOne({ _id: tx.academicFeeId, ownerId });
+      if (fee) {
+        const alreadyExists = fee.installments.some(
+          inst => inst.transactionId && inst.transactionId.toString() === id
+        );
+        if (!alreadyExists) {
+          fee.installments.push({
+            amountPaise: tx.amountPaise,
+            paidDate: tx.date || new Date(),
+            transactionId: tx._id,
+            note: tx.note || 'Restored installment'
+          });
+          fee.updateStatus();
+          await fee.save();
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Transaction restored and account balance reapplied successfully',
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getTransactions,
   createTransaction,
   updateTransaction,
-  deleteTransaction
+  deleteTransaction,
+  restoreTransaction
 };

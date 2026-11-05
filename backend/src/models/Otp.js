@@ -28,6 +28,19 @@ const otpSchema = new mongoose.Schema({
     required: true,
     index: { expires: '10m' } // MongoDB TTL index to auto-delete expired OTPs after 10 mins
   },
+  attempts: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  maxAttempts: {
+    type: Number,
+    default: 5
+  },
+  isInvalidated: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now

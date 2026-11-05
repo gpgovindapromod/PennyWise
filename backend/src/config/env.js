@@ -19,4 +19,8 @@ const config = {
   isProduction: process.env.NODE_ENV === 'production'
 };
 
+if (config.isProduction && !process.env.JWT_SECRET) {
+  throw new Error('FATAL: JWT_SECRET environment variable is strictly required in production mode.');
+}
+
 module.exports = config;

@@ -4,43 +4,11 @@ const Account = require('../models/Account');
 const AcademicFee = require('../models/AcademicFee');
 const { AppError, NotFoundError, ValidationError, ConflictError } = require('../errors/AppError');
 const { getISTMonthRange } = require('../utils/dateUtils');
+const { withTransactionSession } = require('../utils/mongoSession');
 
 // Directional outflow classification
 const OUTFLOW = new Set(['expense', 'transfer_out', 'transfer']);
 const isOutflow = (type) => OUTFLOW.has(type);
-
-/**
- * Helper to obtain or verify an active MongoDB Session.
- * Safely executes transactions on replica sets, with gated fallback for non-production standalone.
- */
-async function withTransactionSession(work) {
-  let session = null;
-  try {
-    session = await mongoose.startSession();
-    let result;
-    await session.withTransaction(async () => {
-      result = await work(session);
-    });
-    return result;
-  } catch (err) {
-    const errMsg = (err.message || '') + ' ' + (err.errorResponse?.errmsg || '') + ' ' + (err.originalError?.message || '');
-    const isStandaloneErr = (
-      errMsg.includes('replica set') ||
-      errMsg.includes('Transaction numbers are only allowed on a replica set member') ||
-      errMsg.includes('does not support retryable writes')
-    );
-
-    if (isStandaloneErr) {
-      if (process.env.NODE_ENV === 'production') throw err;
-      return await work(null);
-    }
-    throw err;
-  } finally {
-    if (session) {
-      await session.endSession();
-    }
-  }
-}
 
 class TransactionService {
   /**
@@ -159,6 +127,15 @@ class TransactionService {
       return await TransactionService._create(data, opts);
     } catch (err) {
       if (err.code === 11000 && opts.idempotencyKey && opts.session === undefined) {
+        // In standalone fallback without multi-doc sessions, if account was already updated
+        // before Transaction.create hit unique index collision, reverse the balance adjustment
+        const isDeduction = isOutflow(data.type);
+        const reverseDelta = isDeduction ? data.amountPaise : -data.amountPaise;
+        await Account.updateOne(
+          { _id: data.accountId, ownerId: data.ownerId },
+          { $inc: { balancePaise: reverseDelta } }
+        );
+
         const tx = await Transaction.findOne({ ownerId: data.ownerId, idempotencyKey: opts.idempotencyKey });
         if (tx) return { transaction: tx, idempotentReplay: true };
       }
@@ -196,6 +173,50 @@ class TransactionService {
       await Account.updateOne({ _id: tx.accountId, ownerId }, { $inc: { balancePaise: reverseDelta } }, sessionOpt);
 
       return { success: true, reversedPaise: reverseDelta, transactionId: tx._id };
+    });
+  }
+
+  /**
+   * Restore a soft-deleted transaction and atomically re-apply its account balance impact.
+   * Atomically flips flag back and prevents duplicate restorations or restoring fee-linked anomalies.
+   */
+  static async restoreTransaction(transactionId, ownerId) {
+    return await withTransactionSession(async (session) => {
+      const sessionOpt = session ? { session } : {};
+
+      // 1. Fetch transaction ensuring it is currently soft-deleted and owned by user
+      const tx = await Transaction.findOneAndUpdate(
+        { _id: transactionId, ownerId, isDeleted: true },
+        { $set: { isDeleted: false, deletedAt: null } },
+        { ...sessionOpt, new: false }
+      );
+
+      if (!tx) {
+        throw new NotFoundError('Transaction not found or is already active');
+      }
+
+      // 2. Fetch associated account
+      const account = await Account.findOne({ _id: tx.accountId, ownerId }, null, sessionOpt);
+      if (!account) {
+        throw new NotFoundError('Associated account not found or has been removed');
+      }
+
+      // 3. Re-apply balance impact (outflow deducts balance, inflow adds balance)
+      const reapplyDelta = isOutflow(tx.type) ? -tx.amountPaise : tx.amountPaise;
+
+      // Balance check for outflow restoration if not a credit account
+      const isCreditType = ['credit', 'loan'].includes(account.type);
+      if (reapplyDelta < 0 && !isCreditType && account.balancePaise < tx.amountPaise) {
+        throw new ValidationError('Insufficient account balance to restore this expense/transfer');
+      }
+
+      await Account.updateOne(
+        { _id: tx.accountId, ownerId },
+        { $inc: { balancePaise: reapplyDelta } },
+        sessionOpt
+      );
+
+      return { success: true, reappliedPaise: reapplyDelta, transactionId: tx._id };
     });
   }
 

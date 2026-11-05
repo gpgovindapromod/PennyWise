@@ -2,15 +2,17 @@ const AcademicFee = require('../models/AcademicFee');
 const Transaction = require('../models/Transaction');
 const Account = require('../models/Account');
 const TransactionService = require('../services/transactionService');
+const { getISTMonthRange, getCurrentISTDate } = require('../utils/dateUtils');
+const { isAcademicFee } = require('../utils/feeClassifier');
 
 const getAcademicSummary = async (req, res, next) => {
   try {
     const ownerId = req.user._id;
-    const now = new Date();
-    const currentYear = now.getFullYear();
+    const { year } = getCurrentISTDate();
+    const { startOfMonth, startOfNextMonth } = getISTMonthRange();
 
-    const startOfAcademicYear = new Date(currentYear, 0, 1);
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    // Start of academic year calendar (Jan 1 of current year in IST)
+    const startOfAcademicYear = new Date(Date.UTC(year, 0, 1) - (5.5 * 60 * 60 * 1000));
 
     const academicTxs = await Transaction.find({
       ownerId,
@@ -22,18 +24,13 @@ const getAcademicSummary = async (req, res, next) => {
     let spendingThisYearPaise = 0;
     const subcategoryTotals = {};
 
-    const feeSubcategories = ['college fees', 'tuition fees', 'semester fees', 'exam fees', 'examination fees', 'hostel fees', 'admission fees'];
-
     academicTxs.forEach(tx => {
-      const isFee = Boolean(
-        tx.academicFeeId || 
-        feeSubcategories.includes(tx.subcategory?.toLowerCase().trim())
-      );
+      const isFee = isAcademicFee(tx);
 
-      // We isolate institutional exam & semester fees from study costs
+      // We isolate institutional exam & semester fees from routine study costs
       if (!isFee) {
         const txDate = new Date(tx.date);
-        const isThisMonth = txDate >= startOfMonth;
+        const isThisMonth = txDate >= startOfMonth && txDate < startOfNextMonth;
         const isThisYear = txDate >= startOfAcademicYear;
 
         if (tx.type === 'expense') {

@@ -1,4 +1,4 @@
-﻿const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 const protect = async (req, res, next) => {
@@ -12,7 +12,8 @@ const protect = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'pennywise_student_secret_key_2026_jwt_token');
+    const config = require('../config/env');
+    const decoded = jwt.verify(token, config.jwtSecret);
     req.user = await User.findById(decoded.id).select('-password');
     if (!req.user) {
       return res.status(401).json({ success: false, message: 'User belonging to token no longer exists' });
